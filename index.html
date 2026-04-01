@@ -4,6 +4,85 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tally · Internal Dashboards</title>
+<script>
+const TALLY_PWD = 'Tally2026!';
+const AUTH_KEY  = 'tally_dashboard_auth';
+(function() {
+  if (sessionStorage.getItem(AUTH_KEY) !== 'ok') {
+    document.documentElement.style.visibility = 'hidden';
+    document.addEventListener('DOMContentLoaded', function() {
+      document.documentElement.style.visibility = '';
+      showGate();
+    });
+  }
+  function showGate() {
+    var g = document.createElement('div');
+    g.id = 'auth-gate';
+    g.innerHTML = [
+      '<div class="gate-card">',
+        '<div class="gate-logo"><span>T</span></div>',
+        '<div class="gate-title">Tally · Internal Access</div>',
+        '<div class="gate-sub">Dashboards Internos — Acceso Restringido</div>',
+        '<input id="gate-pwd" class="gate-input" type="password" placeholder="Contraseña de acceso" autofocus>',
+        '<div id="gate-err" class="gate-err" style="display:none;">Contraseña incorrecta. Inténtalo de nuevo.</div>',
+        '<button class="gate-btn" onclick="gateSubmit()">Entrar →</button>',
+        '<div class="gate-footer">Solo personal autorizado Tally Legal</div>',
+      '</div>'
+    ].join('');
+    document.body.prepend(g);
+    document.getElementById('gate-pwd').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') gateSubmit();
+    });
+  }
+})();
+function gateSubmit() {
+  var val = document.getElementById('gate-pwd').value;
+  if (val === TALLY_PWD) {
+    sessionStorage.setItem(AUTH_KEY, 'ok');
+    document.getElementById('auth-gate').remove();
+  } else {
+    document.getElementById('gate-err').style.display = 'block';
+    document.getElementById('gate-pwd').value = '';
+    document.getElementById('gate-pwd').focus();
+  }
+}
+</script>
+<style>
+#auth-gate {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #0d0f14;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.gate-card {
+  background: #1e2333; border: 1px solid #2a3050;
+  border-radius: 16px; padding: 40px 36px; width: 360px; max-width: 90vw;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.gate-logo {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #4f7fff, #7c5cfc);
+  border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 4px;
+}
+.gate-title  { font-size: 18px; font-weight: 700; color: #e2e8f0; }
+.gate-sub    { font-size: 12px; color: #8899aa; text-align: center; }
+.gate-input  {
+  width: 100%; background: #13161e; border: 1px solid #2a3050;
+  border-radius: 8px; padding: 12px 14px; color: #e2e8f0;
+  font-size: 15px; outline: none; transition: border-color 0.2s;
+}
+.gate-input:focus { border-color: #4f7fff; }
+.gate-err   { font-size: 12px; color: #ef4444; text-align: center; }
+.gate-btn   {
+  width: 100%; background: #4f7fff; border: none;
+  border-radius: 8px; padding: 12px; color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+}
+.gate-btn:hover { opacity: 0.85; }
+.gate-footer { font-size: 11px; color: #8899aa; }
+</style>
 <style>
   :root {
     --bg: #0d0f14; --bg2: #13161e; --card: #1e2333;
