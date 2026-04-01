@@ -2188,17 +2188,13 @@ function gateSubmit() {
 // ============================================================
 // GOOGLE SHEETS API — DATA REFRESH
 // ============================================================
-const SHEET_ID = '1_RrCnxuh0mg7cDTNCqIm5o3S2OmlSs7CGzU5zS3FNsI';
-
-function getSheetURL(sheetName) {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
-}
+// Proxy de Apps Script — corre como cuenta de Google para acceder al sheet privado
+const PROXY_URL = 'https://script.google.com/macros/s/AKfycby6Ng1huZmswttAsDIUYic6OYdFZsY9PllT8tWTR5F8RG8DTXtIyu6eb4azTRUhkIUr/exec';
 
 async function fetchSheet(sheetName) {
   try {
-    const res = await fetch(getSheetURL(sheetName));
-    const text = await res.text();
-    const json = JSON.parse(text.replace(/^.*?({.*})\s*\);?\s*$/, '$1'));
+    const res = await fetch(PROXY_URL + '?sheet=' + encodeURIComponent(sheetName));
+    const json = await res.json();
     return json;
   } catch(e) {
     console.warn(`No se pudo actualizar ${sheetName}:`, e.message);
