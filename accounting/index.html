@@ -9,6 +9,14 @@
 <title>Tally Accounting Team</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+// ── THEME INIT (run before render to avoid flash) ──────────────
+(function() {
+  if (localStorage.getItem('tally_theme') === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+<script>
 // ── PASSWORD GATE ──────────────────────────────────────────────
 // Change TALLY_PWD to rotate the access password anytime.
 const TALLY_PWD = 'Tally2026!';
@@ -106,6 +114,38 @@ function gateSubmit() {
     --muted: #9089aa;
     --radius: 12px;
   }
+  /* ---- LIGHT MODE OVERRIDES ---- */
+  [data-theme="light"] {
+    --bg:     #f5f3ff;
+    --bg2:    #ede9fe;
+    --bg3:    #e2dcfd;
+    --card:   #ffffff;
+    --border: #c4b8f5;
+    --accent: #5b21b6;
+    --accent2:#7c3aed;
+    --text:   #1a1039;
+    --muted:  #6b5f8a;
+  }
+  [data-theme="light"] .header {
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  }
+  [data-theme="light"] .sidebar {
+    background: #ede9fe;
+  }
+  [data-theme="light"] .sidebar-item.active {
+    background: rgba(91,33,182,0.10);
+    border-color: rgba(91,33,182,0.28);
+  }
+  [data-theme="light"] .acc-item {
+    background: #f9f7ff;
+  }
+  [data-theme="light"] .acc-email-signal {
+    background: #ede9fe;
+  }
+  [data-theme="light"] .gate-card {
+    background: #ffffff; border-color: #c4b8f5;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'DM Sans', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
@@ -131,6 +171,15 @@ function gateSubmit() {
     transition: opacity 0.2s;
   }
   .refresh-btn:hover { opacity: 0.85; }
+  /* ---- THEME TOGGLE ---- */
+  .theme-toggle {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--muted); width: 34px; height: 34px;
+    border-radius: 8px; cursor: pointer; font-size: 16px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); background: var(--bg2); }
   .live-badge {
     display: flex; align-items: center; gap: 6px;
     background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25);
@@ -417,6 +466,7 @@ function gateSubmit() {
       Datos en vivo
     </div>
     <div class="last-update" id="lastUpdate">Actualizado: cargando...</div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
     <button class="refresh-btn" onclick="refreshData()">↻ Actualizar</button>
   </div>
 </div>
@@ -2263,6 +2313,35 @@ function fetchSheet(sheetName) {
     document.head.appendChild(script);
   });
 }
+
+// ============================================================
+// THEME TOGGLE
+// ============================================================
+function toggleTheme() {
+  var html = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  if (html.getAttribute('data-theme') === 'light') {
+    html.removeAttribute('data-theme');
+    if (btn) btn.textContent = '🌙';
+    localStorage.setItem('tally_theme', 'dark');
+  } else {
+    html.setAttribute('data-theme', 'light');
+    if (btn) btn.textContent = '☀️';
+    localStorage.setItem('tally_theme', 'light');
+  }
+}
+// Sync button icon after DOM loads (theme attr already set in <head>)
+document.addEventListener('DOMContentLoaded', function() {
+  var stored = localStorage.getItem('tally_theme');
+  var btn = document.getElementById('themeToggle');
+  if (stored === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    if (btn) btn.textContent = '☀️';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    if (btn) btn.textContent = '🌙';
+  }
+});
 
 async function refreshData() {
   document.getElementById('lastUpdate').textContent = 'Actualizando...';
