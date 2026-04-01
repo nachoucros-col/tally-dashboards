@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <title>Tally Accounting Team</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
@@ -58,28 +61,28 @@ function gateSubmit() {
   font-family: 'Inter', system-ui, sans-serif;
 }
 .gate-card {
-  background: #1e2333; border: 1px solid #2a3050;
+  background: #1e1a2e; border: 1px solid #2d2545;
   border-radius: 16px; padding: 40px 36px; width: 360px; max-width: 90vw;
   display: flex; flex-direction: column; align-items: center; gap: 14px;
   box-shadow: 0 24px 64px rgba(0,0,0,0.6);
 }
 .gate-logo {
   width: 52px; height: 52px;
-  background: linear-gradient(135deg, #4f7fff, #7c5cfc);
+  background: linear-gradient(135deg, #7c4dff, #a855f7);
   border-radius: 14px; display: flex; align-items: center; justify-content: center;
   font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 4px;
 }
 .gate-title  { font-size: 18px; font-weight: 700; color: #e2e8f0; }
 .gate-sub    { font-size: 12px; color: #8899aa; text-align: center; }
 .gate-input  {
-  width: 100%; background: #13161e; border: 1px solid #2a3050;
+  width: 100%; background: #12101a; border: 1px solid #2d2545;
   border-radius: 8px; padding: 12px 14px; color: #e2e8f0;
   font-size: 15px; outline: none; transition: border-color 0.2s;
 }
-.gate-input:focus { border-color: #4f7fff; }
+.gate-input:focus { border-color: #7c4dff; }
 .gate-err   { font-size: 12px; color: #ef4444; text-align: center; }
 .gate-btn   {
-  width: 100%; background: #4f7fff; border: none;
+  width: 100%; background: #7c4dff; border: none;
   border-radius: 8px; padding: 12px; color: #fff;
   font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
 }
@@ -88,27 +91,27 @@ function gateSubmit() {
 </style>
 <style>
   :root {
-    --bg: #0d0f14;
-    --bg2: #13161e;
-    --bg3: #1a1e2a;
-    --card: #1e2333;
-    --border: #2a3050;
-    --accent: #4f7fff;
-    --accent2: #7c5cfc;
+    --bg: #0d0b12;
+    --bg2: #12101a;
+    --bg3: #1a1525;
+    --card: #1e1a2e;
+    --border: #2d2545;
+    --accent: #7c4dff;
+    --accent2: #a855f7;
     --green: #22c55e;
     --yellow: #f59e0b;
     --red: #ef4444;
     --orange: #f97316;
     --text: #e2e8f0;
-    --muted: #8899aa;
+    --muted: #9089aa;
     --radius: 12px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
   /* ---- HEADER ---- */
   .header {
-    background: linear-gradient(135deg, #0d0f14 0%, #1a1e2a 100%);
+    background: linear-gradient(135deg, #0d0b12 0%, #1a1525 100%);
     border-bottom: 1px solid var(--border);
     padding: 18px 32px;
     display: flex;
@@ -117,7 +120,7 @@ function gateSubmit() {
     position: sticky; top: 0; z-index: 100;
   }
   .logo { display: flex; align-items: center; gap: 12px; }
-  .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #4f7fff, #7c5cfc); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #7c4dff, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
   .logo-text h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
   .logo-text span { font-size: 11px; color: var(--muted); }
   .header-right { display: flex; align-items: center; gap: 16px; }
@@ -136,22 +139,42 @@ function gateSubmit() {
   .live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  /* ---- NAV TABS ---- */
-  .nav-tabs {
-    display: flex; gap: 4px; padding: 12px 32px;
-    background: var(--bg2); border-bottom: 1px solid var(--border);
-    overflow-x: auto;
+  /* ---- APP LAYOUT ---- */
+  .app-layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ---- SIDEBAR ---- */
+  .sidebar {
+    width: 220px; min-width: 220px; flex-shrink: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    padding: 16px 8px; display: flex; flex-direction: column;
+    gap: 2px; overflow-y: auto;
   }
-  .tab {
-    padding: 7px 16px; border-radius: 8px; cursor: pointer;
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px 14px 12px;
+    border-bottom: 1px solid var(--border); margin-bottom: 8px;
+  }
+  .sidebar-logo-icon {
+    width: 30px; height: 30px; flex-shrink: 0;
+    background: linear-gradient(135deg, #7c4dff, #a855f7);
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 14px;
+  }
+  .sidebar-logo-text { font-size: 13px; font-weight: 700; color: var(--text); }
+  .sidebar-logo-sub { font-size: 10px; color: var(--muted); }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
     font-size: 13px; font-weight: 500; color: var(--muted);
-    border: 1px solid transparent; white-space: nowrap; transition: all 0.2s;
+    transition: all 0.2s; border: 1px solid transparent; white-space: nowrap;
   }
-  .tab:hover { color: var(--text); background: var(--bg3); }
-  .tab.active { color: var(--accent); background: rgba(79,127,255,0.1); border-color: rgba(79,127,255,0.3); }
+  .sidebar-item:hover { color: var(--text); background: var(--bg3); }
+  .sidebar-item.active { color: var(--accent); background: rgba(124,77,255,0.12); border-color: rgba(124,77,255,0.3); }
+  .sidebar-icon { font-size: 16px; width: 18px; text-align: center; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 6px 4px; }
 
   /* ---- MAIN ---- */
-  .main { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
+  .main { flex: 1; padding: 24px 32px; overflow-y: auto; }
   .section { display: none; }
   .section.active { display: block; }
 
@@ -398,15 +421,37 @@ function gateSubmit() {
   </div>
 </div>
 
-<!-- NAV TABS -->
-<div class="nav-tabs">
-  <div class="tab active" onclick="showTab('overview')">🏠 Overview</div>
-  <div class="tab" onclick="showTab('clientes')">👥 Clientes</div>
-  <div class="tab" onclick="showTab('accesos')">🔑 Accesos SC</div>
-  <div class="tab" onclick="showTab('declaraciones')">📋 Declaraciones</div>
-  <div class="tab" onclick="showTab('equipo')">👤 Equipo / Carga</div>
-  <div class="tab" onclick="showTab('automations')">🤖 Automatizaciones</div>
-</div>
+<!-- APP LAYOUT: Sidebar + Main -->
+<div class="app-layout">
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">⚖️</div>
+    <div>
+      <div class="sidebar-logo-text">Tally</div>
+      <div class="sidebar-logo-sub">Contabilidad</div>
+    </div>
+  </div>
+  <div class="sidebar-item active" data-tab="overview" onclick="showTab('overview')">
+    <span class="sidebar-icon">🏠</span><span>Overview</span>
+  </div>
+  <div class="sidebar-item" data-tab="clientes" onclick="showTab('clientes')">
+    <span class="sidebar-icon">👥</span><span>Clientes</span>
+  </div>
+  <div class="sidebar-item" data-tab="accesos" onclick="showTab('accesos')">
+    <span class="sidebar-icon">🔑</span><span>Accesos SC</span>
+  </div>
+  <div class="sidebar-item" data-tab="declaraciones" onclick="showTab('declaraciones')">
+    <span class="sidebar-icon">📋</span><span>Declaraciones</span>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-item" data-tab="equipo" onclick="showTab('equipo')">
+    <span class="sidebar-icon">👤</span><span>Equipo / Carga</span>
+  </div>
+  <div class="sidebar-item" data-tab="automations" onclick="showTab('automations')">
+    <span class="sidebar-icon">🤖</span><span>Automatizaciones</span>
+  </div>
+</nav>
 
 <!-- MAIN -->
 <div class="main">
@@ -450,16 +495,16 @@ function gateSubmit() {
         <div class="kpi-sub">22/164 AZ con acceso · 61 pendientes</div>
         <div class="kpi-trend trend-down">↓ Cuello de botella principal</div>
       </div>
-      <div class="kpi-card" style="--accent-color: #22c55e">
+      <div class="kpi-card" style="--accent-color: #f59e0b">
         <div class="kpi-label">Anuales 2025</div>
-        <div class="kpi-value heat-green">25</div>
-        <div class="kpi-sub">Declaraciones anuales presentadas</div>
-        <div class="kpi-trend trend-up">✓ 100% de los registrados</div>
+        <div class="kpi-value heat-yellow">16.1%</div>
+        <div class="kpi-sub">25 de 155 cuentas activas (base Feb 2026)</div>
+        <div class="kpi-trend trend-warn">= 25 anuales / 155 Feb × 100</div>
       </div>
-      <div class="kpi-card" style="--accent-color: #22c55e">
+      <div class="kpi-card" style="--accent-color: #f59e0b">
         <div class="kpi-label">Declaraciones Anuales Lote</div>
-        <div class="kpi-value">100%</div>
-        <div class="kpi-sub">Con datos: 15 | En ceros: 10</div>
+        <div class="kpi-value heat-yellow">16.1%</div>
+        <div class="kpi-sub">Con datos: 15 | En ceros: 10 | Total: 25</div>
       </div>
     </div>
 
@@ -497,19 +542,8 @@ function gateSubmit() {
       </div>
     </div>
 
-    <div class="grid-2">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-          <div class="card-title" style="margin-bottom:0;">📈 Ventas vs Impuestos por Cliente <span class="badge">Con datos</span></div>
-        </div>
-        <iframe
-          src="https://script.google.com/macros/s/AKfycby6Ng1huZmswttAsDIUYic6OYdFZsY9PllT8tWTR5F8RG8DTXtIyu6eb4azTRUhkIUr/exec?output=ventas-chart"
-          width="100%" height="420" frameborder="0"
-          style="border:none;border-radius:8px;display:block;background:transparent;">
-        </iframe>
-      </div>
-      <div class="card">
-        <div class="card-title">🤖 Estado Automatizaciones Claude</div>
+    <div class="card">
+      <div class="card-title">🤖 Estado Automatizaciones Claude</div>
         <div class="task-grid" style="margin-top:4px;">
           <div class="task-item">
             <div style="font-size:14px;">🟢</div>
@@ -561,7 +595,6 @@ function gateSubmit() {
           </div>
         </div>
       </div>
-    </div>
   </div>
 
   <!-- ============================================================ -->
@@ -598,9 +631,22 @@ function gateSubmit() {
       </div>
     </div>
 
-    <!-- ===== TOP 30 CRÍTICOS ===== -->
-    <div class="card" id="card-criticos">
-      <div class="criticos-header">
+    <!-- ===== VENTAS VS IMPUESTOS — FULL WIDTH ===== -->
+    <div class="card" style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div class="card-title" style="margin-bottom:0;">📊 Ventas vs Impuestos por Cliente <span class="badge">Con datos</span></div>
+      </div>
+      <iframe
+        src="https://script.google.com/macros/s/AKfycby6Ng1huZmswttAsDIUYic6OYdFZsY9PllT8tWTR5F8RG8DTXtIyu6eb4azTRUhkIUr/exec?output=ventas-chart"
+        width="100%" height="420" frameborder="0"
+        style="border:none;border-radius:8px;display:block;background:transparent;">
+      </iframe>
+    </div>
+
+    <!-- ===== TOP 30 CRÍTICOS + CANAL DE ENTRADA ===== -->
+    <div class="grid-2" style="align-items:start;margin-bottom:24px;">
+    <div class="card" id="card-criticos" style="display:flex;flex-direction:column;height:50vh;">
+      <div class="criticos-header" style="flex-shrink:0;">
         <div class="card-title">🚨 Top 30 Clientes Críticos <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)">Fuente: Gmail + WeeklyPlan + SC</span></div>
         <div class="criticos-filters">
           <button class="filter-btn active" onclick="filterCriticos('all',this)">Todos</button>
@@ -612,7 +658,7 @@ function gateSubmit() {
           <button class="filter-btn" onclick="filterCriticos('queja',this)">🔵 Queja</button>
         </div>
       </div>
-      <div id="acc-list">
+      <div id="acc-list" style="flex:1;overflow-y:auto;padding-right:4px;">
 
         <!-- 1 -->
         <div class="acc-item" data-tags="blocked sat">
@@ -1388,35 +1434,36 @@ function gateSubmit() {
 
       </div><!-- #acc-list -->
     </div><!-- #card-criticos -->
-    <!-- ===== FIN TOP 30 CRÍTICOS ===== -->
 
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">👤 Distribución por Responsable</div>
-        <div class="chart-container" style="height:260px;">
-          <canvas id="chartOwner"></canvas>
+    <!-- Canal de Entrada (right half of grid) -->
+    <div class="card">
+      <div class="card-title">🔀 Canal de Entrada</div>
+      <div style="padding-top:30px;">
+        <div class="progress-item">
+          <div class="progress-label"><span>Amazon Marketplace (AZ)</span><span class="pct">164 clientes (43%)</span></div>
+          <div class="progress-bar"><div class="progress-fill fill-blue" style="width:43%"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label"><span>Inbound / Nacional (IN)</span><span class="pct">216+ clientes (57%)</span></div>
+          <div class="progress-bar"><div class="progress-fill fill-purple" style="width:57%"></div></div>
+        </div>
+        <div style="margin-top:24px; padding:16px; background:var(--bg3); border-radius:10px;">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">ANÁLISIS DE DISTRIBUCIÓN</div>
+          <div style="font-size:13px; line-height:1.7; color:var(--text);">
+            Los clientes AZ representan el segmento de mayor complejidad operativa por requerir accesos
+            a Seller Central, gestión de retenciones Amazon y reportes de ventas. El segmento IN tiene
+            mayor diversidad de necesidades pero menor dependencia de integraciones externas.
+          </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">🔀 Canal de Entrada</div>
-        <div style="padding-top:30px;">
-          <div class="progress-item">
-            <div class="progress-label"><span>Amazon Marketplace (AZ)</span><span class="pct">164 clientes (43%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-blue" style="width:43%"></div></div>
-          </div>
-          <div class="progress-item">
-            <div class="progress-label"><span>Inbound / Nacional (IN)</span><span class="pct">216+ clientes (57%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-purple" style="width:57%"></div></div>
-          </div>
-          <div style="margin-top:24px; padding:16px; background:var(--bg3); border-radius:10px;">
-            <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">ANÁLISIS DE DISTRIBUCIÓN</div>
-            <div style="font-size:13px; line-height:1.7; color:var(--text);">
-              Los clientes AZ representan el segmento de mayor complejidad operativa por requerir accesos
-              a Seller Central, gestión de retenciones Amazon y reportes de ventas. El segmento IN tiene
-              mayor diversidad de necesidades pero menor dependencia de integraciones externas.
-            </div>
-          </div>
-        </div>
+    </div>
+    </div><!-- /.grid-2 top30 + canal -->
+
+    <!-- Distribución por Responsable — FULL WIDTH -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">👤 Distribución por Responsable</div>
+      <div class="chart-container" style="height:260px;">
+        <canvas id="chartOwner"></canvas>
       </div>
     </div>
 
@@ -1503,64 +1550,6 @@ function gateSubmit() {
         <div class="kpi-label">Con Banco</div>
         <div class="kpi-value">4</div>
         <div class="kpi-sub">Acceso bancario completo</div>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">📊 Progreso de Accesos por Módulo</div>
-        <div style="margin-top:8px;">
-          <div class="progress-item">
-            <div class="progress-label"><span>🔑 Retenciones</span><span class="pct">~14 / 164 (8.5%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-purple" style="width:8.5%"></div></div>
-          </div>
-          <div class="progress-item">
-            <div class="progress-label"><span>📈 Ventas (Sales Report)</span><span class="pct">~22 / 164 (13.4%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-blue" style="width:13.4%"></div></div>
-          </div>
-          <div class="progress-item">
-            <div class="progress-label"><span>📦 Inventario</span><span class="pct">~16 / 164 (9.8%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-yellow" style="width:9.8%"></div></div>
-          </div>
-          <div class="progress-item">
-            <div class="progress-label"><span>💳 Payoneer</span><span class="pct">4 / 164 (2.4%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-red" style="width:2.4%"></div></div>
-          </div>
-          <div class="progress-item">
-            <div class="progress-label"><span>🏦 Estado Banco</span><span class="pct">4 / 164 (2.4%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-red" style="width:2.4%"></div></div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">✅ Clientes con Acceso Completo</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Cliente</th><th>Fecha</th><th>Notas</th></tr></thead>
-            <tbody>
-              <tr><td><b>Recontour</b></td><td>10 Mar</td><td style="color:var(--muted);font-size:12px;">Editores completos</td></tr>
-              <tr><td><b>Durelife Nutrition</b></td><td>18 Mar</td><td style="color:var(--muted);font-size:12px;">Acceso total</td></tr>
-              <tr><td><b>Fresh Finest</b></td><td>10 Mar</td><td style="color:var(--muted);font-size:12px;">Sin banco (5/5)</td></tr>
-              <tr><td><b>ALPAKA</b></td><td>18 Mar</td><td style="color:var(--muted);font-size:12px;">Sin banco</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="card-title" style="margin-top:16px;">⚡ Parciales Clave</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Cliente</th><th>Estado</th><th>Módulos</th></tr></thead>
-            <tbody>
-              <tr><td>Rollga</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>Brighticonic</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>Plymouth</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>RIFTBOX BRANDS</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>Hair Safe Solutions</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>GHU Electronics</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas</td></tr>
-              <tr><td>Doomlings</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Vtas+Inv (bloq ret)</td></tr>
-              <tr><td>Lil Cactus Mexico</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv (Cris)</td></tr>
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
 
@@ -1664,6 +1653,64 @@ function gateSubmit() {
         Para clientes sin respuesta +2 meses: activar protocolo de aviso de responsabilidad y evaluar declaración "en ceros" como medida de protección fiscal.
       </div>
     </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📊 Progreso de Accesos por Módulo</div>
+        <div style="margin-top:8px;">
+          <div class="progress-item">
+            <div class="progress-label"><span>🔑 Retenciones</span><span class="pct">~14 / 164 (8.5%)</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-purple" style="width:8.5%"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label"><span>📈 Ventas (Sales Report)</span><span class="pct">~22 / 164 (13.4%)</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-blue" style="width:13.4%"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label"><span>📦 Inventario</span><span class="pct">~16 / 164 (9.8%)</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-yellow" style="width:9.8%"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label"><span>💳 Payoneer</span><span class="pct">4 / 164 (2.4%)</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-red" style="width:2.4%"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label"><span>🏦 Estado Banco</span><span class="pct">4 / 164 (2.4%)</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-red" style="width:2.4%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">✅ Clientes con Acceso Completo</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>Fecha</th><th>Notas</th></tr></thead>
+            <tbody>
+              <tr><td><b>Recontour</b></td><td>10 Mar</td><td style="color:var(--muted);font-size:12px;">Editores completos</td></tr>
+              <tr><td><b>Durelife Nutrition</b></td><td>18 Mar</td><td style="color:var(--muted);font-size:12px;">Acceso total</td></tr>
+              <tr><td><b>Fresh Finest</b></td><td>10 Mar</td><td style="color:var(--muted);font-size:12px;">Sin banco (5/5)</td></tr>
+              <tr><td><b>ALPAKA</b></td><td>18 Mar</td><td style="color:var(--muted);font-size:12px;">Sin banco</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-title" style="margin-top:16px;">⚡ Parciales Clave</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>Estado</th><th>Módulos</th></tr></thead>
+            <tbody>
+              <tr><td>Rollga</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
+              <tr><td>Brighticonic</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
+              <tr><td>Plymouth</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
+              <tr><td>RIFTBOX BRANDS</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
+              <tr><td>Hair Safe Solutions</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
+              <tr><td>GHU Electronics</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas</td></tr>
+              <tr><td>Doomlings</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Vtas+Inv (bloq ret)</td></tr>
+              <tr><td>Lil Cactus Mexico</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv (Cris)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ============================================================ -->
@@ -1715,7 +1762,7 @@ function gateSubmit() {
         </div>
       </div>
       <div class="card">
-        <div class="card-title">📋 Declaraciones Anuales 2025 <span class="badge">25 registros</span></div>
+        <div class="card-title">📋 Declaraciones Anuales 2025 <span class="badge">25 de 155 (16.1%)</span></div>
         <div style="margin-top:12px;">
           <div class="progress-item">
             <div class="progress-label"><span>Con Datos</span><span class="pct">15 (60%)</span></div>
@@ -1726,8 +1773,8 @@ function gateSubmit() {
             <div class="progress-bar"><div class="progress-fill fill-blue" style="width:40%"></div></div>
           </div>
           <div class="progress-item">
-            <div class="progress-label"><span>Estado: Declarado</span><span class="pct">25 (100%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-green" style="width:100%"></div></div>
+            <div class="progress-label"><span>Estado: Declarado</span><span class="pct">25 de 155 (16.1%)</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-yellow" style="width:16.1%"></div></div>
           </div>
         </div>
         <div style="margin-top:16px; padding:14px; background:var(--bg3); border-radius:10px; font-size:12px; color:var(--muted); line-height:1.6;">
@@ -2179,6 +2226,7 @@ function gateSubmit() {
   </div>
 
 </div><!-- /main -->
+</div><!-- /app-layout -->
 
 <script>
 // ============================================================
@@ -2325,9 +2373,10 @@ function renderTimelineChart() {
 // ============================================================
 function showTab(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(t => t.classList.remove('active'));
   document.getElementById('section-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  var el = document.querySelector('.sidebar-item[data-tab="' + id + '"]');
+  if (el) el.classList.add('active');
   // Redraw charts when tab becomes visible
   if (id === 'overview') { initOverviewCharts(); }
   if (id === 'clientes') initClientesCharts();
@@ -2339,7 +2388,7 @@ function showTab(id) {
 // CHARTS
 // ============================================================
 Chart.defaults.color = '#8899aa';
-Chart.defaults.borderColor = '#2a3050';
+Chart.defaults.borderColor = '#2d2545';
 
 const COLORS = {
   green: '#22c55e', yellow: '#f59e0b', red: '#ef4444',
