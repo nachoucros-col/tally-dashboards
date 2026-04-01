@@ -2188,18 +2188,36 @@ function gateSubmit() {
 // ============================================================
 // GOOGLE SHEETS API — DATA REFRESH
 // ============================================================
-// Proxy de Apps Script — corre como cuenta de Google para acceder al sheet privado
+// Proxy de Apps Script — JSONP mode: el <script> tag envía cookies de Google del usuario
+// → funciona para el equipo interno que ya está logueado en su cuenta Google
 const PROXY_URL = 'https://script.google.com/macros/s/AKfycby6Ng1huZmswttAsDIUYic6OYdFZsY9PllT8tWTR5F8RG8DTXtIyu6eb4azTRUhkIUr/exec';
 
-async function fetchSheet(sheetName) {
-  try {
-    const res = await fetch(PROXY_URL + '?sheet=' + encodeURIComponent(sheetName));
-    const json = await res.json();
-    return json;
-  } catch(e) {
-    console.warn(`No se pudo actualizar ${sheetName}:`, e.message);
-    return null;
-  }
+function fetchSheet(sheetName) {
+  return new Promise(function(resolve) {
+    var cbName = '_tallyCb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    var script = document.createElement('script');
+    var timer = setTimeout(function() {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      console.warn('fetchSheet timeout:', sheetName);
+      resolve(null);
+    }, 25000);
+    window[cbName] = function(data) {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(data);
+    };
+    script.src = PROXY_URL + '?sheet=' + encodeURIComponent(sheetName) + '&callback=' + cbName;
+    script.onerror = function() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      console.warn('fetchSheet error:', sheetName);
+      resolve(null);
+    };
+    document.head.appendChild(script);
+  });
 }
 
 async function refreshData() {
