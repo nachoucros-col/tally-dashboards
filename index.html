@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tally · Internal Dashboards</title>
+<style>
+  :root {
+    --bg: #0d0f14; --bg2: #13161e; --card: #1e2333;
+    --border: #2a3050; --accent: #4f7fff; --accent2: #7c5cfc;
+    --green: #22c55e; --yellow: #f59e0b; --red: #ef4444;
+    --text: #e2e8f0; --muted: #8899aa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  header {
+    background: linear-gradient(135deg, #0d0f14 0%, #1a1e2a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 48px; display: flex; align-items: center; gap: 16px;
+  }
+  .logo-box { width: 44px; height: 44px; background: linear-gradient(135deg, #4f7fff, #7c5cfc); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .logo-info h1 { font-size: 20px; font-weight: 700; }
+  .logo-info p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  main { flex: 1; padding: 56px 48px; max-width: 1100px; margin: 0 auto; width: 100%; }
+  .section-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  .dash-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px; text-decoration: none; color: var(--text);
+    transition: all 0.2s; display: flex; flex-direction: column; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  .dash-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79,127,255,0.12); }
+  .dash-card.soon { opacity: 0.5; pointer-events: none; }
+  .card-icon { font-size: 32px; }
+  .card-title { font-size: 16px; font-weight: 700; }
+  .card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .card-badge {
+    position: absolute; top: 16px; right: 16px;
+    font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .badge-live { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .badge-soon { background: rgba(136,153,170,0.12); color: var(--muted); border: 1px solid rgba(136,153,170,0.2); }
+  .card-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: rgba(79,127,255,0.1); color: var(--accent); border: 1px solid rgba(79,127,255,0.2); }
+  footer { padding: 24px 48px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-box">⚡</div>
+  <div class="logo-info">
+    <h1>Tally · Internal Dashboards</h1>
+    <p>Sistema de visibilización operativa interna — acceso restringido</p>
+  </div>
+</header>
+
+<main>
+  <div class="section-label">Dashboards disponibles</div>
+  <div class="grid">
+
+    <a class="dash-card" href="/accounting">
+      <span class="card-badge badge-live">● Live</span>
+      <div class="card-icon">📊</div>
+      <div class="card-title">Accounting Team</div>
+      <div class="card-desc">Cartera de clientes, declaraciones, accesos Seller Central, automatizaciones Claude y top 30 críticos.</div>
+      <div class="card-tags">
+        <span class="tag">Google Sheets</span>
+        <span class="tag">Gmail</span>
+        <span class="tag">WeeklyPlan</span>
+      </div>
+    </a>
+
+    <div class="dash-card soon">
+      <span class="card-badge badge-soon">Próximo</span>
+      <div class="card-icon">🏦</div>
+      <div class="card-title">Bancos & Tesorería</div>
+      <div class="card-desc">Estado de cuentas, flujo de caja, alertas de saldo y conciliaciones bancarias.</div>
+      <div class="card-tags">
+        <span class="tag">BBVA</span>
+        <span class="tag">STP</span>
+      </div>
+    </div>
+
+    <div class="dash-card soon">
+      <span class="card-badge badge-soon">Próximo</span>
+      <div class="card-icon">📦</div>
+      <div class="card-title">Importaciones</div>
+      <div class="card-desc">Estado de regularización de productos, proveedores, pedimentos y cumplimiento aduanal.</div>
+      <div class="card-tags">
+        <span class="tag">Aduana</span>
+        <span class="tag">Proveedores</span>
+      </div>
+    </div>
+
+    <div class="dash-card soon">
+      <span class="card-badge badge-soon">Próximo</span>
+      <div class="card-icon">🤝</div>
+      <div class="card-title">CX & Retención</div>
+      <div class="card-desc">NPS, tickets abiertos, clientes en riesgo de churn, tiempos de respuesta y SLAs.</div>
+      <div class="card-tags">
+        <span class="tag">HubSpot</span>
+        <span class="tag">Slack</span>
+      </div>
+    </div>
+
+    <div class="dash-card soon">
+      <span class="card-badge badge-soon">Próximo</span>
+      <div class="card-icon">🛒</div>
+      <div class="card-title">Marketplace Growth</div>
+      <div class="card-desc">Ventas Amazon MX por cliente, rankings, Buy Box, inventario y estrategia de crecimiento.</div>
+      <div class="card-tags">
+        <span class="tag">Amazon SP-API</span>
+        <span class="tag">Seller Central</span>
+      </div>
+    </div>
+
+    <div class="dash-card soon">
+      <span class="card-badge badge-soon">Próximo</span>
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">Operaciones</div>
+      <div class="card-desc">Carga de trabajo por equipo, SLAs internos, cuellos de botella y roadmap de automatización.</div>
+      <div class="card-tags">
+        <span class="tag">WeeklyPlan</span>
+        <span class="tag">Notion</span>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <span>Tally Legal S.A.P.I. de C.V. · Uso interno</span>
+  <span>dashboard.tallylegal.io</span>
+</footer>
+</body>
+</html>
