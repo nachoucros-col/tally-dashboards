@@ -323,7 +323,7 @@
   <div class="tab" onclick="showTab('clientes')">👥 Clientes</div>
   <div class="tab" onclick="showTab('accesos')">🔑 Accesos SC</div>
   <div class="tab" onclick="showTab('declaraciones')">📋 Declaraciones</div>
-  <div class="tab" onclick="showTab('weeklyplan')">📅 Weekly Plan</div>
+  <div class="tab" onclick="showTab('equipo')">👤 Equipo / Carga</div>
   <div class="tab" onclick="showTab('automations')">🤖 Automatizaciones</div>
 </div>
 
@@ -418,9 +418,18 @@
 
     <div class="grid-2">
       <div class="card">
-        <div class="card-title">📅 WeeklyPlan — Progreso General</div>
-        <div class="chart-container" style="height:200px;">
-          <canvas id="chartWeekly"></canvas>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <div class="card-title" style="margin-bottom:0;">📈 Ventas vs Impuestos por Cliente <span class="badge">Con datos</span></div>
+          <select id="timelineClientSelect" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;" onchange="renderTimelineChart()">
+            <option value="">↻ Cargando...</option>
+          </select>
+        </div>
+        <div class="chart-container" style="height:192px;">
+          <canvas id="chartTimeline"></canvas>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
+          <div class="legend-item"><div class="legend-dot" style="background:#4f7fff"></div><span style="font-size:11px;">Ventas MXN</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><span style="font-size:11px;">Impuesto Retenido MXN</span></div>
         </div>
       </div>
       <div class="card">
@@ -1478,6 +1487,107 @@
         </div>
       </div>
     </div>
+
+    <!-- ===== RISK PROXY ===== -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <div class="card-title" style="margin-bottom:0;">🎯 Proxy de Riesgo — Demoras por Documentación</div>
+        <span class="badge" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.25);">Historial de accesos + señales de correo</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+        Clientes AZ clasificados por su patrón histórico de demoras en envío de documentación y accesos a Seller Central.
+        Señales: negativas explícitas, responsable sin permisos, ausencia prolongada, problemas técnicos recurrentes.
+      </div>
+
+      <div class="grid-3" style="margin-bottom:16px;">
+        <!-- ALTO RIESGO -->
+        <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.22);border-radius:10px;padding:14px;">
+          <div style="font-size:12px;color:#ef4444;font-weight:700;margin-bottom:8px;">🔴 ALTO RIESGO — 7 clientes</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Negativa explícita, ausencia prolongada o +5 contactos sin respuesta</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Meister</span><span style="font-size:10px;color:var(--red);text-align:right;">Niega acceso "por seguridad"</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Adult Children of ALC.</span><span style="font-size:10px;color:var(--red);text-align:right;">Contacto sin permiso</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Brighticonic</span><span style="font-size:10px;color:var(--red);text-align:right;">Niega acceso banco</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Soluciones Caseras</span><span style="font-size:10px;color:var(--red);text-align:right;">Sin banco confirmado</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Alexander Home LLC</span><span style="font-size:10px;color:var(--red);text-align:right;">5+ emails sin respuesta</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">SSC Designs</span><span style="font-size:10px;color:var(--red);text-align:right;">2 meses sin respuesta</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Wholesome Story LLC</span><span style="font-size:10px;color:var(--red);text-align:right;">2 meses sin respuesta</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MEDIO RIESGO -->
+        <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.22);border-radius:10px;padding:14px;">
+          <div style="font-size:12px;color:#f59e0b;font-weight:700;margin-bottom:8px;">🟡 MEDIO RIESGO — 5 clientes</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">En proceso con fricción técnica o burocrática recurrente</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Doomlings</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Ret. bloqueada técnicamente</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Rollga</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Banco en proceso</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Decibullz LLC</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Confusión SC vs. filing</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">ACAWSO</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Responsable en vacaciones</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">HJJ 3P Inc</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Info fiscal US faltante</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BAJO RIESGO -->
+        <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.22);border-radius:10px;padding:14px;">
+          <div style="font-size:12px;color:#22c55e;font-weight:700;margin-bottom:8px;">🟢 BAJO RIESGO — Acceso otorgado</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Respondieron y otorgaron acceso completo o parcial</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Recontour</span><span style="font-size:10px;color:var(--green);">Completo</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Durelife Nutrition</span><span style="font-size:10px;color:var(--green);">Completo</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Fresh Finest</span><span style="font-size:10px;color:var(--green);">Completo</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">ALPAKA</span><span style="font-size:10px;color:var(--green);">Completo</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Hair Safe Solutions</span><span style="font-size:10px;color:var(--green);">Parcial cooperativo</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">GHU Electronics</span><span style="font-size:10px;color:var(--green);">Parcial cooperativo</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
+              <span style="font-weight:600;">Plymouth · RIFTBOX · Lil Cactus</span><span style="font-size:10px;color:var(--green);">Parciales</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;">
+        <b style="color:var(--text);">💡 Acción recomendada para Alto Riesgo:</b>
+        Para clientes que niegan acceso, documentar el patrón en el expediente y preparar carta sobre <i>obligaciones del representante legal en México</i>.
+        Para clientes sin respuesta +2 meses: activar protocolo de aviso de responsabilidad y evaluar declaración "en ceros" como medida de protección fiscal.
+      </div>
+    </div>
   </div>
 
   <!-- ============================================================ -->
@@ -1569,104 +1679,231 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- TAB: WEEKLY PLAN -->
+  <!-- TAB: EQUIPO / CARGA -->
   <!-- ============================================================ -->
-  <div class="section" id="section-weeklyplan">
+  <div class="section" id="section-equipo">
     <div class="section-header">
       <div>
-        <div class="section-title">📅 WeeklyPlan — Semana 14 (Activa)</div>
-        <div class="section-sub">Semana del 30 Mar al 5 Abr 2026 · Hoy: Martes 31 Mar</div>
+        <div class="section-title">👤 Equipo — Carga y Progreso</div>
+        <div class="section-sub">Fuente: Clients_Load + Declaraciones · Análisis por responsable</div>
       </div>
     </div>
 
-    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
-      <div class="kpi-card" style="--accent-color:#22c55e">
-        <div class="kpi-label">Finalizado</div>
-        <div class="kpi-value heat-green">72</div>
-        <div class="kpi-sub">61.5% del total</div>
+    <!-- KPI POR PERSONA -->
+    <div class="grid-2">
+      <!-- ARTURO -->
+      <div class="card" style="border-left:4px solid #ef4444;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:42px;height:42px;background:rgba(239,68,68,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#ef4444;">A</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;">Arturo</div>
+            <div style="font-size:11px;color:var(--muted);">Responsable principal · IN (Inbound)</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:28px;font-weight:700;color:#ef4444;">180</div>
+            <div style="font-size:10px;color:var(--muted);">clientes</div>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ene 2026</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-green" style="width:90%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:var(--green);">✓ ~85 declarados</span>
+            <span style="color:var(--yellow);">⏳ ~10 en proceso</span>
+            <span style="color:var(--red);">✗ ~5 sin iniciar</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Feb 2026</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-yellow" style="width:47%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:var(--green);">✓ ~45 declarados</span>
+            <span style="color:var(--yellow);">⏳ ~15 proceso</span>
+            <span style="color:var(--red);">✗ ~20 sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 ~5 bloq.</span>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);">
+          🟢 Flujo estable · Clientes IN de menor complejidad fiscal · Carga alta en volumen
+        </div>
       </div>
-      <div class="kpi-card" style="--accent-color:#f59e0b">
-        <div class="kpi-label">En Proceso</div>
-        <div class="kpi-value heat-yellow">20</div>
-        <div class="kpi-sub">17.1% del total</div>
+
+      <!-- CRISTINA -->
+      <div class="card" style="border-left:4px solid #7c5cfc;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:42px;height:42px;background:rgba(124,92,252,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#7c5cfc;">C</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;">Cristina</div>
+            <div style="font-size:11px;color:var(--muted);">AZ (Amazon) · Alta complejidad</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:28px;font-weight:700;color:#7c5cfc;">55</div>
+            <div style="font-size:10px;color:var(--muted);">clientes</div>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ene 2026</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-purple" style="width:64%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:var(--green);">✓ ~22 declarados</span>
+            <span style="color:var(--yellow);">⏳ ~8 proceso</span>
+            <span style="color:var(--red);">✗ ~12 sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 ~8 bloq.</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Feb 2026</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-red" style="width:32%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:var(--green);">✓ ~10 declarados</span>
+            <span style="color:var(--yellow);">⏳ ~6 proceso</span>
+            <span style="color:var(--red);">✗ ~20 sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 ~10 bloq.</span>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--red);">
+          🔴 Cuello de botella alto · 10+ clientes AZ sin acceso SC ni documentación · Prioridad escalación
+        </div>
       </div>
-      <div class="kpi-card" style="--accent-color:#ef4444">
-        <div class="kpi-label">Sin Iniciar</div>
-        <div class="kpi-value heat-red">22</div>
-        <div class="kpi-sub">18.8% del total</div>
+
+      <!-- LINA -->
+      <div class="card" style="border-left:4px solid #4f7fff;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:42px;height:42px;background:rgba(79,127,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#4f7fff;">L</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;">Lina</div>
+            <div style="font-size:11px;color:var(--muted);">AZ (Amazon) · Proceso activo</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:28px;font-weight:700;color:#4f7fff;">60</div>
+            <div style="font-size:10px;color:var(--muted);">clientes</div>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ene 2026</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-blue" style="width:73%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:var(--green);">✓ ~32 declarados</span>
+            <span style="color:var(--yellow);">⏳ ~5 proceso</span>
+            <span style="color:var(--red);">✗ ~10 sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 ~8 bloq.</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Feb 2026</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-yellow" style="width:43%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:var(--green);">✓ ~18 declarados</span>
+            <span style="color:var(--yellow);">⏳ ~8 proceso</span>
+            <span style="color:var(--red);">✗ ~22 sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 ~7 bloq.</span>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--yellow);">
+          🟡 En progreso · Requiere seguimiento SC para desbloquear declaraciones AZ pendientes
+        </div>
       </div>
-      <div class="kpi-card" style="--accent-color:#7c5cfc">
-        <div class="kpi-label">Bloqueado</div>
-        <div class="kpi-value" style="color:var(--accent2)">3</div>
-        <div class="kpi-sub">Requieren escalación</div>
+
+      <!-- EDGAR -->
+      <div class="card" style="border-left:4px solid #22c55e;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:42px;height:42px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#22c55e;">E</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;">Edgar</div>
+            <div style="font-size:11px;color:var(--muted);">Asignaciones mixtas · Cartera reducida</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:28px;font-weight:700;color:#22c55e;">3</div>
+            <div style="font-size:10px;color:var(--muted);">clientes</div>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ene 2026</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-green" style="width:80%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;">
+            <span style="color:var(--green);">✓ 2 declarados</span>
+            <span style="color:var(--red);">✗ 1 pendiente</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Feb 2026</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-yellow" style="width:33%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;">
+            <span style="color:var(--green);">✓ 1 declarado</span>
+            <span style="color:var(--red);">✗ 2 pendientes</span>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);">
+          🟢 Cartera mínima · Capacidad disponible para absorber clientes de alta prioridad
+        </div>
       </div>
     </div>
 
+    <!-- CHARTS: Team distribution + declarations -->
     <div class="grid-2">
       <div class="card">
-        <div class="card-title">🔴 Tareas Críticas Sin Iniciar (Semana 14)</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Cliente</th><th>Tarea</th><th>Deadline</th><th>Estado</th></tr></thead>
-            <tbody>
-              <tr><td>Dormeo North America</td><td style="font-size:12px;color:var(--muted)">Info mensual Dic 2025</td><td>30/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>PADIPA / Contalink</td><td style="font-size:12px;color:var(--muted)">Desvinculación RFC</td><td>30/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>StoryHorse</td><td style="font-size:12px;color:var(--muted)">Nueva metodología</td><td>30/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>DZN2VF / Contable</td><td style="font-size:12px;color:var(--muted)">Aclarar servicio activo</td><td>30/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>Trekology LLC</td><td style="font-size:12px;color:var(--muted)">Nuevo contacto + continuidad</td><td>30/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>Pura Vida Moringa</td><td style="font-size:12px;color:var(--muted)">Nuevo punto de contacto</td><td>30/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>Soluciones Caseras</td><td style="font-size:12px;color:var(--muted)">Confirmar Elizabeth como contacto</td><td>30/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>OCA227 / Air Ron</td><td style="font-size:12px;color:var(--muted)">Enviar info pendiente Edgar</td><td>30/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>Tiege Hanley</td><td style="font-size:12px;color:var(--muted)">Procesar reportes Jan-Feb</td><td>31/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>Eco Appliances</td><td style="font-size:12px;color:var(--muted)">Estrategia Amazon MX</td><td>31/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>Decibullz LLC</td><td style="font-size:12px;color:var(--muted)">Aclarar acceso SC vs filing</td><td>31/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-              <tr><td>GHU Electronics</td><td style="font-size:12px;color:var(--muted)">Confirmar estrategia en ceros</td><td>31/Mar</td><td><span class="status status-red">Sin iniciar</span></td></tr>
-            </tbody>
-          </table>
+        <div class="card-title">📊 Distribución de Cartera por Responsable</div>
+        <div class="chart-container" style="height:220px;">
+          <canvas id="chartEquipoClientes"></canvas>
         </div>
       </div>
       <div class="card">
-        <div class="card-title">✅ Completadas Semana 14</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Cliente</th><th>Acción</th><th>Resp.</th></tr></thead>
-            <tbody>
-              <tr><td>Ubiquitous Inc</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>NILO MEXICO</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Betco Sales Corp</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Thrival LLC</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Epoch Design LLC</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Progressive Health</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Colorado Biolabs</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Bear Down Brands</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Real Deal Steel MX</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Organic Meadow</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>—</td></tr>
-              <tr><td>RED Medical Supplies</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-              <tr><td>Brittle Brothers LLC</td><td style="font-size:12px;color:var(--muted)">Anual 2025 + Ene-Feb 2026</td><td>Leonardo</td></tr>
-            </tbody>
-          </table>
+        <div class="card-title">🚨 Declaraciones Feb 2026 por Responsable</div>
+        <div class="chart-container" style="height:220px;">
+          <canvas id="chartEquipoDecl"></canvas>
         </div>
       </div>
     </div>
 
+    <!-- BOTTLENECK TABLE -->
     <div class="card">
-      <div class="card-title">⏳ En Proceso / Bloqueado — Seguimiento activo</div>
+      <div class="card-title">⚡ Análisis de Cuellos de Botella por Persona — Feb 2026</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Semana</th><th>Cliente</th><th>Responsable</th><th>Estado</th><th>Nota</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Responsable</th><th>Clientes</th><th>Declarados Feb</th><th>% Avance</th>
+              <th>Bloqueados</th><th>Cuello de Botella Principal</th><th>Acción</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td>12</td><td>EcoDecors</td><td>Juan</td><td><span class="status status-purple">Bloqueado</span></td><td style="font-size:12px;color:var(--muted)">Contexto con Ximena + offboarding fiscal</td></tr>
-            <tr><td>12</td><td>HJJ 3P Inc</td><td>Leonardo</td><td><span class="status status-yellow">En Proceso</span></td><td style="font-size:12px;color:var(--muted)">Falta info US Tax Filing</td></tr>
-            <tr><td>12</td><td>Durelife Nutrition</td><td>Cristina</td><td><span class="status status-yellow">En Proceso</span></td><td style="font-size:12px;color:var(--muted)">Sin respuesta accesos SC</td></tr>
-            <tr><td>12</td><td>Alexander Home LLC</td><td>Cristina</td><td><span class="status status-yellow">En Proceso</span></td><td style="font-size:12px;color:var(--muted)">No responde (5 emails distintos)</td></tr>
-            <tr><td>12</td><td>Wholesome Story LLC</td><td>Cristina</td><td><span class="status status-yellow">En Proceso</span></td><td style="font-size:12px;color:var(--muted)">Call agendada + Marta en copia</td></tr>
-            <tr><td>12</td><td>Le Wagon</td><td>Juan</td><td><span class="status status-yellow">En Proceso</span></td><td style="font-size:12px;color:var(--muted)">BBVA MX bloqueado, renegociar honorario</td></tr>
-            <tr><td>12</td><td>Lumi Rugs</td><td>Elizabeth</td><td><span class="status status-yellow">En Proceso</span></td><td style="font-size:12px;color:var(--muted)">Pregunta impuestos Amazon cargos</td></tr>
-            <tr><td>12</td><td>SSC Designs</td><td>Cristina</td><td><span class="status status-yellow">En Proceso</span></td><td style="font-size:12px;color:var(--muted)">Sin respuesta × 2 meses</td></tr>
-            <tr><td>12</td><td>Decibullz LLC</td><td>Cristina</td><td><span class="status status-purple">Bloqueado</span></td><td style="font-size:12px;color:var(--muted)">Acceso SC no cubre filing requerido</td></tr>
-            <tr><td>12</td><td>ACAWSO</td><td>Cristina</td><td><span class="status status-purple">Bloqueado</span></td><td style="font-size:12px;color:var(--muted)">Encargado en vacaciones</td></tr>
+            <tr>
+              <td><b>Arturo</b></td><td>180</td>
+              <td><span style="color:var(--green);">~45</span></td>
+              <td><span class="status status-yellow">~47%</span></td>
+              <td>~5</td>
+              <td style="font-size:12px;color:var(--muted);">Volumen alto · algunos sin documentación IN</td>
+              <td><span class="status status-yellow">Priorizar</span></td>
+            </tr>
+            <tr>
+              <td><b style="color:#7c5cfc;">Cristina</b></td><td>55</td>
+              <td><span style="color:var(--red);">~10</span></td>
+              <td><span class="status status-red">~32%</span></td>
+              <td>~10</td>
+              <td style="font-size:12px;color:var(--red);">10+ AZ sin acceso SC · 2 clientes 2+ meses sin respuesta</td>
+              <td><span class="status status-red">Escalada urgente</span></td>
+            </tr>
+            <tr>
+              <td><b style="color:#4f7fff;">Lina</b></td><td>60</td>
+              <td><span style="color:var(--yellow);">~18</span></td>
+              <td><span class="status status-yellow">~43%</span></td>
+              <td>~7</td>
+              <td style="font-size:12px;color:var(--muted);">Accesos SC pendientes · documentación incompleta</td>
+              <td><span class="status status-yellow">Seguimiento SC</span></td>
+            </tr>
+            <tr>
+              <td><b style="color:#22c55e;">Edgar</b></td><td>3</td>
+              <td><span style="color:var(--green);">1</span></td>
+              <td><span class="status status-yellow">33%</span></td>
+              <td>0</td>
+              <td style="font-size:12px;color:var(--muted);">Cartera reducida · capacidad disponible</td>
+              <td><span class="status status-green">OK</span></td>
+            </tr>
           </tbody>
         </table>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--muted);">
+        * Datos estimados derivados de cruce Clients_Load + Declaraciones. Para datos en tiempo real usar tab Declaraciones con filtro por responsable.
       </div>
     </div>
   </div>
@@ -1892,20 +2129,106 @@ async function fetchSheet(sheetName) {
 async function refreshData() {
   document.getElementById('lastUpdate').textContent = 'Actualizando...';
   try {
-    // Try to fetch live data from Google Sheets (requires sheet to be publicly readable)
-    const [cpp] = await Promise.allSettled([
-      fetchSheet('Clientes_por_periodo')
-    ]);
+    const [cpp] = await Promise.allSettled([fetchSheet('Clientes_por_periodo')]);
     if (cpp.status === 'fulfilled' && cpp.value) {
       updateDeclStats(cpp.value);
     }
   } catch(e) { /* silent */ }
+  await loadTimelineData();
   document.getElementById('lastUpdate').textContent = 'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
 }
 
 function updateDeclStats(data) {
-  // Parse gviz response and update charts if needed
-  // (future: live dynamic updates)
+  // Reserved for future live stat updates
+}
+
+// ============================================================
+// TIMELINE CHART — Ventas vs Impuestos por Cliente
+// ============================================================
+let timelineRawData = {};
+
+async function loadTimelineData() {
+  const data = await fetchSheet('Clientes_por_periodo');
+  if (!data) return;
+  timelineRawData = {};
+  const rows = data.table?.rows || [];
+  rows.forEach(row => {
+    const c = row.c || [];
+    const get  = i => c[i] ? c[i].v : null;
+    const getF = i => c[i] ? (c[i].f != null ? c[i].f : c[i].v) : null;
+    const client    = get(1);
+    const period    = getF(3) || String(get(3) || '');
+    const declTipo  = get(5);
+    const sales     = parseFloat(get(6)) || 0;
+    const retention = parseFloat(get(9)) || 0;
+    if (declTipo !== 'Con datos') return;
+    if (!client || !period) return;
+    if (!timelineRawData[client]) timelineRawData[client] = [];
+    timelineRawData[client].push({ period, sales, retention });
+  });
+  Object.keys(timelineRawData).forEach(c => {
+    timelineRawData[c].sort((a, b) => a.period < b.period ? -1 : 1);
+  });
+  const sel = document.getElementById('timelineClientSelect');
+  if (!sel) return;
+  const clients = Object.keys(timelineRawData).sort();
+  if (clients.length === 0) {
+    sel.innerHTML = '<option value="">Sin datos disponibles</option>';
+    return;
+  }
+  sel.innerHTML = clients.map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('');
+  renderTimelineChart();
+}
+
+function renderTimelineChart() {
+  const sel = document.getElementById('timelineClientSelect');
+  if (!sel) return;
+  const client  = sel.value;
+  const entries = (client && timelineRawData[client]) ? timelineRawData[client] : [];
+  if (charts.timeline) charts.timeline.destroy();
+  const ctx = document.getElementById('chartTimeline')?.getContext('2d');
+  if (!ctx) return;
+  charts.timeline = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: entries.map(e => e.period),
+      datasets: [
+        {
+          label: 'Ventas (MXN)',
+          data: entries.map(e => e.sales),
+          borderColor: COLORS.blue, backgroundColor: COLORS.blue + '22',
+          tension: 0.3, fill: true, borderWidth: 2,
+          pointBackgroundColor: COLORS.blue, pointRadius: 4
+        },
+        {
+          label: 'Impuesto Retenido (MXN)',
+          data: entries.map(e => e.retention),
+          borderColor: COLORS.red, backgroundColor: COLORS.red + '22',
+          tension: 0.3, fill: true, borderWidth: 2,
+          pointBackgroundColor: COLORS.red, pointRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index', intersect: false,
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: $${(ctx.parsed.y || 0).toLocaleString('es-MX')}`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#2a305022' } },
+        y: {
+          grid: { color: '#2a305033' }, beginAtZero: true,
+          ticks: { callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) }
+        }
+      }
+    }
+  });
 }
 
 // ============================================================
@@ -1917,9 +2240,10 @@ function showTab(id) {
   document.getElementById('section-' + id).classList.add('active');
   event.currentTarget.classList.add('active');
   // Redraw charts when tab becomes visible
-  if (id === 'overview') initOverviewCharts();
+  if (id === 'overview') { initOverviewCharts(); if (!Object.keys(timelineRawData).length) loadTimelineData(); }
   if (id === 'clientes') initClientesCharts();
   if (id === 'declaraciones') initDeclCharts();
+  if (id === 'equipo') initEquipoCharts();
 }
 
 // ============================================================
@@ -2010,26 +2334,58 @@ function initOverviewCharts() {
     }
   });
 
-  // Weekly donut
-  if (charts.weekly) charts.weekly.destroy();
-  const ctx3 = document.getElementById('chartWeekly')?.getContext('2d');
-  if (!ctx3) return;
-  charts.weekly = new Chart(ctx3, {
-    type: 'doughnut',
-    data: {
-      labels: ['Finalizado (72)', 'En Proceso (20)', 'Sin Iniciar (22)', 'Bloqueado (3)'],
-      datasets: [{
-        data: [72, 20, 22, 3],
-        backgroundColor: [COLORS.green, COLORS.yellow, COLORS.red, COLORS.purple],
-        borderWidth: 0, hoverOffset: 6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '60%',
-      plugins: { legend: { position: 'right', labels: { font: { size: 12 }, padding: 12 } } }
-    }
-  });
+}
+
+// ============================================================
+// EQUIPO / CARGA CHARTS
+// ============================================================
+function initEquipoCharts() {
+  if (charts.equipoClientes) charts.equipoClientes.destroy();
+  const ctx1 = document.getElementById('chartEquipoClientes')?.getContext('2d');
+  if (ctx1) {
+    charts.equipoClientes = new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: ['Arturo (IN)', 'Lina (AZ)', 'Cristina (AZ)', 'Edgar', 'Sin asignar'],
+        datasets: [{
+          data: [180, 60, 55, 3, 82],
+          backgroundColor: [COLORS.red, COLORS.blue, COLORS.purple, COLORS.green, COLORS.muted],
+          borderWidth: 0, hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '55%',
+        plugins: { legend: { position: 'right', labels: { font: { size: 11 }, padding: 8 } } }
+      }
+    });
+  }
+  if (charts.equipoDecl) charts.equipoDecl.destroy();
+  const ctx2 = document.getElementById('chartEquipoDecl')?.getContext('2d');
+  if (ctx2) {
+    charts.equipoDecl = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: ['Arturo', 'Lina', 'Cristina', 'Edgar'],
+        datasets: [
+          { label: 'Declarado',   data: [45, 18, 10, 1], backgroundColor: COLORS.green  + 'dd', borderRadius: 4 },
+          { label: 'En proceso',  data: [15,  8,  6, 0], backgroundColor: COLORS.yellow + 'dd', borderRadius: 4 },
+          { label: 'Sin iniciar', data: [20, 22, 20, 2], backgroundColor: COLORS.red    + 'dd', borderRadius: 4 },
+          { label: 'Bloqueado',   data: [ 5,  7, 10, 0], backgroundColor: COLORS.purple + 'dd', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 8 } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, grid: { color: '#2a305033' }, beginAtZero: true }
+        }
+      }
+    });
+  }
 }
 
 function initClientesCharts() {
@@ -2097,6 +2453,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('lastUpdate').textContent =
     'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
   initOverviewCharts();
+  loadTimelineData(); // fetch Clientes_por_periodo for timeline chart
   // Auto-refresh every 5 minutes
   setInterval(refreshData, 5 * 60 * 1000);
 });
