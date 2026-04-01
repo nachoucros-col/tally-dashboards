@@ -1,0 +1,15 @@
+# Secrets & credentials — NEVER commit these
+.env
+.env.*
+*.env
+secrets.json
+credentials.json
+service-account*.json
+*.pem
+*.key
+
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
