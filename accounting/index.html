@@ -2772,10 +2772,9 @@ function initOverviewSalesChart() {
   if (overviewSalesChart) { overviewSalesChart.destroy(); overviewSalesChart = null; }
   const ctx = document.getElementById('chartMonthlySales')?.getContext('2d');
   if (!ctx) return;
-  // Build last 6 months from current - 1
+  // Build last 6 months including current month
   const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const now = new Date();
-  now.setMonth(now.getMonth() - 1); // base = current month - 1
   const periods = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
