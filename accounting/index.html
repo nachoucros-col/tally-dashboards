@@ -447,6 +447,139 @@ function gateSubmit() {
   .heat-green { color: var(--green); }
   .heat-yellow { color: var(--yellow); }
   .heat-red { color: var(--red); }
+
+  /* ============================================================ */
+  /* CLIENT VIEWER                                                 */
+  /* ============================================================ */
+  .client-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 0;
+    min-height: 640px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--card);
+  }
+  .client-left-panel {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--bg2);
+    overflow: hidden;
+  }
+  .client-search-wrap {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .client-search-wrap input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .client-search-wrap input::placeholder { color: var(--muted); }
+  .client-search-wrap input:focus { border-color: var(--accent); }
+  .client-count {
+    font-size: 11px; color: var(--muted); margin-top: 6px; text-align: right;
+  }
+  .client-list-wrap {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .client-list-item {
+    padding: 11px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .client-list-item:hover { background: var(--bg3); }
+  .client-list-item.selected {
+    background: rgba(124,92,252,0.12);
+    border-left: 3px solid var(--accent);
+    padding-left: 11px;
+  }
+  .cli-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .cli-id { font-size: 11px; color: var(--muted); }
+  .cli-sem-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .cli-sem-dot.red { background: #ef4444; }
+  .cli-sem-dot.orange { background: #f97316; }
+  .cli-sem-dot.yellow { background: #f59e0b; }
+  .cli-sem-dot.green { background: #22c55e; }
+  .client-profile-panel {
+    overflow-y: auto;
+    padding: 28px 32px;
+  }
+  .client-empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%; min-height: 400px;
+    color: var(--muted); text-align: center;
+  }
+  /* Semaphore */
+  .sem-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 16px; border-radius: 20px;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .sem-red    { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+  .sem-orange { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+  .sem-yellow { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+  .sem-green  { background: rgba(34,197,94,0.15);  color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+  /* Profile header */
+  .cli-profile-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px; margin-bottom: 24px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--border);
+  }
+  .cli-profile-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .cli-profile-meta { font-size: 12px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px; }
+  .cli-profile-meta span { display: flex; align-items: center; gap: 4px; }
+  /* Info cards */
+  .cli-info-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;
+  }
+  .cli-info-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px;
+  }
+  .cli-info-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 5px; }
+  .cli-info-value { font-size: 13px; font-weight: 600; color: var(--text); }
+  .cli-info-value a { color: var(--accent); text-decoration: none; }
+  .cli-info-value a:hover { text-decoration: underline; }
+  /* Declaration status */
+  .decl-card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+    margin-bottom: 20px;
+  }
+  .decl-card.decl-ok    { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.25); }
+  .decl-card.decl-warn  { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.25); }
+  .decl-card.decl-block { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.25); }
+  .decl-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .decl-reason { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  /* Timeline chart */
+  .cli-chart-wrap {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 20px;
+  }
+  .cli-chart-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  @media (max-width: 900px) {
+    .client-layout { grid-template-columns: 1fr; }
+    .client-left-panel { border-right: none; border-bottom: 1px solid var(--border); max-height: 240px; }
+    .client-profile-panel { padding: 16px; }
+    .cli-info-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -653,905 +786,29 @@ function gateSubmit() {
   <div class="section" id="section-clientes">
     <div class="section-header">
       <div>
-        <div class="section-title">👥 Cartera de Clientes</div>
-        <div class="section-sub">Fuente: Clients_Load · Actualizado 31 Mar 2026</div>
+        <div class="section-title">📋 Historia del Cliente</div>
+        <div class="section-sub">~62 clientes AZ con First_Shipment Finalizado · Datos: Folder_Clientes + Gmail + WeeklyPlan</div>
       </div>
     </div>
 
-    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
-      <div class="kpi-card" style="--accent-color:#4f7fff">
-        <div class="kpi-label">Total Registrados</div>
-        <div class="kpi-value">380+</div>
-        <div class="kpi-sub">Clients_Load activos</div>
+    <div class="client-layout">
+      <!-- LEFT: Search + List -->
+      <div class="client-left-panel">
+        <div class="client-search-wrap">
+          <input type="text" id="clientSearch" placeholder="🔍 Buscar por nombre o ID…" oninput="filterClientList()">
+          <div class="client-count" id="clientCount">62 clientes</div>
+        </div>
+        <div class="client-list-wrap" id="clientList"><!-- populated by JS --></div>
       </div>
-      <div class="kpi-card" style="--accent-color:#f97316">
-        <div class="kpi-label">Amazon (AZ)</div>
-        <div class="kpi-value">164</div>
-        <div class="kpi-sub">Empresas extranjeras MX</div>
-      </div>
-      <div class="kpi-card" style="--accent-color:#7c5cfc">
-        <div class="kpi-label">Inbound (IN)</div>
-        <div class="kpi-value">216+</div>
-        <div class="kpi-sub">Empresas nacionales</div>
-      </div>
-      <div class="kpi-card" style="--accent-color:#22c55e">
-        <div class="kpi-label">Con FIEL Vigente</div>
-        <div class="kpi-value">—</div>
-        <div class="kpi-sub">Dato en progreso</div>
-      </div>
-    </div>
-
-    <!-- ===== VENTAS VS IMPUESTOS — FULL WIDTH ===== -->
-    <div class="card" style="margin-bottom:24px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">📊 Ventas vs Impuestos por Cliente <span class="badge">Con datos</span></div>
-      </div>
-      <iframe
-        src="https://script.google.com/macros/s/AKfycby6Ng1huZmswttAsDIUYic6OYdFZsY9PllT8tWTR5F8RG8DTXtIyu6eb4azTRUhkIUr/exec?output=ventas-chart"
-        width="100%" height="420" frameborder="0"
-        style="border:none;border-radius:8px;display:block;background:transparent;">
-      </iframe>
-    </div>
-
-    <!-- ===== TOP 30 CRÍTICOS + CANAL DE ENTRADA ===== -->
-    <div class="grid-2" style="align-items:start;margin-bottom:24px;">
-    <div class="card" id="card-criticos" style="display:flex;flex-direction:column;height:50vh;">
-      <div class="criticos-header" style="flex-shrink:0;">
-        <div class="card-title">🚨 Top 30 Clientes Críticos <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)">Fuente: Gmail + WeeklyPlan + SC</span></div>
-        <div class="criticos-filters">
-          <button class="filter-btn active" onclick="filterCriticos('all',this)">Todos</button>
-          <button class="filter-btn" onclick="filterCriticos('blocked',this)">🔴 Bloqueado</button>
-          <button class="filter-btn" onclick="filterCriticos('nodecl',this)">🟡 Sin declarar</button>
-          <button class="filter-btn" onclick="filterCriticos('churn',this)">🟣 Riesgo churn</button>
-          <button class="filter-btn" onclick="filterCriticos('nosc',this)">🟠 Sin acceso SC</button>
-          <button class="filter-btn" onclick="filterCriticos('sat',this)">🔴 SAT alert</button>
-          <button class="filter-btn" onclick="filterCriticos('queja',this)">🔵 Queja</button>
-        </div>
-      </div>
-      <div id="acc-list" style="flex:1;overflow-y:auto;padding-right:4px;">
-
-        <!-- 1 -->
-        <div class="acc-item" data-tags="blocked sat">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#1</span>
-            <span class="acc-name">PADIPA</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-sat">SAT Alert</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Elizabeth / Juan</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 31, 2026 — UNREAD</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (accounting / elizabeth)</div>
-                <div class="acc-col-value">Correo SAT sin leer: desvinculación RFC en Contalink con Francisco Gutierrez. Declaraciones de IVA y DIOT pendientes por bloqueo de acceso al sistema contable. Riesgo de incumplimiento fiscal inmediato.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — acceso Contalink sin confirmar</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Multa SAT por declaración extemporánea + exposición legal</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Llamar a Francisco Gutierrez hoy. Resolver vinculación RFC → desbloquear Contalink → presentar declaración pendiente.</div>
-            </div>
+      <!-- RIGHT: Profile -->
+      <div class="client-profile-panel" id="clientProfile">
+        <div class="client-empty-state">
+          <div style="font-size:52px;margin-bottom:16px;">👤</div>
+          <div style="font-size:17px;font-weight:600;margin-bottom:8px;color:var(--text);">Selecciona un cliente</div>
+          <div style="font-size:13px;color:var(--muted);max-width:260px;line-height:1.7;">
+            Elige un cliente de la lista para ver su historia completa: semáforo, declaraciones, ventas y retenciones históricas.
           </div>
         </div>
-
-        <!-- 2 -->
-        <div class="acc-item" data-tags="blocked nosc">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#2</span>
-            <span class="acc-name">Decibullz LLC</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-nosc">Sin acceso SC</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Juan / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 31, 2026 — hilo activo</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (juan / accounting)</div>
-                <div class="acc-col-value">Dan Angel disputa que el acceso SC no resuelve la presentación fiscal. Thread activo al 31 Mar. Cliente confundido sobre separación entre acceso SC y proceso de declaración. Tally no logra acceder para extraer ventas.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — acceso SC sin confirmar</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Declaración Feb/Mar bloqueada. Riesgo retención Amazon.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Enviar a Dan Angel instrucciones exactas de permiso SC vs. declaración. Solicitar capturas de pantalla del acceso actual para diagnosticar.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3 -->
-        <div class="acc-item" data-tags="nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#3</span>
-            <span class="acc-name">Tiege Hanley Inc</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">🟡 Declaración incompleta</span>
-              <span class="acc-tag tag-info">CEO involucrado</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Cristina / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (cristina / contabilidad)</div>
-                <div class="acc-col-value">Declarado en ceros — requiere complementaria. CEO Kelley Thornton personalmente involucrado. Ventas reales confirmadas: Ene $526 USD / Feb $352 USD en Amazon MX. Declaración original incorrecta.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — complementaria pendiente</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Inexactitud fiscal — posible revisión SAT si no se corrige</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Preparar declaración complementaria con ventas reales. Comunicar timeline a Kelley Thornton antes de que escale.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4 -->
-        <div class="acc-item" data-tags="blocked churn">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#4</span>
-            <span class="acc-name">Alexander Home LLC</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-churn">Riesgo churn</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Elizabeth</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">5+ emails sin respuesta</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad / elizabeth)</div>
-                <div class="acc-col-value">5 correos de contacto enviados desde Tally. Cero respuesta del cliente. Bloqueado en WeeklyPlan. Sin documentación, sin acceso SC confirmado. Patrón de abandono progresivo.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — sin respuesta</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Meses sin declarar. Riesgo de baja voluntaria por falta de seguimiento.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Escalada: contacto telefónico urgente. Si no responde en 24h → protocolo de offboarding o alerta legal.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5 -->
-        <div class="acc-item" data-tags="blocked nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#5</span>
-            <span class="acc-name">Wholesome Story LLC</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-nodecl">2 meses sin declarar</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Cristina / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Sin respuesta — 2+ meses</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (cristina / contabilidad)</div>
-                <div class="acc-col-value">Sin respuesta por 2 meses. Exposición fiscal acumulada por Jan y Feb 2026. Bloqueado en WeeklyPlan. No hay documentación disponible para presentar declaraciones.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Multas acumuladas x2 meses + riesgo reputacional Tally</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Intento final de contacto. Preparar aviso de responsabilidad fiscal al cliente por falta de documentación.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 6 -->
-        <div class="acc-item" data-tags="blocked">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#6</span>
-            <span class="acc-name">ACAWSO</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Elizabeth / Juan</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (elizabeth / juan)</div>
-                <div class="acc-col-value">Persona autorizada de vacaciones. Proceso bloqueado hasta su regreso. Sin fecha clara de retorno. Tally no puede avanzar en trámites sin firma autorizada.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — persona autorizada fuera</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Retraso en declaraciones. Posible multa si fecha límite vence.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Solicitar persona sustituta o poder notarial temporal. Confirmar fecha exacta de regreso.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 7 -->
-        <div class="acc-item" data-tags="blocked churn">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#7</span>
-            <span class="acc-name">EcoDecors</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-churn">Riesgo offboarding</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Juan</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — escalada Juan</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (juan)</div>
-                <div class="acc-col-value">Pablo Rocha requiere llamada urgente. Riesgo de offboarding activo. Juan tiene tarea bloqueada en WeeklyPlan. Cliente con señales claras de frustración con el servicio.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — Juan pendiente</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Pérdida de cliente + posible reseña negativa</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Juan: agendar llamada con Pablo Rocha HOY. Preparar solución concreta antes de la llamada.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 8 -->
-        <div class="acc-item" data-tags="blocked churn">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#8</span>
-            <span class="acc-name">Le Wagon</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-churn">Renegociación activa</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Juan / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (juan / contabilidad)</div>
-                <div class="acc-col-value">Cuenta BBVA MX bloqueada. Renegociando honorario a $6,300 MXN/mes. Situación de liquidez del cliente comprometida. Proceso contable y fiscal detenido hasta resolución bancaria.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — cuenta bancaria</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Declaraciones pendientes + riesgo de impago honorario</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Confirmar acuerdo renegociación. Apoyar desbloqueo BBVA. Separar problema bancario de proceso fiscal.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 9 -->
-        <div class="acc-item" data-tags="blocked churn">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#9</span>
-            <span class="acc-name">SSC Designs Office Essentials</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-churn">2 meses sin respuesta</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Cristina</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Email "Acción Requerida" enviado</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad)</div>
-                <div class="acc-col-value">2 meses sin respuesta del cliente. Email de "Acción Requerida" enviado sin confirmar recepción. Sin documentación disponible para declaraciones.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — sin respuesta</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Exposición fiscal acumulada. Posible abandono de cuenta.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Contacto telefónico. Si no responde → documentar y escalar a protocolo de cliente inactivo.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 10 -->
-        <div class="acc-item" data-tags="blocked nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#10</span>
-            <span class="acc-name">HJJ 3P Inc</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">Información fiscal faltante</span>
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Elizabeth</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad / elizabeth)</div>
-                <div class="acc-col-value">Información para US Tax Filing aún no entregada. Cuestionamientos sobre presentaciones corporativas anteriores. Cliente con dudas sobre scope de servicio Tally.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — info fiscal pendiente</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Incumplimiento deadlines fiscales EUA + México</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Clarificar scope por escrito. Solicitar lista de documentos con deadline concreto. Escalar si no entrega en 48h.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 11 -->
-        <div class="acc-item" data-tags="sat blocked">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#11</span>
-            <span class="acc-name">MAQUICENTER AMERICA SA DE CV</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-sat">SAT Alert</span>
-              <span class="acc-tag tag-nodecl">Anual ISR 2024</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad</div></div>
-              <div><div class="acc-col-label">RFC</div><div class="acc-col-value">MAM230224817</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad) — UNREAD</div>
-                <div class="acc-col-value">Correo SAT sin leer con obligación fiscal: Declaración Anual ISR 2024. RFC MAM230224817. Correo no abierto por equipo. Riesgo de vencimiento de plazo.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — anual pendiente</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Multa por omisión declaración anual + recargos ISR</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Leer correo SAT HOY. Verificar fecha límite declaración anual. Iniciar proceso inmediatamente.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 12 -->
-        <div class="acc-item" data-tags="queja churn">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#12</span>
-            <span class="acc-name">StoryHorse</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-queja">🔵 Queja activa</span>
-              <span class="acc-tag tag-churn">Riesgo churn</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Juan / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — queja recibida</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (juan / contabilidad)</div>
-                <div class="acc-col-value">Laura insatisfecha con el servicio. Asunto: "ATENCION AL CLIENTE". Queja formal recibida. Sin resolución documentada aún. Riesgo alto de baja y reseña negativa.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — gestión de queja</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Pérdida de cliente + daño reputacional</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Juan contacta a Laura hoy con solución concreta. Documentar queja en CRM. Ofrecer compensación si aplica.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 13 -->
-        <div class="acc-item" data-tags="blocked nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#13</span>
-            <span class="acc-name">Air Ron Mexico (ROCAL)</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">Transición contable</span>
-              <span class="acc-tag tag-blocked">Pendiente Edgar</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Edgar Martinez</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — Edgar pendiente</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (edgar.martinez)</div>
-                <div class="acc-col-value">Edgar tiene información pendiente de compartir con el equipo. Transición contable activa. Sin confirmar que info fue transferida. Proceso de onboarding/transición incompleto.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — Edgar info pendiente</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Continuidad contable en riesgo. Pérdida de historial.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Edgar: entregar info al equipo hoy. Documentar estado de transición en shared drive.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 14 -->
-        <div class="acc-item" data-tags="blocked churn">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#14</span>
-            <span class="acc-name">EMUSA México</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-churn">Cliente frustrado</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Elizabeth</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad / elizabeth)</div>
-                <div class="acc-col-value">Luis Escobal frustrado con problemas de documentación en formato .pages (incompatible). Alta de empresa bloqueada. Cliente pierde tiempo y culpa a Tally por la demora.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — formato incompatible</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Onboarding bloqueado. Riesgo de cancelación antes de iniciar.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Solicitar documentos en PDF o Word. Enviar instrucciones claras a Luis Escobal sobre formatos aceptados.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 15 -->
-        <div class="acc-item" data-tags="nosc nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#15</span>
-            <span class="acc-name">Eco Appliances Inc</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">Sin ventas MX</span>
-              <span class="acc-tag tag-nosc">Estrategia MX pendiente</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Juan / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — Mary Fernandez</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (juan / contabilidad)</div>
-                <div class="acc-col-value">Mary Fernandez pregunta por estrategia Amazon MX: cero ventas en México hasta la fecha. Cliente invirtiendo en Tally sin resultados de negocio. Cuestionamiento sobre ROI del servicio.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — estrategia MX</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Cliente sin ROI = cancelación inminente</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Preparar propuesta de estrategia MX + intro a equipo de marketplace growth. Responder a Mary con plan concreto.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 16 -->
-        <div class="acc-item" data-tags="nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#16</span>
-            <span class="acc-name">GHU Electronics LLC</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">Estrategia ceros confirmada</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Cristina / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (cristina / contabilidad)</div>
-                <div class="acc-col-value">Operaciones Ene-Feb confirmadas pero declaración en ceros estratégica acordada. Riesgo: si SAT detecta discrepancia con ventas Amazon reportadas, puede iniciar auditoría.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — validar estrategia ceros</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Riesgo fiscal si ventas no coinciden con declaración</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Validar con asesor fiscal que la estrategia de ceros es defensible. Documentar razonamiento por escrito.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 17 -->
-        <div class="acc-item" data-tags="blocked nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#17</span>
-            <span class="acc-name">Kordiz</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-nodecl">Sin documentación</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Juan</div></div>
-              <div><div class="acc-col-label">Contacto</div><div class="acc-col-value">julien.freynet@gmail.com</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad)</div>
-                <div class="acc-col-value">Email de "Acción Requerida" enviado a julien.freynet@gmail.com. Sin documentación recibida. Sin confirmación de lectura. Cliente nuevo sin onboarding completado.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — sin documentación</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Onboarding paralizado. Primer mes de servicio sin avance.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Llamada directa a Julien. Enviar checklist de documentos con deadline de 72h.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 18 -->
-        <div class="acc-item" data-tags="nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#18</span>
-            <span class="acc-name">Brian Chen (HNX94D)</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">Consulta fiscal T1</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Edgar</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — desembolso enviado</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad / edgar.martinez)</div>
-                <div class="acc-col-value">Pregunta sobre esquema T1 no deducible. Desembolso enviado al cliente. Clarificación fiscal pendiente de confirmación. Riesgo si el cliente no entiende las implicaciones del T1.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">En proceso — clarificación pendiente</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Riesgo de disputa si cliente no validó implicaciones</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Enviar explicación escrita del esquema T1. Obtener confirmación por email del cliente.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 19 -->
-        <div class="acc-item" data-tags="blocked nosc">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#19</span>
-            <span class="acc-name">BRENDAZ CABLES</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nosc">No sabe obtener docs SC</span>
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Cristina / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (cristina / contabilidad)</div>
-                <div class="acc-col-value">Cliente no sabe cómo obtener documentos desde Seller Central. Necesita tutoring detallado. Sin documentación → sin declaración. Proceso completamente detenido por falta de capacitación.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — capacitación SC</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Declaración retrasada. Cliente puede frustrarse con proceso.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Enviar guía paso a paso de Seller Central + video tutorial. Agendar sesión de 15 min si necesario.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 20 -->
-        <div class="acc-item" data-tags="nosc blocked">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#20</span>
-            <span class="acc-name">Riftbox Brands</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nosc">Tally sin acceso SC</span>
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Cristina</div></div>
-              <div><div class="acc-col-label">Contacto</div><div class="acc-col-value">dacosta@riftbox.com</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad / cristina)</div>
-                <div class="acc-col-value">Guía de acceso SC enviada a dacosta@riftbox.com. Tally aún no tiene acceso confirmado. Sin acceso → sin extracción de datos → sin declaración. Seguimiento pendiente.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — espera confirmación SC</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Declaración bloqueada indefinidamente sin acceso</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Follow-up a dacosta@riftbox.com confirmando si ya otorgó permisos. Verificar en SC si acceso está pendiente.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 21 -->
-        <div class="acc-item" data-tags="churn">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#21</span>
-            <span class="acc-name">Todos Comemos LATAM</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-churn">Riesgo retención</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Juan / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — cambio de equipo</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (juan)</div>
-                <div class="acc-col-value">Email de cambio de equipo enviado a Nicolás. Transición de responsable activa. Riesgo de pérdida de relación durante cambio. Cliente puede aprovechar la transición para cancelar.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">En proceso — transición equipo</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Churn durante transición = pérdida de MRR</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Call de introducción nuevo responsable + Nicolás en los próximos 2 días. Garantizar continuidad de servicio.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 22 -->
-        <div class="acc-item" data-tags="nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#22</span>
-            <span class="acc-name">Lumi Rugs</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">Consulta retenciones</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Cristina</div></div>
-              <div><div class="acc-col-label">Contacto</div><div class="acc-col-value">zeyu.jiang@lumirugs.com</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad / cristina)</div>
-                <div class="acc-col-value">Zeyu Jiang pregunta frecuentemente sobre cargos de impuestos Amazon. Cliente confundido sobre retenciones automáticas vs. obligaciones Tally. Sin respuesta formal documentada.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — explicación retenciones</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Confusión acumulada = potencial disputa o cancelación</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Enviar a Zeyu explicación clara de retenciones Amazon vs. IVA declarable. Crear template reutilizable.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 23 -->
-        <div class="acc-item" data-tags="nodecl blocked">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#23</span>
-            <span class="acc-name">Meteor City</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">Dic/Ene/Feb sin iniciar</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Cristina</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — info recibida</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (cristina)</div>
-                <div class="acc-col-value">Información para Dic/Ene/Feb recibida de Cristina pero los periodos siguen en estado "Sin iniciar" en WeeklyPlan. Cuello de botella: info disponible pero sin procesar.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — 3 meses acumulados</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">3 declaraciones atrasadas con info ya disponible</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Cristina: priorizar Meteor City en las próximas 48h. Info disponible = sin excusa para no declarar.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 24 -->
-        <div class="acc-item" data-tags="blocked nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#24</span>
-            <span class="acc-name">Cooks Innovations</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-nodecl">Sin documentación</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad</div></div>
-              <div><div class="acc-col-label">Contacto</div><div class="acc-col-value">nicolas@cooksinnovations.com</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad)</div>
-                <div class="acc-col-value">Sin documentación recibida de nicolas@cooksinnovations.com. Sin respuesta a solicitudes previas. Proceso completamente detenido sin datos del cliente.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — sin documentación</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Acumulación de períodos sin declarar</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Llamada directa a Nicolás. Ultimátum documentado: entregar info en 5 días hábiles o protocolo de cuenta inactiva.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 25 -->
-        <div class="acc-item" data-tags="blocked nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#25</span>
-            <span class="acc-name">Lincove</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-nodecl">Sin documentación</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Cristina</div></div>
-              <div><div class="acc-col-label">Contacto</div><div class="acc-col-value">leibish@lincove.com</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad / cristina)</div>
-                <div class="acc-col-value">Email de "Acción Requerida" enviado a leibish@lincove.com y otros contactos. Sin documentación recibida. Múltiples intentos de contacto sin éxito.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — sin respuesta</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Exposición fiscal + posible abandono de cuenta</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Contacto telefónico con Leibish. Si no responde en 24h → documentar para potencial baja.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 26 -->
-        <div class="acc-item" data-tags="blocked sat nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#26</span>
-            <span class="acc-name">Brutus Bone Broth</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-sat">Sin FIEL</span>
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad)</div>
-                <div class="acc-col-value">Sin FIEL (e.firma SAT). Declaración anual completamente bloqueada sin firma electrónica. Cliente extranjero sin proceso de obtención de FIEL iniciado.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — sin FIEL</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Declaración anual imposible sin FIEL + recargos acumulados</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Iniciar proceso de obtención de FIEL para extranjero. Evaluar si aplica representante legal con poder notarial.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 27 -->
-        <div class="acc-item" data-tags="blocked nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#27</span>
-            <span class="acc-name">Sterling James Company</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-blocked">🔴 Bloqueado</span>
-              <span class="acc-tag tag-nodecl">Estados cuenta ilegibles</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad)</div>
-                <div class="acc-col-value">Estados de cuenta enviados con marcas negras tapando información clave (datos bancarios redactados). Equipo contable no puede leer ni procesar la información. Bloqueado por documentación incompleta.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Bloqueado — documentos ilegibles</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Contabilidad no puede registrar movimientos. Declaración bloqueada.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Solicitar estados de cuenta sin redactar (o con solo datos personales visibles). Explicar por qué se necesita la información completa.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 28 -->
-        <div class="acc-item" data-tags="nosc blocked">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#28</span>
-            <span class="acc-name">Farmers Market Foods</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nosc">Acceso SPN coordinando</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Contabilidad / Juan</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — coordinación Amazon</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (contabilidad / juan)</div>
-                <div class="acc-col-value">Coordinación de acceso SPN con Fer Rivas (Amazon) en curso. Proceso depende de tercero (Amazon). Sin fecha confirmada de resolución. Declaraciones bloqueadas hasta obtener acceso SPN.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">En proceso — espera Amazon SPN</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Dependencia externa. Declaraciones detenidas sin fecha.</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Follow-up a Fer Rivas con urgencia. Solicitar ETA concreto. Escalar si no hay respuesta en 48h.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 29 -->
-        <div class="acc-item" data-tags="nodecl">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#29</span>
-            <span class="acc-name">Wellex</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nodecl">Mensual pendiente</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Cristina / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (cristina / contabilidad)</div>
-                <div class="acc-col-value">Declaración anual presentada. Esperando que se refleje en portal SAT. Declaración mensual pendiente de iniciar. Riesgo: confundir cierre anual con exención mensual.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — mensual Feb/Mar</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Omisión mensual a pesar de anual presentada</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Iniciar declaración mensual Feb. Confirmar en portal SAT que la anual ya aparece reflejada.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 30 -->
-        <div class="acc-item" data-tags="nosc blocked">
-          <button class="acc-trigger" onclick="toggleAcc(this)">
-            <span class="acc-rank">#30</span>
-            <span class="acc-name">Durelife Nutrition</span>
-            <span class="acc-tags">
-              <span class="acc-tag tag-nosc">Acceso SC estancado</span>
-              <span class="acc-tag tag-blocked">🔴 Sin respuesta</span>
-            </span>
-            <span class="acc-chevron">▼</span>
-          </button>
-          <div class="acc-body">
-            <div class="acc-content">
-              <div><div class="acc-col-label">Responsable</div><div class="acc-col-value">Cristina / Contabilidad</div></div>
-              <div><div class="acc-col-label">Última señal</div><div class="acc-col-value">Mar 2026 — proceso estancado</div></div>
-              <div class="acc-email-signal">
-                <div class="acc-col-label">📧 Señal Gmail (cristina / contabilidad)</div>
-                <div class="acc-col-value">Proceso de acceso SC iniciado pero estancado. Sin respuesta del cliente. Tally no puede extraer datos de ventas para declarar. Cuello de botella: cliente no completa proceso de invitación SC.</div>
-              </div>
-              <div><div class="acc-col-label">WeeklyPlan</div><div class="acc-col-value">Sin iniciar — SC estancado</div></div>
-              <div><div class="acc-col-label">Impacto</div><div class="acc-col-value">Declaraciones bloqueadas sin fecha de resolución</div></div>
-              <div class="acc-action"><strong>⚡ Acción inmediata</strong>Reenviar instrucciones SC con paso a paso específico. Si no responde en 48h → escalar a supervisor del cliente.</div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- #acc-list -->
-    </div><!-- #card-criticos -->
-
-    <!-- Canal de Entrada (right half of grid) -->
-    <div class="card">
-      <div class="card-title">🔀 Canal de Entrada</div>
-      <div style="padding-top:30px;">
-        <div class="progress-item">
-          <div class="progress-label"><span>Amazon Marketplace (AZ)</span><span class="pct">164 clientes (43%)</span></div>
-          <div class="progress-bar"><div class="progress-fill fill-blue" style="width:43%"></div></div>
-        </div>
-        <div class="progress-item">
-          <div class="progress-label"><span>Inbound / Nacional (IN)</span><span class="pct">216+ clientes (57%)</span></div>
-          <div class="progress-bar"><div class="progress-fill fill-purple" style="width:57%"></div></div>
-        </div>
-        <div style="margin-top:24px; padding:16px; background:var(--bg3); border-radius:10px;">
-          <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">ANÁLISIS DE DISTRIBUCIÓN</div>
-          <div style="font-size:13px; line-height:1.7; color:var(--text);">
-            Los clientes AZ representan el segmento de mayor complejidad operativa por requerir accesos
-            a Seller Central, gestión de retenciones Amazon y reportes de ventas. El segmento IN tiene
-            mayor diversidad de necesidades pero menor dependencia de integraciones externas.
-          </div>
-        </div>
-      </div>
-    </div>
-    </div><!-- /.grid-2 top30 + canal -->
-
-    <!-- Distribución por Responsable — FULL WIDTH -->
-    <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">👤 Distribución por Responsable</div>
-      <div class="chart-container" style="height:260px;">
-        <canvas id="chartOwner"></canvas>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🏆 Top Responsables por Carga <span class="badge">Owners Clients_Load</span></div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Responsable</th><th>Clientes AZ</th><th>Clientes IN</th><th>Total</th><th>% Carga</th><th>Riesgo Cuello Botella</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><b>Arturo</b></td><td>0</td><td>~180</td><td>~180</td>
-              <td><div class="progress-bar" style="width:140px"><div class="progress-fill fill-red" style="width:72%"></div></div> 72%</td>
-              <td><span class="status status-red">🔴 Alto</span></td>
-            </tr>
-            <tr>
-              <td><b>Cristina</b></td><td>~55</td><td>0</td><td>~55</td>
-              <td><div class="progress-bar" style="width:140px"><div class="progress-fill fill-yellow" style="width:22%"></div></div> 22%</td>
-              <td><span class="status status-yellow">🟡 Medio</span></td>
-            </tr>
-            <tr>
-              <td><b>Lina</b></td><td>~60</td><td>0</td><td>~60</td>
-              <td><div class="progress-bar" style="width:140px"><div class="progress-fill fill-yellow" style="width:24%"></div></div> 24%</td>
-              <td><span class="status status-yellow">🟡 Medio</span></td>
-            </tr>
-            <tr>
-              <td><b>Edgar</b></td><td>0</td><td>3</td><td>3</td>
-              <td><div class="progress-bar" style="width:140px"><div class="progress-fill fill-green" style="width:1%"></div></div> &lt;1%</td>
-              <td><span class="status status-green">🟢 Bajo</span></td>
-            </tr>
-            <tr>
-              <td><b>Sin asignar</b></td><td>~49</td><td>~33</td><td>~82</td>
-              <td><div class="progress-bar" style="width:140px"><div class="progress-fill fill-blue" style="width:33%"></div></div> 33%</td>
-              <td><span class="status status-red">⚠ Sin dueño</span></td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
   </div>
@@ -2079,6 +1336,164 @@ function gateSubmit() {
         * Datos estimados derivados de cruce Clients_Load + Declaraciones. Para datos en tiempo real usar tab Declaraciones con filtro por responsable.
       </div>
     </div>
+
+    <!-- DIFICULTADES ACTIVAS -->
+    <div class="card" style="border-left:4px solid #ef4444;">
+      <div class="card-title">🚧 Dificultades Activas por Responsable</div>
+      <div class="grid-2" style="gap:16px;margin-top:4px;">
+
+        <!-- CRISTINA dificultades -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:30px;height:30px;background:rgba(124,92,252,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#7c5cfc;">C</div>
+            <span style="font-weight:700;">Cristina</span>
+            <span class="status status-red" style="margin-left:auto;">⚠ 4 bloqueos</span>
+          </div>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#ef4444;flex-shrink:0;">🔴</span>
+              <span><b>Wholesome Story LLC</b> — Sin respuesta +2 meses. 5 correos enviados. Sin SC, sin documentación. Riesgo de churn total.</span>
+            </li>
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#f59e0b;flex-shrink:0;">🟡</span>
+              <span><b>Tiege Hanley</b> — Declaración original en ceros, requiere complementaria. Contacto activo (kelley.thornton@tiege.com) pero sin cierre.</span>
+            </li>
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#f97316;flex-shrink:0;">🟠</span>
+              <span><b>3 clientes suspendidos</b> (FUNZIES, KORDIZ, Adult Children) — Requieren offboarding o regularización. Cartera muerta que consume atención.</span>
+            </li>
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#f97316;flex-shrink:0;">🟠</span>
+              <span><b>10+ clientes sin acceso SC</b> — Solicitudes enviadas sin respuesta. Bloquea declaración directa. Requiere campaña coordinada de seguimiento.</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- LINA dificultades -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:30px;height:30px;background:rgba(79,127,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#4f7fff;">L</div>
+            <span style="font-weight:700;">Lina</span>
+            <span class="status status-yellow" style="margin-left:auto;">⚠ 3 bloqueos</span>
+          </div>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#f97316;flex-shrink:0;">🟠</span>
+              <span><b>5 clientes suspendidos</b> (WYMM, Xero Pixs, Proempire, Tailor Toys + 1) — Sin actividad de importación. Requieren definición: offboarding o reactivación.</span>
+            </li>
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#f59e0b;flex-shrink:0;">🟡</span>
+              <span><b>SC pendiente en 4 clientes</b> (Rollga, PlusEV, HJJ + 1) — Acceso solicitado, sin confirmación. Bloquea declaraciones de Feb actualmente.</span>
+            </li>
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#f59e0b;flex-shrink:0;">🟡</span>
+              <span><b>~22 declaraciones Feb sin iniciar</b> — Documentación recibida pero flujo de carga AZ no completado. Riesgo de rezago acumulado hacia Mar.</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- ARTURO dificultades -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:30px;height:30px;background:rgba(239,68,68,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#ef4444;">A</div>
+            <span style="font-weight:700;">Arturo</span>
+            <span class="status status-yellow" style="margin-left:auto;">⚠ 2 bloqueos</span>
+          </div>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#ef4444;flex-shrink:0;">🔴</span>
+              <span><b>Sobrecarga estructural (180 clientes)</b> — Volumen IN supera capacidad individual sostenible. ~20 clientes con documentación incompleta sin poder procesarse.</span>
+            </li>
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#f59e0b;flex-shrink:0;">🟡</span>
+              <span><b>~20 clientes sin documentación IN completa</b> — Pedimentos sin soporte documental. No se pueden declarar hasta que el cliente envíe complemento.</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- EDGAR dificultades -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:30px;height:30px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#22c55e;">E</div>
+            <span style="font-weight:700;">Edgar</span>
+            <span class="status status-green" style="margin-left:auto;">✓ Sin bloqueos</span>
+          </div>
+          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#22c55e;flex-shrink:0;">🟢</span>
+              <span><b>Cartera activa en orden</b> — 3 clientes asignados, sin reportes de bloqueo ni acceso faltante. Flujo normal.</span>
+            </li>
+            <li style="display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:#22c55e;flex-shrink:0;">🟢</span>
+              <span><b>Capacidad disponible</b> — Puede absorber 2-3 clientes de alta prioridad o apoyar en backlog de Arturo (IN de bajo riesgo).</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PRIORIDAD HOY -->
+    <div class="card" style="border-left:4px solid #4f7fff;">
+      <div class="card-title">🎯 Prioridad Hoy — Acción Concreta por Responsable</div>
+      <div class="grid-2" style="gap:16px;margin-top:4px;">
+
+        <!-- CRISTINA prioridad -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:30px;height:30px;background:rgba(124,92,252,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#7c5cfc;">C</div>
+            <span style="font-weight:700;">Cristina</span>
+          </div>
+          <ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            <li><b>Cerrar complementaria Tiege Hanley</b> — Llamar/escribir a kelley.thornton@tiege.com con cifras corregidas y fecha límite de presentación hoy.</li>
+            <li><b>Escalada final Wholesome Story</b> — Último correo con aviso de suspensión de servicio. Si sin respuesta en 48h, activar offboarding.</li>
+            <li><b>Offboarding FUNZIES + KORDIZ</b> — Confirmar con Juan si procede dar de baja operativa. Liberar carga de agenda.</li>
+            <li><b>Campaña SC (lote de 5)</b> — Enviar en un solo bloque recordatorio de acceso SC a los 5 clientes más retrasados. Plantilla estándar + fecha límite.</li>
+          </ol>
+        </div>
+
+        <!-- LINA prioridad -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:30px;height:30px;background:rgba(79,127,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#4f7fff;">L</div>
+            <span style="font-weight:700;">Lina</span>
+          </div>
+          <ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            <li><b>Definir 5 suspendidos</b> — Revisar si alguno tiene actividad reciente; los que no → propuesta de offboarding a Juan hoy antes de las 6pm.</li>
+            <li><b>Activar SC Rollga / PlusEV / HJJ</b> — Follow-up directo con contacto de cada cliente. Meta: confirmar acceso o escalada hoy.</li>
+            <li><b>Declarar clientes con SC disponible</b> — Priorizar los que ya tienen acceso y documentación completa. Meta mínima: 5 declaraciones Feb cerradas hoy.</li>
+            <li><b>Verificar Honest Medical + PUL Dental</b> — Confirmar estatus de documentación. Si completa, declarar. Si incompleta, registrar bloqueo.</li>
+          </ol>
+        </div>
+
+        <!-- ARTURO prioridad -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:30px;height:30px;background:rgba(239,68,68,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#ef4444;">A</div>
+            <span style="font-weight:700;">Arturo</span>
+          </div>
+          <ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            <li><b>Declarar IN con docs completos</b> — Separar los ~50 clientes IN con documentación completa y procesar en batch. No esperar los incompletos.</li>
+            <li><b>Marcar 20 bloqueados en Sheets</b> — Registrar en Clients_Load los clientes sin documentación con estado "bloqueado + motivo". Evita confusión de seguimiento.</li>
+            <li><b>Escalar sobrecarga a Juan</b> — Proponer redistribución de 15-20 clientes IN simples hacia Edgar u otro apoyo. 180 clientes es insostenible sin backlog.</li>
+          </ol>
+        </div>
+
+        <!-- EDGAR prioridad -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="width:30px;height:30px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#22c55e;">E</div>
+            <span style="font-weight:700;">Edgar</span>
+          </div>
+          <ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+            <li><b>Cerrar 2 declaraciones Feb pendientes</b> — Sus 3 clientes son pocos; sin excusa para no tener Feb cerrado al 100% hoy.</li>
+            <li><b>Disponible para reasignación</b> — Comunicar a Juan capacidad disponible. Listo para absorber 2-3 clientes IN simples de la cartera de Arturo.</li>
+          </ol>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
   <!-- ============================================================ -->
@@ -2458,7 +1873,10 @@ function showTab(id) {
   if (el) el.classList.add('active');
   // Redraw charts when tab becomes visible
   if (id === 'overview') { initOverviewCharts(); }
-  if (id === 'clientes') initClientesCharts();
+  if (id === 'clientes') {
+    initClientesCharts();
+    if (Object.keys(timelineRawData).length === 0) loadTimelineData();
+  }
   if (id === 'declaraciones') initDeclCharts();
   if (id === 'equipo') initEquipoCharts();
 }
@@ -2606,27 +2024,444 @@ function initEquipoCharts() {
 }
 
 function initClientesCharts() {
-  if (charts.owner) charts.owner.destroy();
-  const ctx = document.getElementById('chartOwner')?.getContext('2d');
+  // Replaced by initClientViewer() — called from showTab('clientes')
+  initClientViewer();
+}
+
+// ============================================================
+// CLIENT VIEWER — Historia del Cliente
+// ============================================================
+
+const CLIENT_DB = {
+  'AZ006499':{ name:'Stealth Mode', rfc:'SMO241111E73', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1D-M5CFrG9zc3Izo8goeZTdzmwPHrA5o8',
+    sem:'green', semReason:'Cliente activo sin señales de alerta recientes.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006529':{ name:'FUNZIES LLC', rfc:'FLD250423DG2', owner:'Cristina', email:'', suspended:true,
+    drive:'https://drive.google.com/drive/folders/1Q2yBPcoR-X1yLoemmh7LSDo17kuU2ewZ',
+    sem:'yellow', semReason:'Cliente suspendido — sin operación comercial activa.',
+    declStatus:'bloqueada', declReason:'suspended', tags:['suspended'] },
+  'AZ006994':{ name:'Dormeo North America LLC', rfc:'DNA250821LYO', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1Ml6p6bBar28FuYqtTRo9caQ9ao526frQ',
+    sem:'green', semReason:'Cliente activo, sin alertas recientes.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006573':{ name:'Sterling James Company', rfc:'SJA250505IM9', owner:'Lina', email:'kcouillard9@gmail.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1-RpxaReHt0Czn1AwjDAdL4sH6E0SeBeS',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006552':{ name:'Meister', rfc:'ADM2505218H9', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1iTOLDvpd4OZWWx0R5tG72dnW2qDUqBra',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006416':{ name:'Growve Inc.', rfc:'LGM241004G12', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1j4JiiCezSY7cEHpMTKBBwyEe8_jxmVdb',
+    sem:'green', semReason:'Cliente activo, sin alertas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006754':{ name:'Tiege Hanley Inc', rfc:'THI250527FG8', owner:'Cristina', email:'kelley.thornton@tiege.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/19tTD3UAwT06vYaEl3GTNewieZiNtjqiN',
+    sem:'yellow', semReason:'Declaración original en ceros — requiere complementaria. CEO Kelley Thornton personalmente involucrado. Ventas reales confirmadas: Ene $526 / Feb $352 USD.',
+    declStatus:'incompleta', declReason:'team', tags:['nodecl'] },
+  'AZ006455':{ name:'MagNinos', rfc:'MAG250403II0', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/10f8hLqZSTsvTfSOK8jnIqe46g8HICdo-',
+    sem:'green', semReason:'Sin señales de alerta.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006425':{ name:'Filmadora Auto Plus', rfc:'BWF250507LD0', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/14I8irt_FpMJ3XBRrebXoQHpZC1qukHth',
+    sem:'green', semReason:'Cliente activo, sin alertas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007051':{ name:'Aloderma', rfc:'ALO2508088I7', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1lpSEhf_gUdLx-TQOsQkK7ngULeQOG7S5',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006926':{ name:'BRENDAZ CABLES', rfc:'BCA250701QI1', owner:'Cristina', email:'brendadealsinc@gmail.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1g4mXAxF2y3cbSspXQIsFszPHzsmaMOuh',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006746':{ name:'Forte Series', rfc:'FSE25O6O5DP6', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1C0KLiJNXnv3621zYBLYZwqtqmpNYk6Kt',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007071':{ name:'Lifeway Resources Mexico', rfc:'LRM2509121K5', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1bqtNKOcczHPBigGntDgChqMXJ4T6wAEP',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006544':{ name:'Parapharma Tech', rfc:'ENA250620412', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1deziQZkgs6EsCwCMQiisIL2FZr2NxNEt',
+    sem:'green', semReason:'Cliente activo, sin alertas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006878':{ name:'Hair Safe Solutions', rfc:'HSS2507115K5', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1yTM_jz33NpLkxJ5q4Y_vnT0Et6vq7hTy',
+    sem:'green', semReason:'Sin señales de alerta.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006510':{ name:'HJJ 3P Inc', rfc:'HPI250424758', owner:'Lina', email:'henry@boxed-gifts.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/18UliNTwacKdaCx8xyMIDCuGwp7sB2XY4',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006713':{ name:'Quality Brands Mexico', rfc:'ENG250513Q65', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1BxTI6sQAkzrQso_Ci-3TjrdGNRMp3HhP',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006772':{ name:'Godefroy', rfc:'TBE250701D17', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1fchNVwSgZhAZGrH0Eo7pn4EJVfpFWdeW',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006759':{ name:'TAKE OFF Luggage', rfc:'TOL250617PN7', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1JKwqJ6gHi4GPsONjEL1f_frrKG1nk202',
+    sem:'green', semReason:'Cliente activo, sin alertas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007117':{ name:'Durelife nutrition', rfc:'DNU250922TMA', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/11YKlJdIx-qiCNBdXVEXPwgJfIJ-NSWaE',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006928':{ name:'Eco Appliances Inc', rfc:'EAI250711IN7', owner:'Cristina', email:'mary@equatorappliances.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1hu5cA3D0xj7jGTFhGcdCivqWoB3TcgPY',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006852':{ name:'Consumer Express LLC', rfc:'CEX250609BD1', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1wwthq6LLzheCgFdwd93UdlHsnMzZGlNC',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007110':{ name:'Cooks Innovations', rfc:'CIN250828CG7', owner:'Cristina', email:'nicolas@cooksinnovations.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1_7Ox_R0Z-WqHCPY-12IcwFgAbZyOFeZ8',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007022':{ name:'GHU Electronics LLC', rfc:'GEL250725P29', owner:'Cristina', email:'batteryhb425@gmail.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1z7Wo7YCNOojdI33AmJiQ3oFdLEuLFk4-',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006923':{ name:'Rollga', rfc:'RHE250718V76', owner:'Lina', email:'wilkerson@rollga.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1Cxklv81xRQcR1eGTqop0CZ4hjKCy6qQJ',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006363':{ name:'Airtok Technology Co Ltd', rfc:'ATL2503315X1', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1EB4Swaftq2cVLJXPXH2INsFV62rpwIJK',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006974':{ name:'Soluciones Caseras', rfc:'SCA250717NQ3', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1DWe7RNeHFUQwphtsFXSzWxF24L6ITprl',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006651':{ name:'DVN Products LLC', rfc:'DPR250502BC8', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/108pUkru4ik2KRRWHCkFRu0v1MgDYOHzr',
+    sem:'green', semReason:'Sin señales de alerta.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007059':{ name:'SSC Designs Office Essentials', rfc:'SDO250818360', owner:'Cristina', email:'jonathan@ssc-designs.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1kx1vMP1Er34m0grvdZwmmPwECFA8caSa',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006969':{ name:'Plus EV Holdings INC', rfc:'PEH250711GQ3', owner:'Lina', email:'finance@plusevholdings.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1u8g3jl9C0VFD98AQJF7e6Xb5E2B6-YXz',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006904':{ name:'WYMM Mexico', rfc:'WMM250625MF3', owner:'Lina', email:'', suspended:true,
+    drive:'https://drive.google.com/drive/folders/1W0oW2r5UJ_mCCtMEqRyq6-6JjACe5jq6',
+    sem:'yellow', semReason:'Cliente suspendido — sin operación activa. Verificar condiciones de reactivación.',
+    declStatus:'bloqueada', declReason:'suspended', tags:['suspended'] },
+  'AZ006854':{ name:'Honest Medical', rfc:'HMED2505291X4', owner:'Lina', email:'kashmir@honestmed.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1YwXtf6kna1Sr991SaMC8F3T5YAlGGNsn',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006785':{ name:'PUL Dental', rfc:'PDE250605FLA', owner:'Lina', email:'kaivon@puldental.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1eMD1o8xZKACCBSQtxJOBiRjkx6kaDQkb',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006876':{ name:'Adult Children of Alcoholics WSO', rfc:'ACA2506189C8', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/16JLQChvTra_M0KMVWtnm5FNrZ-rrhlE1',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006901':{ name:'Loudcup MX', rfc:'LMX250430PA8', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1UvMx9Rzj28dbsROVkSE4MPVbnr1lu_Vl',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006685':{ name:'Doomlings', rfc:'DOO250520SW6', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1k77K2I5xr5gXfzUAuGDMCX3DMPxe79bq',
+    sem:'green', semReason:'Sin señales de alerta.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006895':{ name:'Meteor City', rfc:'MCI2506238B2', owner:'Cristina', email:'brianjohnnychen@gmail.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1ZmW-bTc4QiyVYjxUQFxo88JErPei_0KP',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006437':{ name:'Wholesome Story LLC', rfc:'WSL250717G40', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1HoBWZvnqc3u2ugMFqUWGPikT8Qw4NR4t',
+    sem:'red', semReason:'🚨 SIN RESPUESTA +2 MESES · 5 correos sin contestar. Bloqueado en WeeklyPlan. Exposición fiscal acumulada Ene+Feb 2026. Riesgo de multas + baja involuntaria.',
+    declStatus:'bloqueada', declReason:'noinfo', tags:['blocked','nodecl'] },
+  'AZ006991':{ name:'Lincove', rfc:'ABE250910795', owner:'Cristina', email:'shulem@lincove.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1pXJj_ZlKDsuPTWuAGeW-T0kMYqgxwJKc',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006979':{ name:'The Hair Diagram', rfc:'HDI250714DP1', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1VKVQ_EbUsUTESq2yVIKz8_SPnf4Xi-K4',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ007136':{ name:'WavesRx LLC', rfc:'WAV250915LP3', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1f6g9O1eoJKe4cvXDpcpEebILDnze5vVR',
+    sem:'green', semReason:'Sin señales de alerta.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006563':{ name:'Lifebuoy', rfc:'LIF250423IZ9', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1FZJRJZxv_RNOwxzU1wmAcA8zu7SYSnRE',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006569':{ name:'Enformaylimpio VANILLA', rfc:'EVA250505CZ3', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1pPSUPli1ikvx5_E25hlAEc2LDFFoR0ar',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006707':{ name:'Val Natural Nutrition Center', rfc:'VNN250512U41', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1ejXRBOWS7FsDiC4zYf-Vik-r44ZTQH-e',
+    sem:'green', semReason:'Sin señales de alerta.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006411':{ name:'HEY GIRL BRANDS', rfc:'HGB241003LR7', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1SWAqHaz_1i3Tw1eNhP4fHnSYN7F-wkBV',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006842':{ name:'1489399 ALBERTA LTD', rfc:'UMC250612MJ4', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1EpQp3YwETDqCbtSxTSVThIuQu67VUeYp',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ005337':{ name:'XERO PIXS MEXICO', rfc:'XPM240910IP7', owner:'Lina', email:'', suspended:true,
+    drive:'https://drive.google.com/drive/folders/1HOGyndNeTIRoX72_poNLvSSj-lneZoZ5',
+    sem:'yellow', semReason:'Cliente suspendido — cuenta inactiva.',
+    declStatus:'bloqueada', declReason:'suspended', tags:['suspended'] },
+  'AZ006860':{ name:'Wellex', rfc:'PIN25061278A', owner:'Lina', email:'diana@wellex.co', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1a54gg7BNIgf0R4BI8sIBbAKCB5ETTo62',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006929':{ name:'Brighticonic LLC', rfc:'BRI250725G91', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1fThbrJ6PKvlkTvFFOU3bgmHbGXcKkdrM',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006886':{ name:'URBAN JAGA INC', rfc:'UJI250606J53', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1iuR7eU3WzTUepkzPKEblJWSOQDdHHSvI',
+    sem:'green', semReason:'Sin señales de alerta.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006871':{ name:'Pyramid Time Systems', rfc:'PTS250708R50', owner:'Lina', email:'jkiley@ptitime.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1GwVtPjCjLCsdy93f4dFjE3HsaN5mpR1B',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007191':{ name:'Trekology LLC', rfc:'TAO251021HG1', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1bvRi4aBaiXYakpoZAzgS3Vr-Aj0lVB32',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006522':{ name:'KORDIZ', rfc:'KTA250501UZ0', owner:'Cristina', email:'julien.freynet@gmail.com', suspended:true,
+    drive:'https://drive.google.com/drive/folders/1e0aQHN0ZVApqr8KwbkqS8yys0mecewPl',
+    sem:'yellow', semReason:'Cliente suspendido — cuenta inactiva. Contacto: julien.freynet@gmail.com.',
+    declStatus:'bloqueada', declReason:'suspended', tags:['suspended'] },
+  'AZ006495':{ name:'Gag Gifts For Good Causes', rfc:'GGF250513L18', owner:'Cristina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1hgZzmGBbGfEPDmkhd8rKy5FZ7DDtSz-I',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007134':{ name:'Proempire', rfc:'PRO250910CS0', owner:'Lina', email:'info@proempirellc.com', suspended:true,
+    drive:'https://drive.google.com/drive/folders/1d6aU0NQKCznbnRpYE17LnlPGLXUyaLcD',
+    sem:'yellow', semReason:'Cliente suspendido — sin operación activa. Contacto: info@proempirellc.com.',
+    declStatus:'bloqueada', declReason:'suspended', tags:['suspended'] },
+  'AZ006727':{ name:'Cyberdyne Systems Inc', rfc:'HSV250701RKA', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1kWi4IwhyxGZqRo73n9Q10-gFFruO4rfd',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ007160':{ name:'WeSupplyDIY', rfc:'WES251008TR9', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1ggr7-kJxoGdDvvED1lPMjK4lHCj1IpEl',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'incompleta', declReason:'team', tags:[] },
+  'AZ006705':{ name:'Tailor Toys LLC', rfc:'TTL250520IN5', owner:'Lina', email:'', suspended:true,
+    drive:'https://drive.google.com/drive/folders/153islFm6vjSxc42BbpqCB0HSwwKI714F',
+    sem:'yellow', semReason:'Cliente suspendido — cuenta inactiva.',
+    declStatus:'bloqueada', declReason:'suspended', tags:['suspended'] },
+  'AZ006453':{ name:'Recontour', rfc:'RME250402BQA', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/13ya6Zejjj10AXNzAnWsFzK4UQAPLfJKI',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006667':{ name:'Lumi Rugs', rfc:'LRU250513Q89', owner:'Cristina', email:'zeyu.jiang@lumirugs.com', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1QewJ-nCCweVNOQjXFTlNhQ9TP_8ufJn4',
+    sem:'green', semReason:'Cliente activo, contacto disponible.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006935':{ name:'Antennas Direct', rfc:'ADI250718AB9', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1B4DHWYMdW3Ia37wJRpO204VsbS1EHJIh',
+    sem:'green', semReason:'Sin alertas recientes.',
+    declStatus:'completa', declReason:'', tags:[] },
+  'AZ006446':{ name:'The StudBuddy', rfc:'STU250404SR6', owner:'Lina', email:'', suspended:false,
+    drive:'https://drive.google.com/drive/folders/1tL22Q_9tN6oA4cuzyyiEFau0swlWExyr',
+    sem:'green', semReason:'Sin alertas activas.',
+    declStatus:'completa', declReason:'', tags:[] }
+};
+
+let activeClientId = null;
+let clientChart = null;
+
+function initClientViewer() {
+  populateClientList('');
+}
+
+function filterClientList() {
+  var q = (document.getElementById('clientSearch')?.value || '').toLowerCase();
+  populateClientList(q);
+}
+
+function populateClientList(filter) {
+  var wrap = document.getElementById('clientList');
+  if (!wrap) return;
+  var ids = Object.keys(CLIENT_DB);
+  var filtered = ids.filter(function(id) {
+    var c = CLIENT_DB[id];
+    return !filter
+      || c.name.toLowerCase().includes(filter)
+      || id.toLowerCase().includes(filter)
+      || (c.owner || '').toLowerCase().includes(filter)
+      || (c.rfc || '').toLowerCase().includes(filter);
+  });
+  // Sort: red first, then orange, yellow, green; then alpha
+  var semOrder = {red:0, orange:1, yellow:2, green:3};
+  filtered.sort(function(a,b) {
+    var sa = semOrder[CLIENT_DB[a].sem] || 3;
+    var sb = semOrder[CLIENT_DB[b].sem] || 3;
+    if (sa !== sb) return sa - sb;
+    return CLIENT_DB[a].name.localeCompare(CLIENT_DB[b].name);
+  });
+  var countEl = document.getElementById('clientCount');
+  if (countEl) countEl.textContent = filtered.length + ' cliente' + (filtered.length !== 1 ? 's' : '');
+  wrap.innerHTML = filtered.map(function(id) {
+    var c = CLIENT_DB[id];
+    var selectedClass = (id === activeClientId) ? ' selected' : '';
+    return '<div class="client-list-item' + selectedClass + '" onclick="selectClient('' + id + '')">' +
+      '<div><div class="cli-name">' + escH(c.name) + '</div><div class="cli-id">' + id + (c.suspended ? ' · Suspendido' : '') + '</div></div>' +
+      '<div class="cli-sem-dot ' + c.sem + '"></div>' +
+      '</div>';
+  }).join('');
+}
+
+function escH(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function selectClient(id) {
+  activeClientId = id;
+  // Update selected state in list
+  document.querySelectorAll('.client-list-item').forEach(function(el) {
+    el.classList.remove('selected');
+  });
+  var items = document.querySelectorAll('.client-list-item');
+  items.forEach(function(el) {
+    if (el.querySelector('.cli-id') && el.querySelector('.cli-id').textContent.startsWith(id)) {
+      el.classList.add('selected');
+    }
+  });
+  renderClientProfile(id);
+}
+
+function renderClientProfile(id) {
+  var c = CLIENT_DB[id];
+  if (!c) return;
+  var panel = document.getElementById('clientProfile');
+  if (!panel) return;
+
+  // Semaphore
+  var semLabels = {red:'🔴 Bloqueado', orange:'🟠 Sin acceso SC', yellow:'🟡 Atención', green:'🟢 Al día'};
+  var semLabel = semLabels[c.sem] || '⚪ Sin datos';
+
+  // Decl card
+  var declClass = c.declStatus === 'completa' ? 'decl-ok' : c.declStatus === 'incompleta' ? 'decl-warn' : 'decl-block';
+  var declIcon = c.declStatus === 'completa' ? '✅' : c.declStatus === 'incompleta' ? '⚠️' : '🚫';
+  var declTitle = c.declStatus === 'completa' ? 'Declaraciones al día' : c.declStatus === 'incompleta' ? 'Declaraciones incompletas' : 'Declaraciones bloqueadas';
+  var declReasonLabels = {
+    'noinfo': 'El cliente no ha enviado información / no responde contacto.',
+    'nosc': 'Sin acceso a Seller Central — imposible extraer datos de ventas.',
+    'team': 'El equipo aún no ha iniciado o completado la declaración.',
+    'suspended': 'Cliente suspendido — cuenta inactiva, sin operación comercial.',
+    '': 'Sin observaciones pendientes.'
+  };
+  var declReasonText = declReasonLabels[c.declReason] || c.declReason || '';
+
+  // Drive link
+  var driveHtml = c.drive
+    ? '<a href="' + c.drive + '" target="_blank" rel="noopener">📁 Abrir carpeta</a>'
+    : '<span style="color:var(--muted)">No disponible</span>';
+
+  // Email
+  var emailHtml = c.email
+    ? '<a href="mailto:' + c.email + '">' + c.email + '</a>'
+    : '<span style="color:var(--muted)">No registrado</span>';
+
+  // Status badge
+  var statusHtml = c.suspended
+    ? '<span style="background:rgba(107,95,138,0.2);color:#a78bfa;border:1px solid rgba(167,139,250,0.3);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">Suspendido</span>'
+    : '<span style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">Activo</span>';
+
+  panel.innerHTML =
+    '<div class="cli-profile-header">' +
+      '<div>' +
+        '<div class="cli-profile-name">' + escH(c.name) + '</div>' +
+        '<div class="cli-profile-meta">' +
+          '<span>🏷️ ' + id + '</span>' +
+          '<span>📄 RFC: ' + escH(c.rfc || '—') + '</span>' +
+          '<span>👤 ' + escH(c.owner || 'Sin asignar') + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">' +
+        '<span class="sem-badge sem-' + c.sem + '">' + semLabel + '</span>' +
+        statusHtml +
+      '</div>' +
+    '</div>' +
+
+    '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;line-height:1.7;color:var(--muted);">' +
+      '<b style="color:var(--text);display:block;margin-bottom:4px;">📊 Contexto del semáforo</b>' +
+      escH(c.semReason) +
+    '</div>' +
+
+    '<div class="cli-info-grid">' +
+      '<div class="cli-info-card"><div class="cli-info-label">📧 Email de contacto</div><div class="cli-info-value">' + emailHtml + '</div></div>' +
+      '<div class="cli-info-card"><div class="cli-info-label">📁 Google Drive</div><div class="cli-info-value">' + driveHtml + '</div></div>' +
+    '</div>' +
+
+    '<div class="decl-card ' + declClass + '">' +
+      '<div class="decl-title">' + declIcon + ' ' + declTitle + '</div>' +
+      '<div class="decl-reason">' + escH(declReasonText) + '</div>' +
+    '</div>' +
+
+    '<div class="cli-chart-wrap">' +
+      '<div class="cli-chart-title">📈 Ventas vs Retenciones — Historial</div>' +
+      '<div style="height:220px;position:relative;"><canvas id="clientTimelineChart"></canvas></div>' +
+      '<div id="clientChartEmpty" style="display:none;text-align:center;padding:40px;color:var(--muted);font-size:13px;">Sin datos históricos disponibles para este cliente.</div>' +
+    '</div>';
+
+  // Render chart with timeline data
+  renderClientTimelineChart(c.name);
+}
+
+function renderClientTimelineChart(clientName) {
+  if (clientChart) { clientChart.destroy(); clientChart = null; }
+  var ctx = document.getElementById('clientTimelineChart');
+  var emptyEl = document.getElementById('clientChartEmpty');
   if (!ctx) return;
-  charts.owner = new Chart(ctx, {
-    type: 'bar',
+
+  var entries = timelineRawData[clientName] || [];
+  if (!entries.length) {
+    ctx.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  ctx.style.display = '';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  var labels = entries.map(function(e){ return e.period; });
+  var sales = entries.map(function(e){ return e.sales; });
+  var retention = entries.map(function(e){ return e.retention; });
+
+  clientChart = new Chart(ctx.getContext('2d'), {
+    type: 'line',
     data: {
-      labels: ['Arturo', 'Lina', 'Cristina', 'Edgar', 'Sin asignar'],
-      datasets: [{
-        label: 'Clientes asignados',
-        data: [180, 60, 55, 3, 82],
-        backgroundColor: [COLORS.red, COLORS.blue, COLORS.purple, COLORS.green, COLORS.muted],
-        borderRadius: 6
-      }]
+      labels: labels,
+      datasets: [
+        { label: 'Ventas', data: sales, borderColor: '#7c5cfc', backgroundColor: 'rgba(124,92,252,0.12)', borderWidth: 2, pointRadius: 4, tension: 0.3, fill: true },
+        { label: 'Retenciones', data: retention, borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', borderWidth: 2, pointRadius: 4, tension: 0.3, fill: true }
+      ]
     },
     options: {
-      indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { labels: { font: { size: 11 }, padding: 8 }, position: 'top' },
+        tooltip: { mode: 'index', intersect: false }
+      },
       scales: {
-        x: { grid: { color: '#2a305033' }, beginAtZero: true },
-        y: { grid: { display: false } }
+        x: { grid: { color: '#2a305022' }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: '#2a305033' }, beginAtZero: true, ticks: { font: { size: 11 } } }
       }
     }
   });
@@ -2670,7 +2505,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('lastUpdate').textContent =
     'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
   initOverviewCharts();
-  // timeline chart is served via iframe (Apps Script)
+  loadTimelineData(); // pre-load timeline for client viewer
   // Auto-refresh every 5 minutes
   setInterval(refreshData, 5 * 60 * 1000);
 });
