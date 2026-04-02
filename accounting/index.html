@@ -2320,7 +2320,7 @@ function populateClientList(filter) {
   wrap.innerHTML = filtered.map(function(id) {
     var c = CLIENT_DB[id];
     var selectedClass = (id === activeClientId) ? ' selected' : '';
-    return '<div class="client-list-item' + selectedClass + '" onclick="selectClient('' + id + '')">' +
+    return '<div class="client-list-item' + selectedClass + '" onclick="selectClient(\'' + id + '\')">' +
       '<div><div class="cli-name">' + escH(c.name) + '</div><div class="cli-id">' + id + (c.suspended ? ' · Suspendido' : '') + '</div></div>' +
       '<div class="cli-sem-dot ' + c.sem + '"></div>' +
       '</div>';
