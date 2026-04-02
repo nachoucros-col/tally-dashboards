@@ -15,18 +15,20 @@
     Permissions-Policy       = "geolocation=(), microphone=(), camera=()"
     Cache-Control            = "no-store, no-cache, must-revalidate"
 
-# HTML pages: never cache
+# HTML pages: never cache (always fresh from server)
 [[headers]]
   for = "/*.html"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate"
 
 # ── Redirects ─────────────────────────────────────────────────
+# Redirect root to portal
 [[redirects]]
   from   = "/"
   to     = "/index.html"
   status = 200
 
+# 404 fallback
 [[redirects]]
   from   = "/*"
   to     = "/index.html"

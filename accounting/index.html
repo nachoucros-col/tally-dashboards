@@ -795,6 +795,32 @@ function gateSubmit() {
       </div>
     </div>
 
+    <!-- TOP 10 CLIENTES POR VENTAS -->
+    <div class="card" id="top10ClientesCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:0;">🏆 Top 10 Clientes por Ventas <span class="badge">Clientes AZ · Acumulado histórico</span></div>
+        <div style="font-size:11px;color:var(--muted);" id="top10PeriodNote">Cargando…</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="top10Table" style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600;white-space:nowrap;">#</th>
+              <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600;white-space:nowrap;">Cliente</th>
+              <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600;white-space:nowrap;">ID</th>
+              <th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600;white-space:nowrap;">Último mes</th>
+              <th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600;white-space:nowrap;">Promedio/mes</th>
+              <th style="text-align:right;padding:6px 8px;color:var(--muted);font-weight:600;white-space:nowrap;">Total acumulado</th>
+              <th style="text-align:center;padding:6px 8px;color:var(--muted);font-weight:600;white-space:nowrap;">Meses</th>
+            </tr>
+          </thead>
+          <tbody id="top10Body">
+            <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Cargando datos…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-title">🤖 Estado Automatizaciones Claude</div>
         <div class="task-grid" style="margin-top:4px;">
@@ -2444,8 +2470,8 @@ function populateClientList(filter) {
     var ca = CLIENT_DB[a], cb = CLIENT_DB[b];
     // Suspended goes to bottom
     if (ca.suspended !== cb.suspended) return ca.suspended ? 1 : -1;
-    var sa = semOrder[ca.sem] !== undefined ? semOrder[ca.sem] : 3;
-    var sb = semOrder[cb.sem] !== undefined ? semOrder[cb.sem] : 3;
+    var sa = semOrder[calcClientSem(a, ca)] !== undefined ? semOrder[calcClientSem(a, ca)] : 3;
+    var sb = semOrder[calcClientSem(b, cb)] !== undefined ? semOrder[calcClientSem(b, cb)] : 3;
     if (sa !== sb) return sa - sb;
     return ca.name.localeCompare(cb.name);
   });
@@ -2453,6 +2479,7 @@ function populateClientList(filter) {
   if (countEl) countEl.textContent = filtered.length + ' cliente' + (filtered.length !== 1 ? 's' : '');
   wrap.innerHTML = filtered.map(function(id) {
     var c = CLIENT_DB[id];
+    var sem = calcClientSem(id, c);
     var selectedClass = (id === activeClientId) ? ' selected' : '';
     var suspTag = c.suspended ? ' <span style="font-size:9px;background:rgba(167,139,250,0.18);color:#a78bfa;padding:1px 5px;border-radius:4px;">SUSP</span>' : '';
     return '<div class="client-list-item' + selectedClass + '" onclick="selectClient(\'' + id + '\')">' +
@@ -2460,7 +2487,7 @@ function populateClientList(filter) {
         '<div class="cli-name">' + escH(c.name) + suspTag + '</div>' +
         '<div class="cli-id">' + id + ' · ' + escH(c.owner || '—') + '</div>' +
       '</div>' +
-      '<div class="cli-sem-dot ' + c.sem + '" style="flex-shrink:0;"></div>' +
+      '<div class="cli-sem-dot ' + sem + '" style="flex-shrink:0;"></div>' +
     '</div>';
   }).join('');
 }
@@ -2500,18 +2527,56 @@ function calcClientTotals(clientId) {
   };
 }
 
+// ── Semáforo computado — NO usa c.sem (evita circularidad) ──────────────
+// Señales independientes: SC, declaraciones, tareas.
+// Reglas (según spec):
+//   nosc / noinfo                    → yellow (SC signal)
+//   declStatus incompleta (1 mes)    → yellow
+//   declStatus pendiente  (2 meses)  → yellow
+//   declStatus bloqueada  (2+)       → red
+//   >3 tareas bloqueantes activas    → red
+//   2+ yellows combinados            → orange
+function calcClientSem(id, c) {
+  if (c.suspended) return 'yellow';
+  var reds = 0, yellows = 0;
+
+  // -- SC: sin acceso o sin respuesta de cliente
+  var noSC   = (c.tags && c.tags.includes('nosc')) || c.declReason === 'nosc';
+  var noInfo = c.declReason === 'noinfo';
+  if (noSC || noInfo) yellows++;
+
+  // -- Declaraciones faltantes
+  if (c.declStatus === 'bloqueada' && !c.suspended) reds++;       // 2+ faltantes → rojo
+  else if (c.declStatus === 'pendiente')             yellows++;   // 2 faltantes → amarillo
+  else if (c.declStatus === 'incompleta')            yellows++;   // 1 faltante (mes pasado) → amarillo
+
+  // -- Conteo de tareas bloqueantes (proxy para regla >3 tareas con 5+ días)
+  var taskCount = 0;
+  if (noSC)                                                          taskCount++;
+  if (noInfo)                                                        taskCount++;
+  if (c.declStatus === 'incompleta' && c.declReason === 'team')      taskCount++;
+  if (c.declStatus === 'bloqueada' && !c.suspended)                  taskCount++;
+  if (taskCount > 3) reds++;
+
+  // -- Agregar
+  if (reds > 0)    return 'red';
+  if (yellows >= 2) return 'orange';
+  if (yellows >= 1) return 'yellow';
+  return 'green';
+}
+
 function getClientSCAccess(id, c) {
   if (c.suspended) return {level:'na', label:'N/A', note:'Cliente suspendido — acceso SC no aplica.'};
   if ((c.tags && c.tags.includes('nosc')) || c.declReason === 'nosc')
     return {level:'sin_acceso', label:'Sin acceso', note:'Sin acceso a Seller Central — bloqueo activo sobre declaración mensual.'};
-  if (c.sem === 'red' && c.declReason === 'noinfo')
+  if (c.declReason === 'noinfo')
     return {level:'sin_acceso', label:'Sin acceso', note:'Sin respuesta del cliente para habilitar acceso SC.'};
-  if (c.sem === 'orange')
-    return {level:'pendiente', label:'Pendiente', note:'Solicitud de acceso enviada — pendiente confirmación del cliente.'};
   if (c.declStatus === 'completa')
     return {level:'completo', label:'Completo', note:'Acceso completo a Seller Central — datos disponibles para declaración.'};
   if (c.declStatus === 'incompleta' && c.declReason === 'team')
     return {level:'completo', label:'Completo', note:'Acceso SC disponible — declaración pendiente de procesamiento interno.'};
+  if (c.declStatus === 'bloqueada')
+    return {level:'sin_acceso', label:'Sin acceso', note:'Declaración bloqueada — revisar acceso y documentación pendiente.'};
   return {level:'parcial', label:'Parcial', note:'Acceso parcial o en proceso de verificación.'};
 }
 
@@ -2522,8 +2587,8 @@ function getClientDeclarations(id, c) {
     rows.push({period:'Anual 2025', tipo:'Anual', status:'finalizada'});
   } else if (c.suspended) {
     rows.push({period:'Anual 2025', tipo:'Anual', status:'bloqueada'});
-  } else if (c.sem === 'red' || c.declReason === 'noinfo') {
-    rows.push({period:'Anual 2025', tipo:'Anual', status:'pendiente'});
+  } else if (c.declReason === 'noinfo' || c.declStatus === 'bloqueada') {
+    rows.push({period:'Anual 2025', tipo:'Anual', status:'bloqueada'});
   } else {
     rows.push({period:'Anual 2025', tipo:'Anual', status:'pendiente'});
   }
@@ -2532,9 +2597,11 @@ function getClientDeclarations(id, c) {
     rows.push({period:'Ene 2026', tipo:'Mensual', status:'finalizada'});
   } else if (c.suspended) {
     rows.push({period:'Ene 2026', tipo:'Mensual', status:'bloqueada'});
+  } else if (c.declStatus === 'bloqueada') {
+    rows.push({period:'Ene 2026', tipo:'Mensual', status:'bloqueada'});
   } else if (c.declReason === 'team') {
     rows.push({period:'Ene 2026', tipo:'Mensual', status:'finalizada'});
-  } else if (c.declReason === 'noinfo' || c.sem === 'red') {
+  } else if (c.declReason === 'noinfo') {
     rows.push({period:'Ene 2026', tipo:'Mensual', status:'pendiente'});
   } else {
     rows.push({period:'Ene 2026', tipo:'Mensual', status:'en_proceso'});
@@ -2554,13 +2621,14 @@ function getClientDeclarations(id, c) {
   return rows;
 }
 
-function getClientTasks(id, c) {
+function getClientTasks(id, c, sem) {
   var tasks = [];
-  if (c.sem === 'red') {
+  var noSC = (c.tags && c.tags.includes('nosc')) || c.declReason === 'nosc';
+  if (sem === 'red') {
     tasks.push({text:'Enviar correo de escalada — notificar riesgo de churn', priority:'alta', done:false});
     tasks.push({text:'Revisar historial completo en Google Drive', priority:'alta', done:false});
   }
-  if ((c.tags && c.tags.includes('nosc')) || c.sem === 'orange' || c.declReason === 'nosc') {
+  if (noSC || c.declReason === 'noinfo') {
     tasks.push({text:'Confirmar acceso Seller Central con cliente', priority:'alta', done:false});
   }
   if (c.suspended) {
@@ -2579,25 +2647,28 @@ function getClientTasks(id, c) {
   return tasks;
 }
 
-function buildAnalisisEstrategico(id, c, totals) {
+function buildAnalisisEstrategico(id, c, totals, sem) {
   var n = escH(c.name);
   if (c.suspended) {
     return n + ' se encuentra <b>suspendida</b> — sin actividad comercial activa en México. La cuenta no genera importaciones y no requiere declaración mensual mientras esté inactiva. <b>Decisión requerida:</b> offboarding formal o plan de reactivación con timeline definido. Cada mes adicional sin resolución consume atención del equipo sin retorno operativo.';
   }
-  if (c.sem === 'red') {
-    return '<b>Situación crítica.</b> ' + n + ' lleva más de 2 meses sin responder contacto. Todas las declaraciones están bloqueadas por falta de información o acceso. El riesgo de pérdida de cliente es elevado. Se requiere <b>escalada inmediata</b> — último correo formal con fecha límite de respuesta, o inicio de proceso de cierre controlado del servicio.';
+  if (sem === 'red') {
+    return '<b>Situación crítica.</b> ' + n + ' tiene declaraciones bloqueadas por falta de información o acceso. El riesgo operativo es elevado. Se requiere <b>escalada inmediata</b> — correo formal con fecha límite de respuesta o inicio de proceso de cierre controlado.';
   }
-  if (c.sem === 'orange') {
-    return n + ' tiene un <b>bloqueo operativo por acceso a Seller Central.</b> Sin acceso SC no es posible extraer los datos de ventas para la declaración mensual. La resolución depende del cliente. Cada semana sin resolver acumula períodos pendientes que aumentan la complejidad contable futura.';
+  if (sem === 'orange') {
+    return n + ' tiene <b>múltiples alertas activas</b> — combinación de bloqueos que requieren atención simultánea. Sin resolver el acceso SC y la documentación pendiente, los períodos faltantes seguirán acumulándose. Priorizar para esta semana.';
   }
-  if (c.sem === 'yellow') {
+  if (sem === 'yellow') {
     if (c.declReason === 'team') {
       return n + ' tiene contacto activo e información disponible. El bloqueo es <b>interno</b> — el equipo aún no ha completado la declaración. Caso resoluble en el corto plazo sin dependencia externa. Priorizar dentro del flujo de trabajo actual.';
     }
     if (c.declReason === 'noinfo') {
       return n + ' requiere <b>documentación del cliente</b> para proceder. El contacto existe pero la información fiscal o de ventas no ha sido entregada completa. Seguimiento activo recomendado antes de fin de mes para no entrar en atraso.';
     }
-    return n + ' requiere <b>atención en el corto plazo.</b> Estado general: ' + escH(c.semReason);
+    if (c.declReason === 'nosc') {
+      return n + ' tiene <b>bloqueo por acceso a Seller Central.</b> Sin acceso SC no es posible extraer los datos de ventas para la declaración mensual. La resolución depende del cliente.';
+    }
+    return n + ' requiere <b>atención en el corto plazo.</b> ' + (c.semReason ? escH(c.semReason) : 'Revisar estado de declaraciones y acceso SC.');
   }
   // green
   var txt = n + ' está <b>al día.</b> Cuenta activa con declaraciones en orden';
@@ -2617,14 +2688,15 @@ function renderClientProfile(id) {
   var panel = document.getElementById('clientProfile');
   if (!panel) return;
 
+  var sem = calcClientSem(id, c);  // computed — never reads c.sem
   var totals = calcClientTotals(id);
   var sc = getClientSCAccess(id, c);
   var decls = getClientDeclarations(id, c);
-  var tasks = getClientTasks(id, c);
+  var tasks = getClientTasks(id, c, sem);
 
   // Semaphore label
-  var semLabels = {red:'🔴 Bloqueado', orange:'🟠 Sin acceso SC', yellow:'🟡 Requiere atención', green:'🟢 Al día'};
-  var semLabel = semLabels[c.sem] || '⚪ Sin datos';
+  var semLabels = {red:'🔴 Crítico', orange:'🟠 Múltiples alertas', yellow:'🟡 Requiere atención', green:'🟢 Al día'};
+  var semLabel = semLabels[sem] || '⚪ Sin datos';
 
   // Status badge
   var statusHtml = c.suspended
@@ -2695,7 +2767,7 @@ function renderClientProfile(id) {
         '</div>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">' +
-        '<span class="sem-badge sem-' + c.sem + '">' + semLabel + '</span>' +
+        '<span class="sem-badge sem-' + sem + '">' + semLabel + '</span>' +
         statusHtml +
       '</div>' +
     '</div>' +
@@ -2726,7 +2798,7 @@ function renderClientProfile(id) {
     // ── 3. ANÁLISIS ESTRATÉGICO ──
     '<div class="cli-section">' +
       '<div class="cli-section-title">🧠 Análisis Estratégico</div>' +
-      '<div class="cli-analysis-text">' + buildAnalisisEstrategico(id, c, totals) + '</div>' +
+      '<div class="cli-analysis-text">' + buildAnalisisEstrategico(id, c, totals, sem) + '</div>' +
       semReasonHtml +
     '</div>' +
 
@@ -2871,6 +2943,71 @@ function initOverviewSalesChart() {
       }
     }
   });
+  // Also refresh top 10 table whenever chart data is ready
+  buildTop10ClientsTable();
+}
+
+// ── Top 10 Clientes por ventas ────────────────────────────────────────────────
+function buildTop10ClientsTable() {
+  const tbody = document.getElementById('top10Body');
+  const noteEl = document.getElementById('top10PeriodNote');
+  if (!tbody) return;
+  if (!Object.keys(timelineRawData).length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Sin datos disponibles</td></tr>';
+    return;
+  }
+
+  const fmt = v => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(v);
+
+  // Build summary per client
+  const summary = Object.keys(timelineRawData).map(cid => {
+    const entries = timelineRawData[cid].filter(e => e.sales > 0);
+    if (!entries.length) return null;
+    const total = entries.reduce((s, e) => s + e.sales, 0);
+    const avg = total / entries.length;
+    const lastEntry = entries[entries.length - 1];
+    const name = (CLIENT_DB[cid] && CLIENT_DB[cid].name) ? CLIENT_DB[cid].name : cid;
+    return { cid, name, total, avg, lastSales: lastEntry.sales, lastPeriod: lastEntry.period, months: entries.length };
+  }).filter(Boolean);
+
+  // Sort by total desc, take top 10
+  summary.sort((a, b) => b.total - a.total);
+  const top10 = summary.slice(0, 10);
+
+  // Period note
+  const allKeys = Object.values(timelineRawData)
+    .flatMap(arr => arr.map(e => e.periodKey))
+    .filter(Boolean).sort();
+  if (noteEl && allKeys.length) {
+    const mn = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const fk = k => { const [y,m] = k.split('-'); return mn[parseInt(m,10)-1] + ' ' + y.slice(2); };
+    noteEl.textContent = 'Datos: ' + fk(allKeys[0]) + ' – ' + fk(allKeys[allKeys.length-1]);
+  }
+
+  const maxTotal = top10[0] ? top10[0].total : 1;
+  const rankColors = ['#f59e0b','#94a3b8','#cd7c38'];
+
+  tbody.innerHTML = top10.map((r, i) => {
+    const barPct = Math.round((r.total / maxTotal) * 100);
+    const rankStyle = i < 3 ? 'font-weight:700;color:' + rankColors[i] : 'color:var(--muted)';
+    return '<tr style="border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background=\'var(--hover)\'" onmouseout="this.style.background=\'\'">' +
+      '<td style="padding:8px 8px;' + rankStyle + '">' + (i+1) + '</td>' +
+      '<td style="padding:8px 8px;max-width:180px;">' +
+        '<div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + r.name + '">' + r.name + '</div>' +
+        '<div style="height:3px;border-radius:2px;background:var(--border);margin-top:4px;">' +
+          '<div style="height:3px;border-radius:2px;background:var(--accent);width:' + barPct + '%;transition:width 0.4s;"></div>' +
+        '</div>' +
+      '</td>' +
+      '<td style="padding:8px 8px;color:var(--muted);font-size:11px;white-space:nowrap;">' + r.cid + '</td>' +
+      '<td style="padding:8px 8px;text-align:right;white-space:nowrap;">' +
+        '<div>' + fmt(r.lastSales) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);">' + r.lastPeriod + '</div>' +
+      '</td>' +
+      '<td style="padding:8px 8px;text-align:right;white-space:nowrap;color:var(--muted);">' + fmt(r.avg) + '</td>' +
+      '<td style="padding:8px 8px;text-align:right;font-weight:600;white-space:nowrap;">' + fmt(r.total) + '</td>' +
+      '<td style="padding:8px 8px;text-align:center;color:var(--muted);">' + r.months + '</td>' +
+    '</tr>';
+  }).join('');
 }
 
 function initDeclCharts() {
