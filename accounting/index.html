@@ -781,9 +781,9 @@ function gateSubmit() {
 
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:0;">📈 Ventas Totales por Mes <span class="badge">Clientes AZ · Últimos 6 meses</span></div>
+        <div class="card-title" style="margin-bottom:0;">📈 Ventas Totales por Mes <span class="badge">Clientes AZ · Últimos 12 meses</span></div>
         <div style="text-align:right;">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Acumulado período</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;" id="overviewSalesPeriodLabel">Acumulado período</div>
           <div style="font-size:20px;font-weight:700;color:var(--accent);" id="overviewSalesTotal">—</div>
         </div>
       </div>
@@ -791,7 +791,7 @@ function gateSubmit() {
         <canvas id="chartMonthlySales"></canvas>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px;">
-        Fuente: Clientes_por_periodo · Solo filas con ventas reportadas · Base: mes actual −1
+        Fuente: Clientes_por_periodo · Solo filas con ventas &gt; 0 · 12 meses hacia atrás desde el mes actual
       </div>
     </div>
 
@@ -2772,11 +2772,11 @@ function initOverviewSalesChart() {
   if (overviewSalesChart) { overviewSalesChart.destroy(); overviewSalesChart = null; }
   const ctx = document.getElementById('chartMonthlySales')?.getContext('2d');
   if (!ctx) return;
-  // Build last 6 months including current month
+  // Build last 12 months including current month
   const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const now = new Date();
   const periods = [];
-  for (let i = 5; i >= 0; i--) {
+  for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     const label = monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
@@ -2785,6 +2785,8 @@ function initOverviewSalesChart() {
   const labels = periods.map(p => p.label);
   const values = periods.map(p => monthlySalesData[p.key] || 0);
   const total = values.reduce((a, b) => a + b, 0);
+  const periodLabelEl = document.getElementById('overviewSalesPeriodLabel');
+  if (periodLabelEl) periodLabelEl.textContent = 'Acumulado ' + periods[0].label + ' – ' + periods[11].label;
   const totalEl = document.getElementById('overviewSalesTotal');
   if (totalEl) totalEl.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(total);
   overviewSalesChart = new Chart(ctx, {
