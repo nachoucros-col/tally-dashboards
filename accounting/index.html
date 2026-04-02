@@ -1855,18 +1855,25 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function refreshData() {
-  document.getElementById('lastUpdate').textContent = 'Actualizando...';
+  const btn = document.querySelector('.refresh-btn');
+  const lbl = document.getElementById('lastUpdate');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Actualizando...'; }
+  if (lbl)  lbl.textContent = 'Actualizando…';
   try {
-    const [cpp] = await Promise.allSettled([fetchSheet('Clientes_por_periodo')]);
-    if (cpp.status === 'fulfilled' && cpp.value) {
-      updateDeclStats(cpp.value);
+    // Reload both sheets in parallel
+    await Promise.all([
+      loadTimelineData(),   // recarga Clientes_por_periodo → timelineRawData, monthlySalesData, overviewSalesChart, top10
+      loadClientsLoad()     // recarga Clients_load → equipoClientsData + KPI cards
+    ]);
+    // Re-render equipo charts if that section is currently visible
+    if (document.getElementById('section-equipo')?.style.display !== 'none') {
+      initEquipoCharts();
     }
-  } catch(e) { /* silent */ }
-  document.getElementById('lastUpdate').textContent = 'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
-}
-
-function updateDeclStats(data) {
-  // Reserved for future live stat updates
+  } catch(e) {
+    console.warn('refreshData error:', e);
+  }
+  if (lbl)  lbl.textContent = 'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
+  if (btn) { btn.disabled = false; btn.textContent = '↻ Actualizar'; }
 }
 
 // ============================================================
