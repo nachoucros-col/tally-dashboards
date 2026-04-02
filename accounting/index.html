@@ -251,6 +251,7 @@ function gateSubmit() {
   .card {
     background: var(--card); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 20px;
+    margin-bottom: 20px;
   }
   .card-title {
     font-size: 14px; font-weight: 600; color: var(--text);
@@ -741,11 +742,7 @@ function gateSubmit() {
         <div class="kpi-sub">25 de 155 cuentas activas (base Feb 2026)</div>
         <div class="kpi-trend trend-warn">= 25 anuales / 155 Feb × 100</div>
       </div>
-      <div class="kpi-card" style="--accent-color: #f59e0b">
-        <div class="kpi-label">Declaraciones Anuales Lote</div>
-        <div class="kpi-value heat-yellow">16.1%</div>
-        <div class="kpi-sub">Con datos: 15 | En ceros: 10 | Total: 25</div>
-      </div>
+
     </div>
 
     <!-- CHARTS ROW -->
@@ -783,6 +780,22 @@ function gateSubmit() {
     </div>
 
     <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:0;">📈 Ventas Totales por Mes <span class="badge">Clientes AZ · Últimos 6 meses</span></div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Acumulado período</div>
+          <div style="font-size:20px;font-weight:700;color:var(--accent);" id="overviewSalesTotal">—</div>
+        </div>
+      </div>
+      <div class="chart-container" style="height:200px;">
+        <canvas id="chartMonthlySales"></canvas>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;">
+        Fuente: Clientes_por_periodo · Solo filas con ventas reportadas · Base: mes actual −1
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-title">🤖 Estado Automatizaciones Claude</div>
         <div class="task-grid" style="margin-top:4px;">
           <div class="task-item">
@@ -797,7 +810,7 @@ function gateSubmit() {
             <div style="font-size:14px;">🔴</div>
             <div class="task-info">
               <div class="task-name">Monitor Correos (5 cuentas)</div>
-              <div class="task-schedule">Cada 3 días · <b style="color:var(--red)">DESACTIVADO</b></div>
+              <div class="task-schedule">Revisión diaria · <b style="color:var(--red)">DESACTIVADO</b> · Reactivar para caché</div>
             </div>
             <span class="status status-red">Inactivo</span>
           </div>
@@ -1834,38 +1847,59 @@ function updateDeclStats(data) {
 // TIMELINE CHART — Ventas vs Impuestos por Cliente
 // ============================================================
 let timelineRawData = {};
+let monthlySalesData = {};
+let overviewSalesChart = null;
 
 async function loadTimelineData() {
   const data = await fetchSheet('Clientes_por_periodo');
   if (!data) return;
   timelineRawData = {};
+  monthlySalesData = {};
   const rows = data.table?.rows || [];
+  const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   rows.forEach(row => {
     const c = row.c || [];
-    const get  = i => c[i] ? c[i].v : null;
-    const getF = i => c[i] ? (c[i].f != null ? c[i].f : c[i].v) : null;
-    const client    = get(1);
-    const period    = getF(3) || String(get(3) || '');
-    const declTipo  = get(5);
+    const get = i => (c[i] && c[i].v != null) ? c[i].v : null;
+    const periodId  = String(get(0) || '');   // "2025-07_AZ005337"
+    const companyId = String(get(1) || '');   // "AZ005337"
     const sales     = parseFloat(get(6)) || 0;
     const retention = parseFloat(get(9)) || 0;
-    if (declTipo !== 'Con datos') return;
-    if (!client || !period) return;
-    if (!timelineRawData[client]) timelineRawData[client] = [];
-    timelineRawData[client].push({ period, sales, retention });
+    if (!companyId || !periodId) return;
+    // Extract YYYY-MM from PeriodID (handles "2025-7" and "2025-07" and "2026-3")
+    const pm = periodId.match(/^(\d{4})-(\d{1,2})/);
+    if (!pm) return;
+    const year = pm[1];
+    const mon  = pm[2].padStart(2, '0');
+    const periodKey = year + '-' + mon;
+    const period = monthNames[parseInt(mon, 10) - 1] + ' ' + year.slice(2);
+    if (!timelineRawData[companyId]) timelineRawData[companyId] = [];
+    timelineRawData[companyId].push({ period, periodKey, sales, retention });
+    // Global monthly aggregate
+    if (sales > 0) {
+      monthlySalesData[periodKey] = (monthlySalesData[periodKey] || 0) + sales;
+    }
   });
-  Object.keys(timelineRawData).forEach(c => {
-    timelineRawData[c].sort((a, b) => a.period < b.period ? -1 : 1);
+  // Sort + deduplicate each company's entries
+  Object.keys(timelineRawData).forEach(cid => {
+    timelineRawData[cid].sort((a, b) => a.periodKey < b.periodKey ? -1 : 1);
+    const seen = {};
+    timelineRawData[cid] = timelineRawData[cid].filter(e => {
+      if (seen[e.periodKey]) return false;
+      seen[e.periodKey] = true;
+      return true;
+    });
   });
+  // Render overview monthly sales chart if canvas is present
+  if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
+  // Update timeline selector in declaraciones tab
   const sel = document.getElementById('timelineClientSelect');
-  if (!sel) return;
-  const clients = Object.keys(timelineRawData).sort();
-  if (clients.length === 0) {
-    sel.innerHTML = '<option value="">Sin datos disponibles</option>';
-    return;
+  if (sel) {
+    const ids = Object.keys(timelineRawData).sort();
+    sel.innerHTML = ids.length
+      ? ids.map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('')
+      : '<option value="">Sin datos disponibles</option>';
+    if (ids.length) renderTimelineChart();
   }
-  sel.innerHTML = clients.map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('');
-  renderTimelineChart();
 }
 
 function renderTimelineChart() {
@@ -1929,7 +1963,7 @@ function showTab(id) {
   var el = document.querySelector('.sidebar-item[data-tab="' + id + '"]');
   if (el) el.classList.add('active');
   // Redraw charts when tab becomes visible
-  if (id === 'overview') { initOverviewCharts(); }
+  if (id === 'overview') { initOverviewCharts(); if (Object.keys(monthlySalesData).length) initOverviewSalesChart(); }
   if (id === 'clientes') {
     initClientesCharts();
     if (Object.keys(timelineRawData).length === 0) loadTimelineData();
@@ -2415,8 +2449,8 @@ function fmtMXN(n) {
   return new Intl.NumberFormat('es-MX', {style:'currency', currency:'MXN', maximumFractionDigits:0}).format(n);
 }
 
-function calcClientTotals(clientName) {
-  var entries = timelineRawData[clientName] || [];
+function calcClientTotals(clientId) {
+  var entries = timelineRawData[clientId] || [];
   var ts = 0, tr = 0;
   entries.forEach(function(e) { ts += (e.sales || 0); tr += (e.retention || 0); });
   return {
@@ -2543,7 +2577,7 @@ function renderClientProfile(id) {
   var panel = document.getElementById('clientProfile');
   if (!panel) return;
 
-  var totals = calcClientTotals(c.name);
+  var totals = calcClientTotals(id);
   var sc = getClientSCAccess(id, c);
   var decls = getClientDeclarations(id, c);
   var tasks = getClientTasks(id, c);
@@ -2692,15 +2726,15 @@ function renderClientProfile(id) {
     '</div>';
 
   // Render chart
-  renderClientTimelineChart(c.name);
+  renderClientTimelineChart(id);
 }
 
-function renderClientTimelineChart(clientName) {
+function renderClientTimelineChart(clientId) {
   if (clientChart) { clientChart.destroy(); clientChart = null; }
   var ctx = document.getElementById('clientTimelineChart');
   var emptyEl = document.getElementById('clientChartEmpty');
   if (!ctx) return;
-  var entries = timelineRawData[clientName] || [];
+  var entries = timelineRawData[clientId] || [];
   if (!entries.length) {
     ctx.style.display = 'none';
     if (emptyEl) emptyEl.style.display = 'block';
@@ -2729,6 +2763,70 @@ function renderClientTimelineChart(clientName) {
       scales: {
         x: { grid: { color: '#2a305022' }, ticks: { font: { size: 10 } } },
         y: { grid: { color: '#2a305033' }, beginAtZero: true, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initOverviewSalesChart() {
+  if (overviewSalesChart) { overviewSalesChart.destroy(); overviewSalesChart = null; }
+  const ctx = document.getElementById('chartMonthlySales')?.getContext('2d');
+  if (!ctx) return;
+  // Build last 6 months from current - 1
+  const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const now = new Date();
+  now.setMonth(now.getMonth() - 1); // base = current month - 1
+  const periods = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const label = monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
+    periods.push({ key, label });
+  }
+  const labels = periods.map(p => p.label);
+  const values = periods.map(p => monthlySalesData[p.key] || 0);
+  const total = values.reduce((a, b) => a + b, 0);
+  const totalEl = document.getElementById('overviewSalesTotal');
+  if (totalEl) totalEl.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(total);
+  overviewSalesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Ventas Totales (MXN)',
+        data: values,
+        borderColor: '#7c5cfc',
+        backgroundColor: 'rgba(124,92,252,0.07)',
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointBackgroundColor: '#7c5cfc',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        tension: 0.35,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: c => 'Ventas: $' + (c.parsed.y || 0).toLocaleString('es-MX')
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#2a305022' }, ticks: { font: { size: 11 } } },
+        y: {
+          grid: { color: '#2a305033' }, beginAtZero: true,
+          ticks: {
+            font: { size: 11 },
+            callback: v => v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M'
+                        : v >= 1000    ? '$' + (v/1000).toFixed(0) + 'k'
+                        : '$' + v
+          }
+        }
       }
     }
   });
@@ -2772,7 +2870,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('lastUpdate').textContent =
     'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
   initOverviewCharts();
-  loadTimelineData(); // pre-load timeline for client viewer
+  loadTimelineData().then(() => {
+    if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
+  }); // pre-load timeline + overview sales chart
   // Auto-refresh every 5 minutes
   setInterval(refreshData, 5 * 60 * 1000);
 });
