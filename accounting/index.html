@@ -1200,7 +1200,7 @@ function gateSubmit() {
             <div style="font-size:11px;color:var(--muted);">Responsable principal · IN (Inbound)</div>
           </div>
           <div style="margin-left:auto;text-align:right;">
-            <div style="font-size:28px;font-weight:700;color:#ef4444;">180</div>
+            <div style="font-size:28px;font-weight:700;color:#ef4444;" id="equipoCount_arturo">—</div>
             <div style="font-size:10px;color:var(--muted);">clientes</div>
           </div>
         </div>
@@ -1237,7 +1237,7 @@ function gateSubmit() {
             <div style="font-size:11px;color:var(--muted);">AZ (Amazon) · Alta complejidad</div>
           </div>
           <div style="margin-left:auto;text-align:right;">
-            <div style="font-size:28px;font-weight:700;color:#7c5cfc;">55</div>
+            <div style="font-size:28px;font-weight:700;color:#7c5cfc;" id="equipoCount_cristina">—</div>
             <div style="font-size:10px;color:var(--muted);">clientes</div>
           </div>
         </div>
@@ -1275,7 +1275,7 @@ function gateSubmit() {
             <div style="font-size:11px;color:var(--muted);">AZ (Amazon) · Proceso activo</div>
           </div>
           <div style="margin-left:auto;text-align:right;">
-            <div style="font-size:28px;font-weight:700;color:#4f7fff;">60</div>
+            <div style="font-size:28px;font-weight:700;color:#4f7fff;" id="equipoCount_lina">—</div>
             <div style="font-size:10px;color:var(--muted);">clientes</div>
           </div>
         </div>
@@ -1313,7 +1313,7 @@ function gateSubmit() {
             <div style="font-size:11px;color:var(--muted);">Asignaciones mixtas · Cartera reducida</div>
           </div>
           <div style="margin-left:auto;text-align:right;">
-            <div style="font-size:28px;font-weight:700;color:#22c55e;">3</div>
+            <div style="font-size:28px;font-weight:700;color:#22c55e;" id="equipoCount_edgar">—</div>
             <div style="font-size:10px;color:var(--muted);">clientes</div>
           </div>
         </div>
@@ -1368,7 +1368,7 @@ function gateSubmit() {
           </thead>
           <tbody>
             <tr>
-              <td><b>Arturo</b></td><td>180</td>
+              <td><b>Arturo</b></td><td id="equipoTbl_arturo">—</td>
               <td><span style="color:var(--green);">~45</span></td>
               <td><span class="status status-yellow">~47%</span></td>
               <td>~5</td>
@@ -1376,7 +1376,7 @@ function gateSubmit() {
               <td><span class="status status-yellow">Priorizar</span></td>
             </tr>
             <tr>
-              <td><b style="color:#7c5cfc;">Cristina</b></td><td>55</td>
+              <td><b style="color:#7c5cfc;">Cristina</b></td><td id="equipoTbl_cristina">—</td>
               <td><span style="color:var(--red);">~10</span></td>
               <td><span class="status status-red">~32%</span></td>
               <td>~10</td>
@@ -1384,7 +1384,7 @@ function gateSubmit() {
               <td><span class="status status-red">Escalada urgente</span></td>
             </tr>
             <tr>
-              <td><b style="color:#4f7fff;">Lina</b></td><td>60</td>
+              <td><b style="color:#4f7fff;">Lina</b></td><td id="equipoTbl_lina">—</td>
               <td><span style="color:var(--yellow);">~18</span></td>
               <td><span class="status status-yellow">~43%</span></td>
               <td>~7</td>
@@ -1392,7 +1392,7 @@ function gateSubmit() {
               <td><span class="status status-yellow">Seguimiento SC</span></td>
             </tr>
             <tr>
-              <td><b style="color:#22c55e;">Edgar</b></td><td>3</td>
+              <td><b style="color:#22c55e;">Edgar</b></td><td id="equipoTbl_edgar">—</td>
               <td><span style="color:var(--green);">1</span></td>
               <td><span class="status status-yellow">33%</span></td>
               <td>0</td>
@@ -1403,7 +1403,7 @@ function gateSubmit() {
         </table>
       </div>
       <div style="margin-top:12px;font-size:11px;color:var(--muted);">
-        * Datos estimados derivados de cruce Clients_Load + Declaraciones. Para datos en tiempo real usar tab Declaraciones con filtro por responsable.
+        * Totales de cartera en vivo desde Clients_Load · Datos de declaraciones estimados · Para detalle usar tab Declaraciones con filtro por responsable.
       </div>
     </div>
 
@@ -1848,6 +1848,7 @@ function updateDeclStats(data) {
 // ============================================================
 let timelineRawData = {};
 let monthlySalesData = {};
+let equipoClientsData = {}; // {Arturo:0, Cristina:0, Lina:0, Edgar:0, 'Sin asignar':0}
 let overviewSalesChart = null;
 
 async function loadTimelineData() {
@@ -1969,7 +1970,10 @@ function showTab(id) {
     if (Object.keys(timelineRawData).length === 0) loadTimelineData();
   }
   if (id === 'declaraciones') initDeclCharts();
-  if (id === 'equipo') initEquipoCharts();
+  if (id === 'equipo') {
+    if (Object.keys(equipoClientsData).length === 0) loadClientsLoad();
+    else initEquipoCharts();
+  }
 }
 
 // ============================================================
@@ -2065,7 +2069,43 @@ function initOverviewCharts() {
 // ============================================================
 // EQUIPO / CARGA CHARTS
 // ============================================================
+async function loadClientsLoad() {
+  const data = await fetchSheet('Clients_load');
+  if (!data) return;
+  const counts = { Arturo: 0, Cristina: 0, Lina: 0, Edgar: 0, 'Sin asignar': 0 };
+  const rows = data.table?.rows || [];
+  rows.forEach(row => {
+    const c = row.c || [];
+    const owner = (c[2] && c[2].v) ? String(c[2].v).trim() : '';
+    if (owner === 'Arturo') counts.Arturo++;
+    else if (owner === 'Cristina') counts.Cristina++;
+    else if (owner === 'Lina') counts.Lina++;
+    else if (owner === 'Edgar') counts.Edgar++;
+    else counts['Sin asignar']++;
+  });
+  equipoClientsData = counts;
+  // Update KPI card counters
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('equipoCount_arturo',   counts.Arturo);
+  set('equipoCount_cristina', counts.Cristina);
+  set('equipoCount_lina',     counts.Lina);
+  set('equipoCount_edgar',    counts.Edgar);
+  // Update table cells
+  set('equipoTbl_arturo',   counts.Arturo);
+  set('equipoTbl_cristina', counts.Cristina);
+  set('equipoTbl_lina',     counts.Lina);
+  set('equipoTbl_edgar',    counts.Edgar);
+  // Redraw chart if tab is active
+  if (document.getElementById('section-equipo')?.style.display !== 'none') initEquipoCharts();
+}
+
 function initEquipoCharts() {
+  const d = equipoClientsData;
+  const arturo   = d.Arturo   || 0;
+  const lina     = d.Lina     || 0;
+  const cristina = d.Cristina || 0;
+  const edgar    = d.Edgar    || 0;
+  const sin      = d['Sin asignar'] || 0;
   if (charts.equipoClientes) charts.equipoClientes.destroy();
   const ctx1 = document.getElementById('chartEquipoClientes')?.getContext('2d');
   if (ctx1) {
@@ -2074,7 +2114,7 @@ function initEquipoCharts() {
       data: {
         labels: ['Arturo (IN)', 'Lina (AZ)', 'Cristina (AZ)', 'Edgar', 'Sin asignar'],
         datasets: [{
-          data: [180, 60, 55, 3, 82],
+          data: [arturo, lina, cristina, edgar, sin],
           backgroundColor: [COLORS.red, COLORS.blue, COLORS.purple, COLORS.green, COLORS.muted],
           borderWidth: 0, hoverOffset: 6
         }]
@@ -2874,6 +2914,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTimelineData().then(() => {
     if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
   }); // pre-load timeline + overview sales chart
+  loadClientsLoad(); // pre-load equipo/carga counts from Clients_load sheet
   // Auto-refresh every 5 minutes
   setInterval(refreshData, 5 * 60 * 1000);
 });
