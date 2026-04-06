@@ -1954,7 +1954,7 @@ function renderAccesosUI() {
   var tbc = document.getElementById('accesosCompletosBody');
   if (tbc) {
     tbc.innerHTML = completos.length ? completos.map(function(c) {
-      var f = c.fecha ? c.fecha.slice(5).replace('-', ' ') : '—';
+      var f = c.fecha ? (function(s) { var d = new Date(s); return isNaN(d.getTime()) ? s.slice(0,10) : d.toLocaleDateString('es-MX', {day:'2-digit', month:'short', timeZone:'UTC'}); })(c.fecha) : '—';
       return '<tr><td><b>' + escH(c.name) + '</b></td><td>' + escH(f) + '</td><td style="color:var(--muted);font-size:12px;">' + escH(c.notas || 'Acceso total') + '</td></tr>';
     }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--muted);font-size:12px;">Ningún cliente con acceso completo</td></tr>';
   }
@@ -2707,6 +2707,27 @@ function calcClientSem(id, c) {
 }
 
 function getClientSCAccess(id, c) {
+  // Prefer live data from Accesos_SellerCentral sheet if available
+  if (typeof accesosRawData !== 'undefined' && accesosRawData.length) {
+    var live = accesosRawData.find(function(r) { return r.id === id; });
+    if (live) {
+      var mods = [];
+      if (live.ret)   mods.push('Retenciones');
+      if (live.vtas)  mods.push('Ventas');
+      if (live.inv)   mods.push('Inventario');
+      if (live.pay)   mods.push('Pagos');
+      if (live.banco) mods.push('Banco');
+      var modNote = mods.length ? mods.join(', ') : 'Sin módulos confirmados';
+      if (live.estado === 'Acceso completo') {
+        return {level:'completo', label:'Completo', note:'Acceso completo — ' + modNote + '.'};
+      }
+      if (live.estado === 'Acceso Parcial') {
+        return {level:'parcial', label:'Parcial', note:'Acceso parcial — ' + modNote + (live.notas ? '. ' + live.notas : '') + '.'};
+      }
+      return {level:'pendiente', label:'Pendiente', note: live.notas || 'Sin acceso a Seller Central confirmado.'};
+    }
+  }
+  // Fallback to static CLIENT_DB logic
   if (c.suspended) return {level:'na', label:'N/A', note:'Cliente suspendido — acceso SC no aplica.'};
   if ((c.tags && c.tags.includes('nosc')) || c.declReason === 'nosc')
     return {level:'sin_acceso', label:'Sin acceso', note:'Sin acceso a Seller Central — bloqueo activo sobre declaración mensual.'};
