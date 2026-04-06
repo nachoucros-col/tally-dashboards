@@ -732,8 +732,8 @@ function gateSubmit() {
       </div>
       <div class="kpi-card" style="--accent-color: #f97316">
         <div class="kpi-label">Accesos Seller Central</div>
-        <div class="kpi-value heat-red">13.4%</div>
-        <div class="kpi-sub">22/164 AZ con acceso · 61 pendientes</div>
+        <div class="kpi-value heat-red" id="kpi-accesos-pct">—</div>
+        <div class="kpi-sub" id="kpi-accesos-sub">Cargando…</div>
         <div class="kpi-trend trend-down">↓ Cuello de botella principal</div>
       </div>
       <div class="kpi-card" style="--accent-color: #f59e0b">
@@ -766,14 +766,14 @@ function gateSubmit() {
           <div style="position:relative; width:180px; height:180px;">
             <canvas id="chartAccesos"></canvas>
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-              <div style="font-size:26px;font-weight:700;">13%</div>
+              <div style="font-size:26px;font-weight:700;" id="accesosDonutCenter">—</div>
               <div style="font-size:11px;color:var(--muted);">con acceso</div>
             </div>
           </div>
           <div class="donut-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><span>Acceso Completo: <b>4</b></span></div>
-            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span>Acceso Parcial: <b>18</b></span></div>
-            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><span>Pendiente: <b>~142</b></span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><span>Acceso Completo: <b id="accesosCompleteLegend">—</b></span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span>Acceso Parcial: <b id="accesosParcialLegend">—</b></span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><span>Pendiente: <b id="accesosPendienteLegend">—</b></span></div>
           </div>
         </div>
       </div>
@@ -878,36 +878,36 @@ function gateSubmit() {
 
     <div class="alert-banner" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);">
       <div class="alert-icon">⚠️</div>
-      <div>
+      <div id="accesos-alert-text">
         <b style="color:var(--yellow)">Sin acceso al SC = sin datos = imposible declarar correctamente.</b>
-        Este es el cuello de botella #1 del sistema. 142+ clientes AZ sin ningún acceso.
+        Este es el cuello de botella #1 del sistema. <span id="accesos-alert-count">—</span> clientes AZ sin ningún acceso.
       </div>
     </div>
 
     <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);">
       <div class="kpi-card" style="--accent-color:#22c55e">
         <div class="kpi-label">Acceso Completo</div>
-        <div class="kpi-value heat-green">4</div>
+        <div class="kpi-value heat-green" id="kpi-completo-val">—</div>
         <div class="kpi-sub">Retenciones + Ventas + Banco + Payoneer</div>
       </div>
       <div class="kpi-card" style="--accent-color:#f59e0b">
         <div class="kpi-label">Acceso Parcial</div>
-        <div class="kpi-value heat-yellow">18</div>
-        <div class="kpi-sub">1-3 módulos habilitados</div>
+        <div class="kpi-value heat-yellow" id="kpi-parcial-val">—</div>
+        <div class="kpi-sub">1+ módulos habilitados</div>
       </div>
       <div class="kpi-card" style="--accent-color:#ef4444">
         <div class="kpi-label">Pendiente</div>
-        <div class="kpi-value heat-red">142+</div>
-        <div class="kpi-sub">Sin ningún acceso</div>
+        <div class="kpi-value heat-red" id="kpi-pendiente-val">—</div>
+        <div class="kpi-sub" id="kpi-pendiente-sub">Sin ningún acceso</div>
       </div>
       <div class="kpi-card" style="--accent-color:#7c5cfc">
         <div class="kpi-label">Con Retenciones</div>
-        <div class="kpi-value">~14</div>
+        <div class="kpi-value" id="kpi-ret-val">—</div>
         <div class="kpi-sub">Módulo crítico fiscal</div>
       </div>
       <div class="kpi-card" style="--accent-color:#f97316">
         <div class="kpi-label">Con Banco</div>
-        <div class="kpi-value">4</div>
+        <div class="kpi-value" id="kpi-banco-val">—</div>
         <div class="kpi-sub">Acceso bancario completo</div>
       </div>
     </div>
@@ -1018,24 +1018,24 @@ function gateSubmit() {
         <div class="card-title">📊 Progreso de Accesos por Módulo</div>
         <div style="margin-top:8px;">
           <div class="progress-item">
-            <div class="progress-label"><span>🔑 Retenciones</span><span class="pct">~14 / 164 (8.5%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-purple" style="width:8.5%"></div></div>
+            <div class="progress-label"><span>🔑 Retenciones</span><span class="pct" id="prog-ret-lbl">Cargando…</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-purple" id="prog-ret-fill" style="width:0%"></div></div>
           </div>
           <div class="progress-item">
-            <div class="progress-label"><span>📈 Ventas (Sales Report)</span><span class="pct">~22 / 164 (13.4%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-blue" style="width:13.4%"></div></div>
+            <div class="progress-label"><span>📈 Ventas (Sales Report)</span><span class="pct" id="prog-vtas-lbl">Cargando…</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-blue" id="prog-vtas-fill" style="width:0%"></div></div>
           </div>
           <div class="progress-item">
-            <div class="progress-label"><span>📦 Inventario</span><span class="pct">~16 / 164 (9.8%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-yellow" style="width:9.8%"></div></div>
+            <div class="progress-label"><span>📦 Inventario</span><span class="pct" id="prog-inv-lbl">Cargando…</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-yellow" id="prog-inv-fill" style="width:0%"></div></div>
           </div>
           <div class="progress-item">
-            <div class="progress-label"><span>💳 Payoneer</span><span class="pct">4 / 164 (2.4%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-red" style="width:2.4%"></div></div>
+            <div class="progress-label"><span>💳 Payoneer</span><span class="pct" id="prog-pay-lbl">Cargando…</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-red" id="prog-pay-fill" style="width:0%"></div></div>
           </div>
           <div class="progress-item">
-            <div class="progress-label"><span>🏦 Estado Banco</span><span class="pct">4 / 164 (2.4%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-red" style="width:2.4%"></div></div>
+            <div class="progress-label"><span>🏦 Estado Banco</span><span class="pct" id="prog-banco-lbl">Cargando…</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-red" id="prog-banco-fill" style="width:0%"></div></div>
           </div>
         </div>
       </div>
@@ -1044,27 +1044,17 @@ function gateSubmit() {
         <div class="table-wrap">
           <table>
             <thead><tr><th>Cliente</th><th>Fecha</th><th>Notas</th></tr></thead>
-            <tbody>
-              <tr><td><b>Recontour</b></td><td>10 Mar</td><td style="color:var(--muted);font-size:12px;">Editores completos</td></tr>
-              <tr><td><b>Durelife Nutrition</b></td><td>18 Mar</td><td style="color:var(--muted);font-size:12px;">Acceso total</td></tr>
-              <tr><td><b>Fresh Finest</b></td><td>10 Mar</td><td style="color:var(--muted);font-size:12px;">Sin banco (5/5)</td></tr>
-              <tr><td><b>ALPAKA</b></td><td>18 Mar</td><td style="color:var(--muted);font-size:12px;">Sin banco</td></tr>
+            <tbody id="accesosCompletosBody">
+              <tr><td colspan="3" style="text-align:center;color:var(--muted);font-size:12px;">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
-        <div class="card-title" style="margin-top:16px;">⚡ Parciales Clave</div>
+        <div class="card-title" style="margin-top:16px;">⚡ Parciales — más módulos primero</div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Cliente</th><th>Estado</th><th>Módulos</th></tr></thead>
-            <tbody>
-              <tr><td>Rollga</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>Brighticonic</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>Plymouth</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>RIFTBOX BRANDS</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>Hair Safe Solutions</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv</td></tr>
-              <tr><td>GHU Electronics</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas</td></tr>
-              <tr><td>Doomlings</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Vtas+Inv (bloq ret)</td></tr>
-              <tr><td>Lil Cactus Mexico</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">Ret+Vtas+Inv (Cris)</td></tr>
+            <tbody id="accesosParcialBody">
+              <tr><td colspan="3" style="text-align:center;color:var(--muted);font-size:12px;">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1876,6 +1866,124 @@ async function loadAutomationsData() {
   }).join('');
 }
 
+// ── Accesos Seller Central ────────────────────────────────────────────────────
+var accesosRawData = [];
+
+async function loadAccesosData() {
+  const data = await fetchSheet('Accesos_SellerCentral');
+  if (!data || !data.table) return;
+  const rows = data.table.rows || [];
+  accesosRawData = rows
+    .filter(function(r) {
+      var id = r.c && r.c[0] && r.c[0].v !== null ? String(r.c[0].v) : '';
+      return id && (id.startsWith('AZ') || id.startsWith('IN'));
+    })
+    .map(function(r) {
+      var c = r.c || [];
+      var bool = function(v) { return v && (String(v) === 'TRUE' || v === true); };
+      return {
+        id:     c[0] && c[0].v !== null ? String(c[0].v) : '',
+        name:   c[1] && c[1].v !== null ? String(c[1].v) : '',
+        estado: c[2] && c[2].v !== null ? String(c[2].v) : 'Pendiente',
+        ret:    bool(c[5] && c[5].v),
+        vtas:   bool(c[6] && c[6].v),
+        inv:    bool(c[7] && c[7].v),
+        pay:    bool(c[8] && c[8].v),
+        banco:  bool(c[9] && c[9].v),
+        fecha:  c[10] && c[10].v !== null ? String(c[10].v) : '',
+        notas:  c[11] && c[11].v !== null ? String(c[11].v) : ''
+      };
+    });
+  renderAccesosUI();
+}
+
+function renderAccesosUI() {
+  var d = accesosRawData;
+  if (!d.length) return;
+  var completos  = d.filter(function(c) { return c.estado === 'Acceso completo'; });
+  var parciales  = d.filter(function(c) { return c.estado === 'Acceso Parcial'; });
+  var pendientes = d.filter(function(c) { return c.estado === 'Pendiente' || (c.estado !== 'Acceso completo' && c.estado !== 'Acceso Parcial'); });
+  var total      = d.length;
+  var conAcceso  = completos.length + parciales.length;
+  var retN   = d.filter(function(c){ return c.ret; }).length;
+  var vtasN  = d.filter(function(c){ return c.vtas; }).length;
+  var invN   = d.filter(function(c){ return c.inv; }).length;
+  var payN   = d.filter(function(c){ return c.pay; }).length;
+  var bancoN = d.filter(function(c){ return c.banco; }).length;
+  var pct    = total > 0 ? (conAcceso / total * 100).toFixed(1) : 0;
+
+  function set(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; }
+  function pctStr(n) { return (total > 0 ? (n / total * 100).toFixed(1) : '0.0') + '%'; }
+  function bar(n) { return total > 0 ? (n / total * 100).toFixed(1) + '%' : '0%'; }
+
+  // Overview KPI
+  set('kpi-accesos-pct', pct + '%');
+  set('kpi-accesos-sub', conAcceso + '/' + total + ' AZ con acceso · ' + pendientes.length + ' pendientes');
+
+  // Overview donut center + legend
+  set('accesosDonutCenter', pct + '%');
+  set('accesosCompleteLegend', completos.length);
+  set('accesosParcialLegend', parciales.length);
+  set('accesosPendienteLegend', pendientes.length);
+
+  // Alert banner
+  set('accesos-alert-count', pendientes.length);
+
+  // Accesos section KPIs
+  set('kpi-completo-val', completos.length);
+  set('kpi-parcial-val', parciales.length);
+  set('kpi-pendiente-val', pendientes.length);
+  set('kpi-ret-val', retN);
+  set('kpi-banco-val', bancoN);
+
+  // Progress bars
+  var mods = [
+    { lbl:'prog-ret-lbl',  fill:'prog-ret-fill',  n:retN },
+    { lbl:'prog-vtas-lbl', fill:'prog-vtas-fill', n:vtasN },
+    { lbl:'prog-inv-lbl',  fill:'prog-inv-fill',  n:invN },
+    { lbl:'prog-pay-lbl',  fill:'prog-pay-fill',  n:payN },
+    { lbl:'prog-banco-lbl',fill:'prog-banco-fill',n:bancoN }
+  ];
+  mods.forEach(function(m) {
+    set(m.lbl, m.n + ' / ' + total + ' (' + pctStr(m.n) + ')');
+    var fe = document.getElementById(m.fill);
+    if (fe) fe.style.width = bar(m.n);
+  });
+
+  // Completos table
+  var tbc = document.getElementById('accesosCompletosBody');
+  if (tbc) {
+    tbc.innerHTML = completos.length ? completos.map(function(c) {
+      var f = c.fecha ? c.fecha.slice(5).replace('-', ' ') : '—';
+      return '<tr><td><b>' + escH(c.name) + '</b></td><td>' + escH(f) + '</td><td style="color:var(--muted);font-size:12px;">' + escH(c.notas || 'Acceso total') + '</td></tr>';
+    }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--muted);font-size:12px;">Ningún cliente con acceso completo</td></tr>';
+  }
+
+  // Parciales table — ordenados por nº de módulos desc
+  var tbp = document.getElementById('accesosParcialBody');
+  if (tbp) {
+    var topParciales = parciales.map(function(c) {
+      var mArr = [];
+      if (c.ret)   mArr.push('Ret');
+      if (c.vtas)  mArr.push('Vtas');
+      if (c.inv)   mArr.push('Inv');
+      if (c.pay)   mArr.push('Pay');
+      if (c.banco) mArr.push('Banco');
+      return { c: c, count: mArr.length, modStr: mArr.length ? mArr.join('+') : 'Solo Amazon' };
+    }).sort(function(a, b) { return b.count - a.count; }).slice(0, 12);
+
+    tbp.innerHTML = topParciales.length ? topParciales.map(function(item) {
+      return '<tr><td>' + escH(item.c.name) + '</td><td><span class="status status-yellow">Parcial</span></td><td style="font-size:11px;">' + escH(item.modStr) + '</td></tr>';
+    }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--muted);font-size:12px;">Ningún cliente con acceso parcial</td></tr>';
+  }
+
+  // Update donut chart if initialized
+  if (window.charts && window.charts.accesos) {
+    window.charts.accesos.data.datasets[0].data = [completos.length, parciales.length, pendientes.length];
+    window.charts.accesos.update();
+  }
+}
+
 async function refreshData() {
   const btn = document.querySelector('.refresh-btn');
   const lbl = document.getElementById('lastUpdate');
@@ -1886,7 +1994,8 @@ async function refreshData() {
     await Promise.all([
       loadTimelineData(),      // recarga Clientes_por_periodo → timelineRawData, monthlySalesData, overviewSalesChart, top10
       loadClientsLoad(),       // recarga Clients_load → equipoClientsData + KPI cards
-      loadAutomationsData()    // recarga Sheet1 del log de automatizaciones
+      loadAutomationsData(),   // recarga pestaña Automatizaciones
+      loadAccesosData()        // recarga Accesos_SellerCentral → KPIs, tablas, donut
     ]);
     // Re-render equipo charts if that section is currently visible
     if (document.getElementById('section-equipo')?.style.display !== 'none') {
@@ -2107,7 +2216,7 @@ function initOverviewCharts() {
     data: {
       labels: ['Completo', 'Parcial', 'Pendiente'],
       datasets: [{
-        data: [4, 18, 142],
+        data: [0, 0, 1],
         backgroundColor: [COLORS.green, COLORS.yellow, COLORS.red],
         borderWidth: 0,
         hoverOffset: 6
@@ -2119,6 +2228,8 @@ function initOverviewCharts() {
       plugins: { legend: { display: false } }
     }
   });
+  // Trigger live data update after chart is ready
+  if (typeof loadAccesosData === 'function') loadAccesosData();
 
 }
 
@@ -3083,6 +3194,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }); // pre-load timeline + overview sales chart
   loadClientsLoad();       // pre-load equipo/carga counts from Clients_load sheet
   loadAutomationsData();   // pre-load estado automatizaciones desde Sheet1
+  loadAccesosData();       // pre-load Accesos_SellerCentral → KPIs + tablas + donut
   // Auto-refresh every 5 minutes
   setInterval(refreshData, 5 * 60 * 1000);
 });
