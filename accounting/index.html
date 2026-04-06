@@ -822,58 +822,14 @@ function gateSubmit() {
     </div>
 
     <div class="card">
-      <div class="card-title">🤖 Estado Automatizaciones Claude</div>
-        <div class="task-grid" style="margin-top:4px;">
-          <div class="task-item">
-            <div style="font-size:14px;">🟢</div>
-            <div class="task-info">
-              <div class="task-name">Briefing Marketplace (Slack)</div>
-              <div class="task-schedule">L-V 9:35am · Próximo: 01 Abr 09:35</div>
-            </div>
-            <span class="status status-green">Activo</span>
-          </div>
-          <div class="task-item disabled">
-            <div style="font-size:14px;">🔴</div>
-            <div class="task-info">
-              <div class="task-name">Monitor Correos (5 cuentas)</div>
-              <div class="task-schedule">Revisión diaria · <b style="color:var(--red)">DESACTIVADO</b> · Reactivar para caché</div>
-            </div>
-            <span class="status status-red">Inactivo</span>
-          </div>
-          <div class="task-item">
-            <div style="font-size:14px;">🟢</div>
-            <div class="task-info">
-              <div class="task-name">Reporte Semanal CX (Slack)</div>
-              <div class="task-schedule">Lunes 9:04am · Próximo: 06 Abr</div>
-            </div>
-            <span class="status status-green">Activo</span>
-          </div>
-          <div class="task-item">
-            <div style="font-size:14px;">🟢</div>
-            <div class="task-info">
-              <div class="task-name">Plan Semanal Scrum Contabilidad</div>
-              <div class="task-schedule">Lunes 10:01am · Próximo: 06 Abr</div>
-            </div>
-            <span class="status status-green">Activo</span>
-          </div>
-          <div class="task-item">
-            <div style="font-size:14px;">🟢</div>
-            <div class="task-info">
-              <div class="task-name">Briefing Diario Contabilidad (DM)</div>
-              <div class="task-schedule">L-V 9:36am · Cristina, Edgar, Llyvi, Juan</div>
-            </div>
-            <span class="status status-green">Activo</span>
-          </div>
-          <div class="task-item">
-            <div style="font-size:14px;">🟢</div>
-            <div class="task-info">
-              <div class="task-name">Listener Hilos Slack → Sheets</div>
-              <div class="task-schedule">L-V 1:35pm + 5:35pm · Sync automático</div>
-            </div>
-            <span class="status status-green">Activo</span>
-          </div>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div class="card-title" style="margin-bottom:0;">🤖 Estado Automatizaciones Claude</div>
+        <div style="font-size:11px;color:var(--muted);" id="automationsUpdatedAt">Cargando…</div>
       </div>
+      <div class="task-grid" id="automationsGrid" style="margin-top:4px;">
+        <div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Cargando automatizaciones…</div>
+      </div>
+    </div>
   </div>
 
   <!-- ============================================================ -->
@@ -1796,6 +1752,36 @@ function gateSubmit() {
 // Proxy de Apps Script — JSONP mode: el <script> tag envía cookies de Google del usuario
 // → funciona para el equipo interno que ya está logueado en su cuenta Google
 const PROXY_URL = 'https://script.google.com/macros/s/AKfycby6Ng1huZmswttAsDIUYic6OYdFZsY9PllT8tWTR5F8RG8DTXtIyu6eb4azTRUhkIUr/exec';
+const AUTOMATIONS_SHEET_ID = '1PNRUcCefwOaAPKXwqXby-xspp1NcvWL6F58YccTte4k';
+
+// Fetches any Google Sheet directly via the Visualization API (JSONP).
+// Works for any spreadsheet accessible to the logged-in Google user.
+function fetchSheetDirect(spreadsheetId, sheetName) {
+  return new Promise(function(resolve) {
+    var cbName = '_tallyCb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    var script = document.createElement('script');
+    var timer = setTimeout(function() {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(null);
+    }, 25000);
+    window[cbName] = function(data) {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(data);
+    };
+    script.src = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(spreadsheetId) +
+      '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(sheetName) + '&callback=' + cbName;
+    script.onerror = function() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(null);
+    };
+    document.head.appendChild(script);
+  });
+}
 
 function fetchSheet(sheetName) {
   return new Promise(function(resolve) {
@@ -1854,6 +1840,73 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// ── Automatizaciones — carga desde Sheet1 del log de automatizaciones ────────
+async function loadAutomationsData() {
+  const grid = document.getElementById('automationsGrid');
+  const note = document.getElementById('automationsUpdatedAt');
+  const data = await fetchSheetDirect(AUTOMATIONS_SHEET_ID, 'Sheet1');
+  if (!data || !data.table) {
+    if (grid) grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin datos disponibles — verifica acceso al Sheet</div>';
+    if (note) note.textContent = 'Error al cargar';
+    return;
+  }
+  const rows = data.table.rows || [];
+  // Row 0 = meta (Sistema General), Row 1 = headers, Rows 2+ = una fila por automatización
+  const agentRows = rows.slice(2).filter(function(r) {
+    const name = r.c && r.c[0] && r.c[0].v ? String(r.c[0].v) : '';
+    return name && name !== 'Sistema General' && name !== 'Agent Name';
+  });
+
+  // Fecha del último log (busca el "Sistema General" más reciente)
+  var lastLogDate = '';
+  for (var i = rows.length - 1; i >= 0; i--) {
+    var rc = rows[i].c || [];
+    var rName = rc[0] && rc[0].v ? String(rc[0].v) : '';
+    var rDate = rc[1] && rc[1].v ? String(rc[1].v) : '';
+    if (rName === 'Sistema General' && rDate) { lastLogDate = rDate; break; }
+  }
+  if (note) note.textContent = lastLogDate ? 'Último log: ' + lastLogDate : 'Fuente: log automatizaciones';
+
+  if (!agentRows.length) {
+    if (grid) grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin automatizaciones registradas</div>';
+    return;
+  }
+
+  grid.innerHTML = agentRows.map(function(row) {
+    var c = row.c || [];
+    var name        = (c[0] && c[0].v) ? String(c[0].v) : '—';
+    var purpose     = (c[2] && c[2].v) ? String(c[2].v) : '';
+    var log         = (c[3] && c[3].v) ? String(c[3].v) : '';
+    var improvement = (c[4] && c[4].v) ? String(c[4].v) : '';
+
+    var isInactive = log.includes('DESACTIVADO') || log.startsWith('⚠️');
+    var icon        = isInactive ? '🔴' : '🟢';
+    var disabledCls = isInactive ? ' disabled' : '';
+    var badgeCls    = isInactive ? 'status-red' : 'status-green';
+    var badgeLabel  = isInactive ? 'Inactivo' : 'Activo';
+
+    // Extrae el horario del campo purpose (texto entre paréntesis)
+    var schedMatch = purpose.match(/\(([^)]+(?:am|pm|Sheets)[^)]*)\)/i);
+    var schedule   = schedMatch ? schedMatch[1] : purpose.slice(0, 70);
+
+    // Muestra last_improvement sólo si es relevante (no el placeholder inicial)
+    var isGenericNote = !improvement || improvement.includes('Registro inicial') || improvement.includes('baseline');
+    var noteHtml = !isGenericNote
+      ? '<div style="font-size:10px;color:var(--accent);margin-top:3px;">→ ' + escH(improvement) + '</div>'
+      : '';
+
+    return '<div class="task-item' + disabledCls + '">' +
+      '<div style="font-size:14px;">' + icon + '</div>' +
+      '<div class="task-info">' +
+        '<div class="task-name">' + escH(name) + '</div>' +
+        '<div class="task-schedule">' + escH(schedule) + '</div>' +
+        noteHtml +
+      '</div>' +
+      '<span class="status ' + badgeCls + '">' + badgeLabel + '</span>' +
+    '</div>';
+  }).join('');
+}
+
 async function refreshData() {
   const btn = document.querySelector('.refresh-btn');
   const lbl = document.getElementById('lastUpdate');
@@ -1862,8 +1915,9 @@ async function refreshData() {
   try {
     // Reload both sheets in parallel
     await Promise.all([
-      loadTimelineData(),   // recarga Clientes_por_periodo → timelineRawData, monthlySalesData, overviewSalesChart, top10
-      loadClientsLoad()     // recarga Clients_load → equipoClientsData + KPI cards
+      loadTimelineData(),      // recarga Clientes_por_periodo → timelineRawData, monthlySalesData, overviewSalesChart, top10
+      loadClientsLoad(),       // recarga Clients_load → equipoClientsData + KPI cards
+      loadAutomationsData()    // recarga Sheet1 del log de automatizaciones
     ]);
     // Re-render equipo charts if that section is currently visible
     if (document.getElementById('section-equipo')?.style.display !== 'none') {
@@ -3058,7 +3112,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTimelineData().then(() => {
     if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
   }); // pre-load timeline + overview sales chart
-  loadClientsLoad(); // pre-load equipo/carga counts from Clients_load sheet
+  loadClientsLoad();       // pre-load equipo/carga counts from Clients_load sheet
+  loadAutomationsData();   // pre-load estado automatizaciones desde Sheet1
   // Auto-refresh every 5 minutes
   setInterval(refreshData, 5 * 60 * 1000);
 });
