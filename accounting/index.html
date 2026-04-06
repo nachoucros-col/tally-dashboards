@@ -1382,7 +1382,7 @@ function gateSubmit() {
     <!-- DIFICULTADES ACTIVAS -->
     <div class="card" style="border-left:4px solid #ef4444;">
       <div class="card-title">🚧 Dificultades Activas por Responsable</div>
-      <div class="grid-2" style="gap:16px;margin-top:4px;">
+      <div class="grid-2" style="gap:16px;margin-top:4px;" id="dificultadesGrid">
 
         <!-- CRISTINA dificultades -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
@@ -1478,7 +1478,7 @@ function gateSubmit() {
     <!-- PRIORIDAD HOY -->
     <div class="card" style="border-left:4px solid #4f7fff;">
       <div class="card-title">🎯 Prioridad Hoy — Acción Concreta por Responsable</div>
-      <div class="grid-2" style="gap:16px;margin-top:4px;">
+      <div class="grid-2" style="gap:16px;margin-top:4px;" id="prioridadGrid">
 
         <!-- CRISTINA prioridad -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
@@ -1550,15 +1550,26 @@ function gateSubmit() {
     </div>
 
     <!-- Kaizen intro banner -->
-    <div style="background:linear-gradient(135deg,rgba(79,127,255,0.08),rgba(124,92,252,0.08));border:1px solid rgba(79,127,255,0.2);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;">
+    <div style="background:linear-gradient(135deg,rgba(79,127,255,0.08),rgba(124,92,252,0.08));border:1px solid rgba(79,127,255,0.2);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;">
       <div style="font-size:13px;line-height:1.7;color:var(--text);">
         <b style="color:var(--accent);">Marco Kaizen Tally:</b> Cada automatización tiene una descripción de lo que hace hoy y la <b>siguiente acción concreta</b> para mejorar el sistema un 1% — mejoras pequeñas, iterables y de bajo esfuerzo. Un sistema que mejora 1% diario es <b>3.7× mejor al final del año</b>.
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:20px;">
+    <!-- Sistema General status banner — populated dynamically -->
+    <div id="sistemaBanner" style="display:none;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--radius);padding:12px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:700;color:var(--accent);">📋 Último Reporte Sistema General</span>
+        <span id="sistemaBannerDate" style="font-size:11px;color:var(--muted);"></span>
+      </div>
+      <div id="sistemaBannerLog" style="font-size:12px;color:var(--text);margin-top:6px;line-height:1.6;"></div>
+    </div>
 
-      <!-- TASK 1 -->
+    <div style="display:flex;flex-direction:column;gap:20px;" id="automatizacionesDetailCards">
+
+      <!-- Dynamic cards are rendered by loadAutomationsData() into automatizacionesDetailCards -->
+      <!-- Legacy placeholder removed —— cards below are rendered via JS -->
+      <div style="display:none;"><!-- TASK 1 -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
         <div style="display:flex;align-items:flex-start;gap:16px;">
           <div style="font-size:28px;line-height:1;">📢</div>
@@ -1708,7 +1719,7 @@ function gateSubmit() {
         </div>
       </div>
 
-    </div>
+    </div></div><!-- /hidden legacy cards -->
 
     <!-- Summary analysis -->
     <div class="card" style="margin-top:24px;">
@@ -1801,8 +1812,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ── Automatizaciones — carga desde pestaña Automatizaciones en Accounting_DataModel ──
 async function loadAutomationsData() {
-  const grid = document.getElementById('automationsGrid');
-  const note = document.getElementById('automationsUpdatedAt');
+  const grid        = document.getElementById('automationsGrid');
+  const note        = document.getElementById('automationsUpdatedAt');
+  const detailCards = document.getElementById('automatizacionesDetailCards');
+  const sisBanner   = document.getElementById('sistemaBanner');
+  const sisBannerDate = document.getElementById('sistemaBannerDate');
+  const sisBannerLog  = document.getElementById('sistemaBannerLog');
+
   const data = await fetchSheet('Automatizaciones');
   if (!data || !data.table) {
     if (grid) grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin datos disponibles — verifica acceso al Sheet</div>';
@@ -1810,27 +1826,81 @@ async function loadAutomationsData() {
     return;
   }
   const rows = data.table.rows || [];
-  // Row 0 = meta (Sistema General), Row 1 = headers, Rows 2+ = una fila por automatización
+
+  // Row 0 = meta/intro, Row 1 = headers, Rows 2+ = agents + Sistema General logs at bottom
   const agentRows = rows.slice(2).filter(function(r) {
     const name = r.c && r.c[0] && r.c[0].v ? String(r.c[0].v) : '';
     return name && name !== 'Sistema General' && name !== 'Agent Name';
   });
 
-  // Fecha del último log (busca el "Sistema General" más reciente)
-  var lastLogDate = '';
+  // Find latest "Sistema General" log row
+  var lastSisLog = null;
   for (var i = rows.length - 1; i >= 0; i--) {
     var rc = rows[i].c || [];
     var rName = rc[0] && rc[0].v ? String(rc[0].v) : '';
-    var rDate = rc[1] && rc[1].v ? String(rc[1].v) : '';
-    if (rName === 'Sistema General' && rDate) { lastLogDate = rDate; break; }
+    if (rName === 'Sistema General') {
+      lastSisLog = {
+        date:   rc[1] && rc[1].v ? String(rc[1].v) : '',
+        log:    rc[3] && rc[3].v ? String(rc[3].v) : '',
+        improv: rc[4] && rc[4].v ? String(rc[4].v) : ''
+      };
+      break;
+    }
   }
-  if (note) note.textContent = lastLogDate ? 'Último log: ' + lastLogDate : 'Fuente: log automatizaciones';
+
+  // Show Sistema General banner
+  if (lastSisLog && sisBanner) {
+    sisBanner.style.display = '';
+    if (sisBannerDate) sisBannerDate.textContent = lastSisLog.date;
+    if (sisBannerLog)  sisBannerLog.textContent  = lastSisLog.log;
+  }
+
+  // Extract set of agent names marked DESACTIVADO in the last Sistema General log
+  var desactivados = new Set();
+  if (lastSisLog && lastSisLog.log) {
+    var logText = lastSisLog.log;
+    // Match patterns like "Monitor Correos sigue DESACTIVADO" or "X DESACTIVADO"
+    var deactMatches = logText.match(/([A-Za-záéíóúÁÉÍÓÚñÑ\s\→()]+?)\s+(?:sigue\s+)?DESACTIVADO/gi) || [];
+    deactMatches.forEach(function(m) {
+      var agentHint = m.replace(/\s*(?:sigue\s+)?DESACTIVADO/i, '').trim().toLowerCase();
+      desactivados.add(agentHint);
+    });
+  }
+
+  function isAgentInactive(name, log) {
+    if (log && (log.includes('DESACTIVADO') || log.startsWith('⚠️'))) return true;
+    // Check against Sistema General DESACTIVADO list
+    var nameLower = name.toLowerCase();
+    for (var d of desactivados) {
+      if (nameLower.includes(d) || d.includes(nameLower.split(' ')[0])) return true;
+    }
+    return false;
+  }
+
+  if (note) note.textContent = lastSisLog && lastSisLog.date ? 'Último log: ' + lastSisLog.date : 'Fuente: log automatizaciones';
 
   if (!agentRows.length) {
     if (grid) grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin automatizaciones registradas</div>';
     return;
   }
 
+  // Icon map by agent name keywords
+  var iconMap = [
+    { kw: 'briefing.*marketplace|marketplace.*briefing', icon: '📢' },
+    { kw: 'correo|email|monitor', icon: '📬' },
+    { kw: 'reporte|cx|semanal', icon: '📊' },
+    { kw: 'scrum|plan semanal', icon: '📋' },
+    { kw: 'contabilidad.*dm|dm.*contabilidad|briefing diario cont', icon: '📩' },
+    { kw: 'listener|hilos|slack.*sheet', icon: '🔄' },
+    { kw: 'revisión diaria|sistema general', icon: '🤖' }
+  ];
+  function getIcon(name) {
+    var lower = name.toLowerCase();
+    for (var m of iconMap) { if (new RegExp(m.kw, 'i').test(lower)) return m.icon; }
+    return '⚙️';
+  }
+
+  // ── Compact overview grid (automationsGrid) ──────────────────────────────────
   grid.innerHTML = agentRows.map(function(row) {
     var c = row.c || [];
     var name        = (c[0] && c[0].v) ? String(c[0].v) : '—';
@@ -1838,17 +1908,15 @@ async function loadAutomationsData() {
     var log         = (c[3] && c[3].v) ? String(c[3].v) : '';
     var improvement = (c[4] && c[4].v) ? String(c[4].v) : '';
 
-    var isInactive = log.includes('DESACTIVADO') || log.startsWith('⚠️');
-    var icon        = isInactive ? '🔴' : '🟢';
-    var disabledCls = isInactive ? ' disabled' : '';
-    var badgeCls    = isInactive ? 'status-red' : 'status-green';
-    var badgeLabel  = isInactive ? 'Inactivo' : 'Activo';
+    var inactive    = isAgentInactive(name, log);
+    var icon        = inactive ? '🔴' : '🟢';
+    var disabledCls = inactive ? ' disabled' : '';
+    var badgeCls    = inactive ? 'status-red' : 'status-green';
+    var badgeLabel  = inactive ? 'Inactivo' : 'Activo';
 
-    // Extrae el horario del campo purpose (texto entre paréntesis)
     var schedMatch = purpose.match(/\(([^)]+(?:am|pm|Sheets)[^)]*)\)/i);
     var schedule   = schedMatch ? schedMatch[1] : purpose.slice(0, 70);
 
-    // Muestra last_improvement sólo si es relevante (no el placeholder inicial)
     var isGenericNote = !improvement || improvement.includes('Registro inicial') || improvement.includes('baseline');
     var noteHtml = !isGenericNote
       ? '<div style="font-size:10px;color:var(--accent);margin-top:3px;">→ ' + escH(improvement) + '</div>'
@@ -1864,6 +1932,87 @@ async function loadAutomationsData() {
       '<span class="status ' + badgeCls + '">' + badgeLabel + '</span>' +
     '</div>';
   }).join('');
+
+  // ── Detailed cards (section-automations) ─────────────────────────────────────
+  if (detailCards) {
+    detailCards.innerHTML = agentRows.map(function(row) {
+      var c = row.c || [];
+      var name        = (c[0] && c[0].v) ? String(c[0].v) : '—';
+      var actDate     = (c[1] && c[1].v) ? String(c[1].v) : '';
+      var purpose     = (c[2] && c[2].v) ? String(c[2].v) : '';
+      var log         = (c[3] && c[3].v) ? String(c[3].v) : '';
+      var improvement = (c[4] && c[4].v) ? String(c[4].v) : '';
+
+      var inactive   = isAgentInactive(name, log);
+      var statusBadge = inactive
+        ? '<span class="status status-red">🔴 Inactivo</span>'
+        : '<span class="status status-green">✅ Activo</span>';
+
+      // Extract schedule string from purpose
+      var schedMatch = purpose.match(/\(([^)]+(?:am|pm)[^)]*)\)/i);
+      var schedule   = schedMatch ? schedMatch[1] : '';
+
+      // Remove schedule portion from purpose for clean display
+      var purposeClean = purpose.replace(/\s*\([^)]+(?:am|pm)[^)]*\)/i, '').trim();
+
+      // last_improvement — show only if it has real content
+      var isGenericNote = !improvement || improvement.includes('Registro inicial') || improvement.includes('baseline') || improvement.includes('Sin cambios');
+      var kaizen = !isGenericNote ? improvement : '';
+
+      var disabledStyle = inactive ? 'opacity:0.7;' : '';
+
+      return '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;' + disabledStyle + '">' +
+        '<div style="display:flex;align-items:flex-start;gap:16px;">' +
+          '<div style="font-size:28px;line-height:1;">' + getIcon(name) + '</div>' +
+          '<div style="flex:1;">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">' +
+              '<div style="font-size:14px;font-weight:700;">' + escH(name) + '</div>' +
+              statusBadge +
+              (schedule ? '<div style="font-size:11px;color:var(--accent);">' + escH(schedule) + '</div>' : '') +
+            '</div>' +
+            '<div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:' + (kaizen ? '12px' : '0') + ';">' +
+              '<b style="color:var(--text);">Qué hace:</b> ' + escH(purposeClean) +
+            '</div>' +
+            (kaizen
+              ? '<div style="background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 14px;">' +
+                  '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">→ ÚLTIMA MEJORA / CAMBIO</div>' +
+                  '<div style="font-size:12px;color:var(--text);line-height:1.6;">' + escH(kaizen) + '</div>' +
+                '</div>'
+              : '') +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0;">' +
+            '<div style="font-size:11px;color:var(--muted);">Activado: ' + escH(actDate) + '</div>' +
+            (lastSisLog ? '<div style="font-size:11px;color:var(--muted);">Revisado: ' + escH(lastSisLog.date) + '</div>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+// ── Registro de Correos ───────────────────────────────────────────────────────
+var correosRawData = [];
+
+async function loadCorreosData() {
+  const data = await fetchSheet('Registro_Correos');
+  if (!data || !data.table) return;
+  const rows = data.table.rows || [];
+  // Columns: [0]RegistroID [1]Company_id [2]NombreCliente [3]MesPeriodo [4]AñoPeriodo [5]TipoCorreo [6]FechaEnvio [7]FechaConfirmacion
+  correosRawData = rows.map(function(r) {
+    var c = r.c || [];
+    return {
+      registroId: c[0] && c[0].v ? String(c[0].v) : '',
+      clientId:   c[1] && c[1].v ? String(c[1].v) : '',
+      nombre:     c[2] && c[2].v ? String(c[2].v) : '',
+      periodo:    c[3] && c[3].v ? String(c[3].v) : '',
+      anio:       c[4] && c[4].v ? String(c[4].v) : '',
+      tipo:       c[5] && c[5].v ? String(c[5].v) : '',
+      fechaEnvio: c[6] && c[6].v ? String(c[6].v) : '',
+      fechaConf:  c[7] && c[7].v ? String(c[7].v) : ''
+    };
+  }).filter(function(r) {
+    return r.clientId && r.clientId !== 'INTERNO' && r.clientId !== 'No encontrado' && r.clientId !== '';
+  });
 }
 
 // ── Accesos Seller Central ────────────────────────────────────────────────────
@@ -1993,9 +2142,11 @@ async function refreshData() {
     // Reload both sheets in parallel
     await Promise.all([
       loadTimelineData(),      // recarga Clientes_por_periodo → timelineRawData, monthlySalesData, overviewSalesChart, top10
-      loadClientsLoad(),       // recarga Clients_load → equipoClientsData + KPI cards
+      loadClientsLoad(),       // recarga Clients_load → equipoClientsData + KPI cards + total clientes
       loadAutomationsData(),   // recarga pestaña Automatizaciones
-      loadAccesosData()        // recarga Accesos_SellerCentral → KPIs, tablas, donut
+      loadAccesosData(),       // recarga Accesos_SellerCentral → KPIs, tablas, donut
+      loadCorreosData(),       // recarga Registro_Correos → correosRawData para perfil de cliente
+      loadWeeklyPlanData()     // recarga WeeklyPlan → Dificultades Activas + Prioridad Hoy
     ]);
     // Re-render equipo charts if that section is currently visible
     if (document.getElementById('section-equipo')?.style.display !== 'none') {
@@ -2234,6 +2385,146 @@ function initOverviewCharts() {
 }
 
 // ============================================================
+// WEEKLY PLAN — Dificultades Activas + Prioridad Hoy
+// ============================================================
+var weeklyPlanRawData = [];
+
+async function loadWeeklyPlanData() {
+  const data = await fetchSheet('WeeklyPlan');
+  if (!data || !data.table) return;
+  const rows = data.table.rows || [];
+  // Columns: [0]Week [1]task_id [2]Company_id [3]ClientName [4]Action [5]Nivel [6]DueDate [7]FinishedDate [8]Responsable [9]Progreso
+  weeklyPlanRawData = rows.map(function(r) {
+    var c = r.c || [];
+    return {
+      week:        c[0] && c[0].v !== null ? String(c[0].v) : '',
+      taskId:      c[1] && c[1].v ? String(c[1].v) : '',
+      companyId:   c[2] && c[2].v ? String(c[2].v) : '',
+      clientName:  c[3] && c[3].v ? String(c[3].v) : '',
+      action:      c[4] && c[4].v ? String(c[4].v) : '',
+      nivel:       c[5] && c[5].v ? String(c[5].v) : '',
+      dueDate:     c[6] && c[6].v ? String(c[6].v) : '',
+      finishedDate:c[7] && c[7].v ? String(c[7].v) : '',
+      responsable: c[8] && c[8].v ? String(c[8].v) : '',
+      progreso:    c[9] && c[9].v ? String(c[9].v) : ''
+    };
+  }).filter(function(r) { return r.taskId || r.clientName; });
+
+  renderDificultades();
+  renderPrioridad();
+}
+
+function renderDificultades() {
+  var grid = document.getElementById('dificultadesGrid');
+  if (!grid) return;
+
+  var activas = weeklyPlanRawData.filter(function(t) {
+    return t.progreso !== 'Finalizado' && t.progreso !== 'Cancelado';
+  });
+
+  var responsables = [
+    { key: 'Cristina', color: '#7c5cfc', bg: 'rgba(124,92,252,0.15)', initial: 'C' },
+    { key: 'Lina',     color: '#4f7fff', bg: 'rgba(79,127,255,0.15)',  initial: 'L' },
+    { key: 'Arturo',   color: '#ef4444', bg: 'rgba(239,68,68,0.15)',   initial: 'A' },
+    { key: 'Edgar',    color: '#22c55e', bg: 'rgba(34,197,94,0.15)',   initial: 'E' },
+    { key: 'Leonardo', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  initial: 'L2' }
+  ];
+
+  var nivelOrder = { '🔴 Crítico': 0, '🟡 Media': 1, '🟢 Baja': 2 };
+  var nivelBadge = {
+    '🔴 Crítico': 'status-red', '🟡 Media': 'status-yellow', '🟢 Baja': 'status-green'
+  };
+
+  var html = responsables.map(function(r) {
+    var tasks = activas.filter(function(t) {
+      return t.responsable === r.key || t.responsable.toLowerCase() === r.key.toLowerCase();
+    }).sort(function(a, b) {
+      return (nivelOrder[a.nivel] !== undefined ? nivelOrder[a.nivel] : 3)
+           - (nivelOrder[b.nivel] !== undefined ? nivelOrder[b.nivel] : 3);
+    });
+    if (!tasks.length) return '';
+
+    var criticos = tasks.filter(function(t) { return t.nivel === '🔴 Crítico'; }).length;
+    var bloqLabel = criticos > 0
+      ? '<span class="status status-red" style="margin-left:auto;">⚠ ' + criticos + ' crítico' + (criticos > 1 ? 's' : '') + '</span>'
+      : '<span class="status status-green" style="margin-left:auto;">✓ Sin críticos</span>';
+
+    var items = tasks.slice(0, 5).map(function(t) {
+      var dot = t.nivel === '🔴 Crítico' ? '🔴' : t.nivel === '🟡 Media' ? '🟡' : '🟢';
+      var due = t.dueDate ? ' <span style="color:var(--muted);font-size:10px;">· ' + escH(t.dueDate) + '</span>' : '';
+      return '<li style="display:flex;gap:8px;align-items:flex-start;">' +
+        '<span style="flex-shrink:0;">' + dot + '</span>' +
+        '<span><b>' + escH(t.clientName) + '</b> — ' + escH(t.action.slice(0, 90)) + (t.action.length > 90 ? '…' : '') + due + '</span>' +
+      '</li>';
+    }).join('');
+
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">' +
+        '<div style="width:30px;height:30px;background:' + r.bg + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:' + r.color + ';">' + r.initial + '</div>' +
+        '<span style="font-weight:700;">' + r.key + '</span>' +
+        bloqLabel +
+      '</div>' +
+      '<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">' + items + '</ul>' +
+    '</div>';
+  }).filter(function(h) { return h; }).join('');
+
+  grid.innerHTML = html || '<div style="color:var(--muted);font-size:13px;padding:12px 0;">Sin tareas activas en WeeklyPlan.</div>';
+}
+
+function renderPrioridad() {
+  var grid = document.getElementById('prioridadGrid');
+  if (!grid) return;
+
+  var today = new Date();
+  var enProceso = weeklyPlanRawData.filter(function(t) {
+    return t.progreso !== 'Finalizado' && t.progreso !== 'Cancelado';
+  });
+
+  var nivelOrder = { '🔴 Crítico': 0, '🟡 Media': 1, '🟢 Baja': 2 };
+
+  var responsables = [
+    { key: 'Cristina', color: '#7c5cfc', bg: 'rgba(124,92,252,0.15)', initial: 'C' },
+    { key: 'Lina',     color: '#4f7fff', bg: 'rgba(79,127,255,0.15)',  initial: 'L' },
+    { key: 'Arturo',   color: '#ef4444', bg: 'rgba(239,68,68,0.15)',   initial: 'A' },
+    { key: 'Edgar',    color: '#22c55e', bg: 'rgba(34,197,94,0.15)',   initial: 'E' },
+    { key: 'Leonardo', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  initial: 'L2' }
+  ];
+
+  var html = responsables.map(function(r) {
+    var tasks = enProceso.filter(function(t) {
+      return t.responsable === r.key || t.responsable.toLowerCase() === r.key.toLowerCase();
+    }).sort(function(a, b) {
+      var na = nivelOrder[a.nivel] !== undefined ? nivelOrder[a.nivel] : 3;
+      var nb = nivelOrder[b.nivel] !== undefined ? nivelOrder[b.nivel] : 3;
+      return na !== nb ? na - nb : a.dueDate.localeCompare(b.dueDate);
+    });
+    if (!tasks.length) return '';
+
+    var items = tasks.slice(0, 4).map(function(t, i) {
+      var due = t.dueDate ? ' — <span style="color:var(--muted);">Vence: ' + escH(t.dueDate) + '</span>' : '';
+      var progBadge = t.progreso === 'En Proceso'
+        ? '<span class="status status-yellow" style="font-size:9px;">En Proceso</span>'
+        : '<span class="status" style="font-size:9px;">' + escH(t.progreso) + '</span>';
+      return '<li style="margin-bottom:6px;">' +
+        '<b>' + escH(t.clientName) + '</b> ' + progBadge + due + '<br>' +
+        '<span style="font-size:11px;color:var(--muted);">' + escH(t.action.slice(0, 100)) + (t.action.length > 100 ? '…' : '') + '</span>' +
+      '</li>';
+    }).join('');
+
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">' +
+        '<div style="width:30px;height:30px;background:' + r.bg + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:' + r.color + ';">' + r.initial + '</div>' +
+        '<span style="font-weight:700;">' + r.key + '</span>' +
+        '<span style="font-size:11px;color:var(--muted);margin-left:auto;">' + tasks.length + ' pendiente' + (tasks.length > 1 ? 's' : '') + '</span>' +
+      '</div>' +
+      '<ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">' + items + '</ol>' +
+    '</div>';
+  }).filter(function(h) { return h; }).join('');
+
+  grid.innerHTML = html || '<div style="color:var(--muted);font-size:13px;padding:12px 0;">Sin tareas en proceso en WeeklyPlan.</div>';
+}
+
+// ============================================================
 // EQUIPO / CARGA CHARTS
 // ============================================================
 async function loadClientsLoad() {
@@ -2243,7 +2534,8 @@ async function loadClientsLoad() {
   const rows = data.table?.rows || [];
   rows.forEach(row => {
     const c = row.c || [];
-    const owner = (c[2] && c[2].v) ? String(c[2].v).trim() : '';
+    // Clients_Load columns: [0]Company_Id [1]RFC [2]ClientName [3]Owner
+    const owner = (c[3] && c[3].v) ? String(c[3].v).trim() : '';
     if (owner === 'Arturo') counts.Arturo++;
     else if (owner === 'Cristina') counts.Cristina++;
     else if (owner === 'Lina') counts.Lina++;
@@ -2251,8 +2543,15 @@ async function loadClientsLoad() {
     else counts['Sin asignar']++;
   });
   equipoClientsData = counts;
-  // Update KPI card counters
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  // Update total clientes KPI
+  const totalClientes = rows.length;
+  const azCount  = rows.filter(r => { const v = r.c && r.c[0] && r.c[0].v ? String(r.c[0].v) : ''; return v.startsWith('AZ'); }).length;
+  const inCount  = rows.filter(r => { const v = r.c && r.c[0] && r.c[0].v ? String(r.c[0].v) : ''; return v.startsWith('IN'); }).length;
+  set('kpi-total-clients', totalClientes);
+  const subEl = document.querySelector('#kpi-total-clients + .kpi-sub, #kpi-total-clients ~ .kpi-sub');
+  if (subEl) subEl.textContent = azCount + ' Amazon (AZ) · ' + inCount + ' Inbound (IN)';
+  // Update KPI card counters
   set('equipoCount_arturo',   counts.Arturo);
   set('equipoCount_cristina', counts.Cristina);
   set('equipoCount_lina',     counts.Lina);
@@ -2893,21 +3192,35 @@ function renderClientProfile(id) {
     '</div>';
   }).join('');
 
-  // Emails section
+  // Emails section — live from Registro_Correos
   var emailsHtml;
-  if (!c.email) {
-    emailsHtml = '<div style="font-size:12px;color:var(--muted);padding:12px 0;">Sin email registrado para este cliente — no es posible rastrear historial de comunicación.</div>';
+  var tipoLabels = {
+    Fiscal_SAT:'SAT/Fiscal', Banco:'Banco', Marketplace:'Marketplace',
+    Comunicacion_General:'Comunicación', Tax_Compliance:'Tax Compliance',
+    Legal:'Legal', Reporte:'Reporte', Facturacion:'Facturación'
+  };
+  var clientEmails = (typeof correosRawData !== 'undefined' ? correosRawData : [])
+    .filter(function(r) { return r.clientId === id; })
+    .sort(function(a, b) { return b.fechaEnvio.localeCompare(a.fechaEnvio); })
+    .slice(0, 5);
+  if (clientEmails.length) {
+    emailsHtml = clientEmails.map(function(e) {
+      var tLabel = tipoLabels[e.tipo] || e.tipo;
+      var periodoStr = e.periodo && e.anio ? e.periodo.slice(0,3) + ' ' + e.anio : '';
+      var fechaDisplay = e.fechaEnvio ? e.fechaEnvio.slice(0, 10) : '—';
+      var confHtml = e.fechaConf
+        ? '<div style="font-size:11px;color:#22c55e;">✓ Confirmado: ' + escH(e.fechaConf.slice(0,10)) + '</div>'
+        : '<div style="font-size:11px;color:#f59e0b;">⏳ Sin confirmación de lectura</div>';
+      return '<div class="cli-email-item">' +
+        '<div style="font-weight:600;">' + escH(tLabel + (periodoStr ? ' — ' + periodoStr : '')) + '</div>' +
+        '<div class="cli-email-date">' + escH(fechaDisplay) + '</div>' +
+        confHtml +
+      '</div>';
+    }).join('');
+  } else if (!c.email) {
+    emailsHtml = '<div style="font-size:12px;color:var(--muted);padding:12px 0;">Sin email registrado para este cliente.</div>';
   } else {
-    emailsHtml = '<div style="font-size:12px;color:var(--muted);padding:10px 0;line-height:1.6;">' +
-      '📬 Conecta Gmail para ver automáticamente el historial de correos de <b>' + escH(c.email) + '</b>.<br>' +
-      'Mientras tanto, revisa la carpeta Drive o el canal de Slack vinculado al cliente.' +
-    '</div>';
-    // Add specific email history for known clients
-    if (id === 'AZ006437') { // Wholesome Story
-      emailsHtml = '<div class="cli-email-item"><div style="font-weight:600;">RE: Estado de cuenta — solicitud acceso SC</div><div class="cli-email-date">Sin respuesta desde Ene 2026</div><div style="font-size:11px;color:var(--muted);">5 correos enviados sin respuesta. Último: 18 Mar 2026.</div></div>';
-    } else if (id === 'AZ006754') { // Tiege Hanley
-      emailsHtml = '<div class="cli-email-item"><div style="font-weight:600;">RE: Declaración complementaria Ene 2026</div><div class="cli-email-date">kelley.thornton@tiege.com · 12 Mar 2026</div><div style="font-size:11px;color:var(--muted);">Confirma recepción pero no ha enviado cifras corregidas.</div></div>';
-    }
+    emailsHtml = '<div style="font-size:12px;color:var(--muted);padding:10px 0;">Sin correos registrados en Registro_Correos para este cliente.</div>';
   }
 
   // Build semReason text block
@@ -3213,9 +3526,11 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTimelineData().then(() => {
     if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
   }); // pre-load timeline + overview sales chart
-  loadClientsLoad();       // pre-load equipo/carga counts from Clients_load sheet
-  loadAutomationsData();   // pre-load estado automatizaciones desde Sheet1
+  loadClientsLoad();       // pre-load equipo/carga counts + total clientes from Clients_load sheet
+  loadAutomationsData();   // pre-load estado automatizaciones desde Automatizaciones tab
   loadAccesosData();       // pre-load Accesos_SellerCentral → KPIs + tablas + donut
+  loadCorreosData();       // pre-load Registro_Correos → correosRawData para perfil de cliente
+  loadWeeklyPlanData();    // pre-load WeeklyPlan → Dificultades Activas + Prioridad Hoy
   // Auto-refresh every 5 minutes
   setInterval(refreshData, 5 * 60 * 1000);
 });
