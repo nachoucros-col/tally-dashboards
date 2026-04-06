@@ -1752,37 +1752,6 @@ function gateSubmit() {
 // Proxy de Apps Script — JSONP mode: el <script> tag envía cookies de Google del usuario
 // → funciona para el equipo interno que ya está logueado en su cuenta Google
 const PROXY_URL = 'https://script.google.com/macros/s/AKfycby6Ng1huZmswttAsDIUYic6OYdFZsY9PllT8tWTR5F8RG8DTXtIyu6eb4azTRUhkIUr/exec';
-const AUTOMATIONS_SHEET_ID = '1PNRUcCefwOaAPKXwqXby-xspp1NcvWL6F58YccTte4k';
-
-// Fetches any Google Sheet directly via the Visualization API (JSONP).
-// Works for any spreadsheet accessible to the logged-in Google user.
-function fetchSheetDirect(spreadsheetId, sheetName) {
-  return new Promise(function(resolve) {
-    var cbName = '_tallyCb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-    var script = document.createElement('script');
-    var timer = setTimeout(function() {
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      resolve(null);
-    }, 25000);
-    window[cbName] = function(data) {
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      resolve(data);
-    };
-    script.src = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(spreadsheetId) +
-      '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(sheetName) + '&callback=' + cbName;
-    script.onerror = function() {
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      resolve(null);
-    };
-    document.head.appendChild(script);
-  });
-}
-
 function fetchSheet(sheetName) {
   return new Promise(function(resolve) {
     var cbName = '_tallyCb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
@@ -1840,11 +1809,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// ── Automatizaciones — carga desde Sheet1 del log de automatizaciones ────────
+// ── Automatizaciones — carga desde pestaña Automatizaciones en Accounting_DataModel ──
 async function loadAutomationsData() {
   const grid = document.getElementById('automationsGrid');
   const note = document.getElementById('automationsUpdatedAt');
-  const data = await fetchSheetDirect(AUTOMATIONS_SHEET_ID, 'Sheet1');
+  const data = await fetchSheet('Automatizaciones');
   if (!data || !data.table) {
     if (grid) grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin datos disponibles — verifica acceso al Sheet</div>';
     if (note) note.textContent = 'Error al cargar';
