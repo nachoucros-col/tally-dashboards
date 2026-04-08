@@ -1320,7 +1320,7 @@ function gateSubmit() {
         </div>
       </div>
       <div class="card">
-        <div class="card-title">🚨 Declaraciones Feb 2026 por Responsable</div>
+        <div class="card-title">🚨 Declaraciones <span id="declChartPeriodLabel">—</span> por Responsable</div>
         <div class="chart-container" style="height:220px;">
           <canvas id="chartEquipoDecl"></canvas>
         </div>
@@ -1329,45 +1329,43 @@ function gateSubmit() {
 
     <!-- BOTTLENECK TABLE -->
     <div class="card">
-      <div class="card-title">⚡ Análisis de Cuellos de Botella por Persona — Feb 2026</div>
+      <div class="card-title">⚡ Análisis de Cuellos de Botella por Persona — <span id="declTblPeriodLabel">—</span></div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Responsable</th><th>Clientes</th><th>Declarados Feb</th><th>% Avance</th>
+              <th>Responsable</th><th>Clientes</th><th>Declarados</th><th>% Avance</th>
               <th>Bloqueados</th><th>Cuello de Botella Principal</th><th>Acción</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><b>Arturo</b></td><td id="equipoTbl_arturo">—</td>
-              <td><span style="color:var(--green);">~45</span></td>
-              <td><span class="status status-yellow">~47%</span></td>
-              <td>~5</td>
-              <td style="font-size:12px;color:var(--muted);">Volumen alto · algunos sin documentación IN</td>
-              <td><span class="status status-yellow">Priorizar</span></td>
+              <td colspan="3" style="font-size:11px;color:var(--muted);font-style:italic;">Proveedor externo · sin datos de declaraciones</td>
+              <td style="font-size:12px;color:var(--muted);">Clientes IN · proveedor externo</td>
+              <td><span class="status">Externo</span></td>
             </tr>
             <tr>
               <td><b style="color:#7c5cfc;">Cristina</b></td><td id="equipoTbl_cristina">—</td>
-              <td><span style="color:var(--red);">~10</span></td>
-              <td><span class="status status-red">~32%</span></td>
-              <td>~10</td>
+              <td id="declTbl_cristina">—</td>
+              <td><span id="declPct_cristina" class="status status-red">—</span></td>
+              <td id="declBlock_cristina">—</td>
               <td style="font-size:12px;color:var(--red);">10+ AZ sin acceso SC · 2 clientes 2+ meses sin respuesta</td>
               <td><span class="status status-red">Escalada urgente</span></td>
             </tr>
             <tr>
               <td><b style="color:#4f7fff;">Lina</b></td><td id="equipoTbl_lina">—</td>
-              <td><span style="color:var(--yellow);">~18</span></td>
-              <td><span class="status status-yellow">~43%</span></td>
-              <td>~7</td>
+              <td id="declTbl_lina">—</td>
+              <td><span id="declPct_lina" class="status status-yellow">—</span></td>
+              <td id="declBlock_lina">—</td>
               <td style="font-size:12px;color:var(--muted);">Accesos SC pendientes · documentación incompleta</td>
               <td><span class="status status-yellow">Seguimiento SC</span></td>
             </tr>
             <tr>
               <td><b style="color:#22c55e;">Edgar</b></td><td id="equipoTbl_edgar">—</td>
-              <td><span style="color:var(--green);">1</span></td>
-              <td><span class="status status-yellow">33%</span></td>
-              <td>0</td>
+              <td id="declTbl_edgar">—</td>
+              <td><span id="declPct_edgar" class="status status-yellow">—</span></td>
+              <td id="declBlock_edgar">—</td>
               <td style="font-size:12px;color:var(--muted);">Cartera reducida · capacidad disponible</td>
               <td><span class="status status-green">OK</span></td>
             </tr>
@@ -1375,7 +1373,7 @@ function gateSubmit() {
         </table>
       </div>
       <div style="margin-top:12px;font-size:11px;color:var(--muted);">
-        * Totales de cartera en vivo desde Clients_Load · Datos de declaraciones estimados · Para detalle usar tab Declaraciones con filtro por responsable.
+        * Totales de cartera en vivo desde Clients_Load · Declaraciones en vivo desde Clientes_por_periodo · Arturo es proveedor externo sin datos de declaraciones en sistema.
       </div>
     </div>
 
@@ -1990,6 +1988,10 @@ async function loadAutomationsData() {
   }
 }
 
+// ── Declaraciones helpers ─────────────────────────────────────────────────────
+var clientOwnerMap = {};   // { companyId: ownerName }
+var declDataByOwner = {};  // { ownerName: { declarado, enProceso, sinIniciar, bloqueado } }
+
 // ── Registro de Correos ───────────────────────────────────────────────────────
 var correosRawData = [];
 
@@ -2142,12 +2144,14 @@ async function refreshData() {
     // Reload both sheets in parallel
     await Promise.all([
       loadTimelineData(),      // recarga Clientes_por_periodo → timelineRawData, monthlySalesData, overviewSalesChart, top10
-      loadClientsLoad(),       // recarga Clients_load → equipoClientsData + KPI cards + total clientes
+      loadClientsLoad(),       // recarga Clients_load → equipoClientsData + clientOwnerMap + KPI cards + total clientes
       loadAutomationsData(),   // recarga pestaña Automatizaciones
       loadAccesosData(),       // recarga Accesos_SellerCentral → KPIs, tablas, donut
       loadCorreosData(),       // recarga Registro_Correos → correosRawData para perfil de cliente
       loadWeeklyPlanData()     // recarga WeeklyPlan → Dificultades Activas + Prioridad Hoy
     ]);
+    // Load declarations after clientOwnerMap is ready (depends on loadClientsLoad)
+    await loadDeclaracionesData();
     // Re-render equipo charts if that section is currently visible
     if (document.getElementById('section-equipo')?.style.display !== 'none') {
       initEquipoCharts();
@@ -2532,10 +2536,13 @@ async function loadClientsLoad() {
   if (!data) return;
   const counts = { Arturo: 0, Cristina: 0, Lina: 0, Edgar: 0, 'Sin asignar': 0 };
   const rows = data.table?.rows || [];
+  clientOwnerMap = {}; // reset
   rows.forEach(row => {
     const c = row.c || [];
     // Clients_Load columns: [0]Company_Id [1]RFC [2]ClientName [3]Owner
+    const companyId = (c[0] && c[0].v) ? String(c[0].v).trim() : '';
     const owner = (c[3] && c[3].v) ? String(c[3].v).trim() : '';
+    if (companyId) clientOwnerMap[companyId] = owner;
     if (owner === 'Arturo') counts.Arturo++;
     else if (owner === 'Cristina') counts.Cristina++;
     else if (owner === 'Lina') counts.Lina++;
@@ -2563,6 +2570,80 @@ async function loadClientsLoad() {
   set('equipoTbl_edgar',    counts.Edgar);
   // Redraw chart if tab is active
   if (document.getElementById('section-equipo')?.style.display !== 'none') initEquipoCharts();
+}
+
+// ── Declaraciones por Responsable (conectado a Clientes_por_periodo) ──────────
+async function loadDeclaracionesData() {
+  const data = await fetchSheet('Clientes_por_periodo');
+  if (!data || !data.table) return;
+  const rows = data.table.rows || [];
+  // Columns: [0]PeriodID [1]Company_id [7]EstadoCliente [13]MesPeriodo [14]AñoPeríodo
+
+  // --- Dynamic period detection: find year+month with most non-empty EstadoCliente ---
+  const periodCounts = {};
+  rows.forEach(row => {
+    const c = row.c || [];
+    const estado = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
+    const mes    = (c[13] && c[13].v) ? String(c[13].v).trim() : '';
+    const anio   = (c[14] && c[14].v) ? String(c[14].v).trim() : '';
+    if (estado && mes && anio) {
+      const key = anio + '|' + mes;
+      periodCounts[key] = (periodCounts[key] || 0) + 1;
+    }
+  });
+  let activePeriodKey = '';
+  let maxCount = 0;
+  Object.keys(periodCounts).forEach(k => {
+    if (periodCounts[k] > maxCount) { maxCount = periodCounts[k]; activePeriodKey = k; }
+  });
+  if (!activePeriodKey) return;
+  const [activeAnio, activeMes] = activePeriodKey.split('|');
+
+  // Update period labels in chart title and table title
+  const periodLabel = activeMes + ' ' + activeAnio;
+  const periodLabelEl = document.getElementById('declChartPeriodLabel');
+  if (periodLabelEl) periodLabelEl.textContent = periodLabel;
+  const tblLabelEl = document.getElementById('declTblPeriodLabel');
+  if (tblLabelEl) tblLabelEl.textContent = periodLabel;
+
+  // --- Count by owner for active period (Cristina, Lina, Edgar only) ---
+  const owners = ['Cristina', 'Lina', 'Edgar'];
+  const fresh = {};
+  owners.forEach(o => { fresh[o] = { declarado: 0, enProceso: 0, sinIniciar: 0, bloqueado: 0 }; });
+
+  rows.forEach(row => {
+    const c = row.c || [];
+    const companyId = (c[1] && c[1].v) ? String(c[1].v).trim() : '';
+    const estado    = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
+    const mes       = (c[13] && c[13].v) ? String(c[13].v).trim() : '';
+    const anio      = (c[14] && c[14].v) ? String(c[14].v).trim() : '';
+    if (mes !== activeMes || anio !== activeAnio || !estado || !companyId) return;
+    const owner = clientOwnerMap[companyId] || '';
+    if (!owners.includes(owner)) return;
+    const bucket = fresh[owner];
+    if      (estado === 'Declarado')   bucket.declarado++;
+    else if (estado === 'En proceso')  bucket.enProceso++;
+    else if (estado === 'Sin iniciar') bucket.sinIniciar++;
+    else if (estado === 'Bloqueado')   bucket.bloqueado++;
+  });
+  declDataByOwner = fresh;
+
+  // --- Update bottleneck table cells ---
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  owners.forEach(o => {
+    const key = o.toLowerCase();
+    const b = fresh[o];
+    const total = b.declarado + b.enProceso + b.sinIniciar + b.bloqueado;
+    const pct   = total > 0 ? Math.round((b.declarado / total) * 100) : 0;
+    set('declTbl_' + key,   b.declarado);
+    set('declPct_' + key,   pct + '%');
+    set('declBlock_' + key, b.bloqueado);
+  });
+
+  // --- Redraw declarations bar chart ---
+  if (document.getElementById('section-equipo')?.style.display !== 'none') {
+    initEquipoCharts();
+  }
 }
 
 function initEquipoCharts() {
@@ -2594,15 +2675,19 @@ function initEquipoCharts() {
   if (charts.equipoDecl) charts.equipoDecl.destroy();
   const ctx2 = document.getElementById('chartEquipoDecl')?.getContext('2d');
   if (ctx2) {
+    // Use live data from declDataByOwner; Arturo is external provider — excluded
+    const owners = ['Cristina', 'Lina', 'Edgar'];
+    const labels = ['Cristina (AZ)', 'Lina (AZ)', 'Edgar'];
+    const get = (o, k) => (declDataByOwner[o] && declDataByOwner[o][k]) || 0;
     charts.equipoDecl = new Chart(ctx2, {
       type: 'bar',
       data: {
-        labels: ['Arturo', 'Lina', 'Cristina', 'Edgar'],
+        labels,
         datasets: [
-          { label: 'Declarado',   data: [45, 18, 10, 1], backgroundColor: COLORS.green  + 'dd', borderRadius: 4 },
-          { label: 'En proceso',  data: [15,  8,  6, 0], backgroundColor: COLORS.yellow + 'dd', borderRadius: 4 },
-          { label: 'Sin iniciar', data: [20, 22, 20, 2], backgroundColor: COLORS.red    + 'dd', borderRadius: 4 },
-          { label: 'Bloqueado',   data: [ 5,  7, 10, 0], backgroundColor: COLORS.purple + 'dd', borderRadius: 4 }
+          { label: 'Declarado',   data: owners.map(o => get(o, 'declarado')),   backgroundColor: COLORS.green  + 'dd', borderRadius: 4 },
+          { label: 'En proceso',  data: owners.map(o => get(o, 'enProceso')),   backgroundColor: COLORS.yellow + 'dd', borderRadius: 4 },
+          { label: 'Sin iniciar', data: owners.map(o => get(o, 'sinIniciar')), backgroundColor: COLORS.red    + 'dd', borderRadius: 4 },
+          { label: 'Bloqueado',   data: owners.map(o => get(o, 'bloqueado')),   backgroundColor: COLORS.purple + 'dd', borderRadius: 4 }
         ]
       },
       options: {
@@ -3526,7 +3611,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTimelineData().then(() => {
     if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
   }); // pre-load timeline + overview sales chart
-  loadClientsLoad();       // pre-load equipo/carga counts + total clientes from Clients_load sheet
+  loadClientsLoad().then(() => loadDeclaracionesData()); // clientOwnerMap must be ready before declarations
   loadAutomationsData();   // pre-load estado automatizaciones desde Automatizaciones tab
   loadAccesosData();       // pre-load Accesos_SellerCentral → KPIs + tablas + donut
   loadCorreosData();       // pre-load Registro_Correos → correosRawData para perfil de cliente
