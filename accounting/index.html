@@ -1112,38 +1112,28 @@ function gateSubmit() {
         </div>
       </div>
       <div class="card">
-        <div class="card-title">📋 Declaraciones Anuales 2025 <span class="badge">25 de 155 (16.1%)</span></div>
+        <div class="card-title">📋 Declaraciones Anuales 2025 <span class="badge" id="anual-badge">cargando…</span></div>
         <div style="margin-top:12px;">
           <div class="progress-item">
-            <div class="progress-label"><span>Con Datos</span><span class="pct">15 (60%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-green" style="width:60%"></div></div>
+            <div class="progress-label"><span>Con Datos</span><span class="pct" id="anual-con-datos-count">—</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-green" id="anual-con-datos-bar" style="width:0%"></div></div>
           </div>
           <div class="progress-item">
-            <div class="progress-label"><span>En Ceros</span><span class="pct">10 (40%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-blue" style="width:40%"></div></div>
+            <div class="progress-label"><span>En Ceros</span><span class="pct" id="anual-en-ceros-count">—</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-blue" id="anual-en-ceros-bar" style="width:0%"></div></div>
           </div>
           <div class="progress-item">
-            <div class="progress-label"><span>Estado: Declarado</span><span class="pct">25 de 155 (16.1%)</span></div>
-            <div class="progress-bar"><div class="progress-fill fill-yellow" style="width:16.1%"></div></div>
+            <div class="progress-label"><span>Estado: Declarado</span><span class="pct" id="anual-declarado-pct">—</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-yellow" id="anual-declarado-bar" style="width:0%"></div></div>
           </div>
         </div>
-        <div style="margin-top:16px; padding:14px; background:var(--bg3); border-radius:10px; font-size:12px; color:var(--muted); line-height:1.6;">
-          <b style="color:var(--green);">⚠ Nota:</b> Tiege Hanley y Consumer Express declarados en ceros
-          porque el cliente no envió invoice. Se requiere declaración complementaria cuando llegue la información.
-        </div>
+        <div id="anual-notas" style="margin-top:16px; padding:14px; background:var(--bg3); border-radius:10px; font-size:12px; color:var(--muted); line-height:1.6; display:none;"></div>
         <div class="card-title" style="margin-top:16px;">Detalle Declaraciones Anuales</div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Cliente</th><th>Tipo</th><th>RFC</th><th>Fecha</th></tr></thead>
-            <tbody>
-              <tr><td>Growve Inc.</td><td><span class="status status-blue">Con datos</span></td><td style="font-size:11px">LGM241004G12</td><td>30/Mar</td></tr>
-              <tr><td>Meister</td><td><span class="status status-blue">Con datos</span></td><td style="font-size:11px">ADM2505218H9</td><td>31/Mar</td></tr>
-              <tr><td>GHU Electronics</td><td><span class="status status-blue">Con datos</span></td><td style="font-size:11px">GEL250725P29</td><td>31/Mar</td></tr>
-              <tr><td>Tiege Hanley</td><td><span class="status status-gray">Ceros</span></td><td style="font-size:11px">THI250527FG8</td><td>31/Mar</td></tr>
-              <tr><td>Consumer Express</td><td><span class="status status-gray">Ceros</span></td><td style="font-size:11px">CEX250609BD1</td><td>31/Mar</td></tr>
-              <tr><td>Hair Safe Solutions</td><td><span class="status status-blue">Con datos</span></td><td style="font-size:11px">HSS2507115K5</td><td>31/Mar</td></tr>
-              <tr><td>Doomlings</td><td><span class="status status-blue">Con datos</span></td><td style="font-size:11px">DOO250520SW6</td><td>31/Mar</td></tr>
-              <tr><td>Val Natural Nutrition</td><td><span class="status status-blue">Con datos</span></td><td style="font-size:11px">VNN250512U41</td><td>30/Mar</td></tr>
+            <tbody id="anualDetailBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:18px;">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -2013,6 +2003,7 @@ async function loadAutomationsData() {
 var clientOwnerMap  = {};  // { companyId: ownerName }
 var declDataByOwner = {};  // { ownerName: { declarado, enProceso, sinIniciar, bloqueado } }
 var monthlyDeclData = null; // { labels[], declarado[], sinOp[], enProceso[], sinIniciar[], bloqueado[] }
+var anualesDataLoaded = false; // flag: true after loadAnualesData() populates the table
 
 // Push live monthly data into both Declaraciones charts (overview + decl tab)
 function updateDeclCharts() {
@@ -2195,8 +2186,8 @@ async function refreshData() {
       loadCorreosData(),       // recarga Registro_Correos → correosRawData para perfil de cliente
       loadWeeklyPlanData()     // recarga WeeklyPlan → Dificultades Activas + Prioridad Hoy
     ]);
-    // Load declarations after clientOwnerMap is ready (depends on loadClientsLoad)
-    await loadDeclaracionesData();
+    // Load declarations + anuales after clientOwnerMap is ready (depends on loadClientsLoad)
+    await Promise.all([loadDeclaracionesData(), loadAnualesData()]);
     // Re-render equipo charts if that section is currently visible
     if (document.getElementById('section-equipo')?.style.display !== 'none') {
       initEquipoCharts();
@@ -2336,12 +2327,22 @@ function showTab(id) {
   }
   if (id === 'declaraciones') {
     initDeclCharts();
-    // If monthlyDeclData not yet loaded, trigger fetch (clientOwnerMap must be ready first)
-    if (!monthlyDeclData) {
+    // If data not yet loaded, trigger fetch (clientOwnerMap must be ready first)
+    var needsDecl   = !monthlyDeclData;
+    var needsAnuales = !anualesDataLoaded;
+    if (needsDecl || needsAnuales) {
       if (Object.keys(clientOwnerMap).length === 0) {
-        loadClientsLoad().then(function() { loadDeclaracionesData(); });
+        loadClientsLoad().then(function() {
+          var tasks = [];
+          if (needsDecl)    tasks.push(loadDeclaracionesData());
+          if (needsAnuales) tasks.push(loadAnualesData());
+          return Promise.all(tasks);
+        });
       } else {
-        loadDeclaracionesData();
+        var tasks = [];
+        if (needsDecl)    tasks.push(loadDeclaracionesData());
+        if (needsAnuales) tasks.push(loadAnualesData());
+        Promise.all(tasks);
       }
     }
   }
@@ -2810,6 +2811,127 @@ async function loadDeclaracionesData() {
   if (document.getElementById('section-equipo')?.style.display !== 'none') {
     initEquipoCharts();
   }
+}
+
+// ============================================================
+// DECLARACIONES ANUALES 2025 — live connection to Anuales_clientes
+// ============================================================
+async function loadAnualesData() {
+  const data = await fetchSheet('Anuales_clientes');
+  if (!data || !data.table) return;
+  const rows = data.table.rows || [];
+
+  // Columns (GViz 0-indexed):
+  // [0]PeriodID [1]Company_id [2]NombreCliente [4]DeclaracionTipo
+  // [5]RFC [7]EstadoCliente [13]AñoPeríodo [19]Fecha_Declaracion [20]Notas_Declaracion
+  const monthNames = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  var conDatos = 0, enCeros = 0;
+  var tableRows = [];
+  var notasEspeciales = [];
+
+  rows.forEach(function(row) {
+    var c = row.c || [];
+    var periodId = (c[0] && c[0].v != null) ? String(c[0].v) : '';
+    if (!periodId) return; // skip empty/blank rows
+
+    var nombre   = (c[2] && c[2].v != null) ? String(c[2].v) : '';
+    var tipo     = (c[4] && c[4].v != null) ? String(c[4].v).trim() : '';
+    var rfc      = (c[5] && c[5].v != null) ? String(c[5].v) : '';
+    var fechaRaw = (c[19] && c[19].v != null) ? String(c[19].v) : '';
+    var notas    = (c[20] && c[20].v != null) ? String(c[20].v).trim() : '';
+
+    if (tipo === 'Con datos') conDatos++;
+    else enCeros++; // Ceros or empty DeclaracionTipo treated as en-ceros
+
+    // Format date: "3/30/2026" → "30/Mar"
+    var fechaFmt = '—';
+    if (fechaRaw) {
+      var parts = fechaRaw.split('/');
+      if (parts.length >= 2) {
+        var m = parseInt(parts[0], 10);
+        var d = parseInt(parts[1], 10);
+        fechaFmt = d + '/' + (monthNames[m] || parts[0]);
+      }
+    }
+
+    tableRows.push({ nombre: nombre, tipo: tipo, rfc: rfc, fechaFmt: fechaFmt, notas: notas });
+
+    if (notas && tipo === 'Ceros') {
+      notasEspeciales.push(nombre);
+    }
+  });
+
+  var totalDeclarado = conDatos + enCeros;
+  if (totalDeclarado === 0) return;
+
+  // Percentages relative to total declared
+  var pctCon   = Math.round(conDatos / totalDeclarado * 100);
+  var pctCeros = Math.round(enCeros  / totalDeclarado * 100);
+
+  // Denominator: total active clients from clientOwnerMap (built by loadClientsLoad)
+  var totalClientes = Object.keys(clientOwnerMap).length || 0;
+  var pctDecl = totalClientes > 0 ? (totalDeclarado / totalClientes * 100).toFixed(1) : null;
+
+  // ── Badge ──
+  var badge = document.getElementById('anual-badge');
+  if (badge) {
+    badge.textContent = pctDecl
+      ? totalDeclarado + ' de ' + totalClientes + ' (' + pctDecl + '%)'
+      : totalDeclarado + ' declarados';
+  }
+
+  // ── Con Datos progress bar ──
+  var el;
+  el = document.getElementById('anual-con-datos-count');
+  if (el) el.textContent = conDatos + ' (' + pctCon + '%)';
+  el = document.getElementById('anual-con-datos-bar');
+  if (el) el.style.width = pctCon + '%';
+
+  // ── En Ceros progress bar ──
+  el = document.getElementById('anual-en-ceros-count');
+  if (el) el.textContent = enCeros + ' (' + pctCeros + '%)';
+  el = document.getElementById('anual-en-ceros-bar');
+  if (el) el.style.width = pctCeros + '%';
+
+  // ── Declarado overall bar ──
+  el = document.getElementById('anual-declarado-pct');
+  if (el) el.textContent = pctDecl
+    ? totalDeclarado + ' de ' + totalClientes + ' (' + pctDecl + '%)'
+    : totalDeclarado + ' declarados';
+  el = document.getElementById('anual-declarado-bar');
+  if (el) el.style.width = (pctDecl || '0') + '%';
+
+  // ── Notas especiales ──
+  var notasDiv = document.getElementById('anual-notas');
+  if (notasDiv) {
+    if (notasEspeciales.length > 0) {
+      notasDiv.style.display = '';
+      notasDiv.innerHTML = '<b style="color:var(--yellow);">⚠ Nota:</b> ' +
+        notasEspeciales.join(', ') +
+        ' declarados en ceros con notas pendientes. Requieren declaración complementaria.';
+    } else {
+      notasDiv.style.display = 'none';
+    }
+  }
+
+  // ── Detail table ──
+  var tbody = document.getElementById('anualDetailBody');
+  if (tbody) {
+    tbody.innerHTML = '';
+    tableRows.forEach(function(r) {
+      var tipoCls = r.tipo === 'Con datos' ? 'status-blue' : 'status-gray';
+      var tipoTxt = r.tipo === 'Con datos' ? 'Con datos' : (r.tipo === 'Ceros' ? 'Ceros' : 'Sin tipo');
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + r.nombre + (r.notas ? ' <span title="' + r.notas.replace(/"/g,'&quot;') + '" style="cursor:help;color:var(--yellow)">📝</span>' : '') + '</td>' +
+        '<td><span class="status ' + tipoCls + '">' + tipoTxt + '</span></td>' +
+        '<td style="font-size:11px">' + (r.rfc || '—') + '</td>' +
+        '<td>' + r.fechaFmt + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+  anualesDataLoaded = true;
 }
 
 function initEquipoCharts() {
@@ -3779,7 +3901,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTimelineData().then(() => {
     if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
   }); // pre-load timeline + overview sales chart
-  loadClientsLoad().then(() => loadDeclaracionesData()); // clientOwnerMap must be ready before declarations
+  loadClientsLoad().then(() => Promise.all([loadDeclaracionesData(), loadAnualesData()])); // clientOwnerMap must be ready
   loadAutomationsData();   // pre-load estado automatizaciones desde Automatizaciones tab
   loadAccesosData();       // pre-load Accesos_SellerCentral → KPIs + tablas + donut
   loadCorreosData();       // pre-load Registro_Correos → correosRawData para perfil de cliente
