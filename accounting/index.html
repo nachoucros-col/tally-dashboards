@@ -2865,21 +2865,13 @@ async function loadAnualesData() {
   var totalDeclarado = conDatos + enCeros;
   if (totalDeclarado === 0) return;
 
-  // Percentages relative to total declared
+  // Percentages relative to total declared (self-contained — no external denominator)
   var pctCon   = Math.round(conDatos / totalDeclarado * 100);
   var pctCeros = Math.round(enCeros  / totalDeclarado * 100);
 
-  // Denominator: total active clients from clientOwnerMap (built by loadClientsLoad)
-  var totalClientes = Object.keys(clientOwnerMap).length || 0;
-  var pctDecl = totalClientes > 0 ? (totalDeclarado / totalClientes * 100).toFixed(1) : null;
-
   // ── Badge ──
   var badge = document.getElementById('anual-badge');
-  if (badge) {
-    badge.textContent = pctDecl
-      ? totalDeclarado + ' de ' + totalClientes + ' (' + pctDecl + '%)'
-      : totalDeclarado + ' declarados';
-  }
+  if (badge) badge.textContent = totalDeclarado + ' presentadas · ' + conDatos + ' con datos · ' + enCeros + ' en ceros';
 
   // ── Con Datos progress bar ──
   var el;
@@ -2894,13 +2886,11 @@ async function loadAnualesData() {
   el = document.getElementById('anual-en-ceros-bar');
   if (el) el.style.width = pctCeros + '%';
 
-  // ── Declarado overall bar ──
+  // ── Total presentadas bar (always 100% since all rows = declarado) ──
   el = document.getElementById('anual-declarado-pct');
-  if (el) el.textContent = pctDecl
-    ? totalDeclarado + ' de ' + totalClientes + ' (' + pctDecl + '%)'
-    : totalDeclarado + ' declarados';
+  if (el) el.textContent = totalDeclarado + ' declaraciones presentadas';
   el = document.getElementById('anual-declarado-bar');
-  if (el) el.style.width = (pctDecl || '0') + '%';
+  if (el) el.style.width = '100%';
 
   // ── Notas especiales ──
   var notasDiv = document.getElementById('anual-notas');
@@ -2935,11 +2925,9 @@ async function loadAnualesData() {
   var kpiPct = document.getElementById('kpi-anuales-pct');
   var kpiSub = document.getElementById('kpi-anuales-sub');
   var kpiTrend = document.getElementById('kpi-anuales-trend');
-  if (kpiPct) kpiPct.textContent = pctDecl ? pctDecl + '%' : totalDeclarado + ' decl.';
-  if (kpiSub) kpiSub.textContent = pctDecl
-    ? totalDeclarado + ' de ' + totalClientes + ' clientes activos'
-    : totalDeclarado + ' declaraciones presentadas';
-  if (kpiTrend) kpiTrend.textContent = conDatos + ' con datos · ' + enCeros + ' en ceros';
+  if (kpiPct) kpiPct.textContent = totalDeclarado + ' decl.';
+  if (kpiSub) kpiSub.textContent = conDatos + ' con datos · ' + enCeros + ' en ceros';
+  if (kpiTrend) kpiTrend.textContent = '↑ ' + pctCon + '% completadas con información';
 
   anualesDataLoaded = true;
 }
