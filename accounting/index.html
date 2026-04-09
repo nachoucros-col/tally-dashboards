@@ -702,12 +702,13 @@ function gateSubmit() {
   <!-- ============================================================ -->
   <div class="section active" id="section-overview">
 
-    <!-- ALERT: Critical tasks today -->
+    <!-- ALERT: Critical tasks today — filled dynamically by loadWeeklyPlanData() + loadDeclaracionesData() -->
     <div class="alert-banner">
       <div class="alert-icon">🚨</div>
       <div>
-        <b>12 tareas críticas sin iniciar</b> en la semana 14 (hoy Martes 31 Mar 2026) —
-        75 clientes en Febrero 2026 aún sin declaración | 1 tarea de monitoreo de correos <b>desactivada</b>
+        <b><span id="alertCriticalCount">—</span> tareas críticas sin iniciar</b> en la <span id="alertWeekInfo">semana actual</span> —
+        <span id="alertPendingCount">—</span> clientes en <span id="alertActivePeriodName">—</span> aún sin declaración |
+        <span id="alertEmailStatus">cargando estado automatizaciones…</span>
       </div>
     </div>
 
@@ -719,16 +720,16 @@ function gateSubmit() {
         <div class="kpi-sub">83 Amazon (AZ) · 197+ Inbound (IN)</div>
       </div>
       <div class="kpi-card" style="--accent-color: #22c55e">
-        <div class="kpi-label">Declaraciones Enero 2026</div>
-        <div class="kpi-value heat-green">91.3%</div>
-        <div class="kpi-sub">126/138 declarados · 10 en proceso</div>
-        <div class="kpi-trend trend-up">↑ Mes más avanzado del ciclo</div>
+        <div class="kpi-label" id="kpi-prev-label">Declaraciones —</div>
+        <div class="kpi-value heat-green" id="kpi-prev-pct">—</div>
+        <div class="kpi-sub" id="kpi-prev-sub">Cargando…</div>
+        <div class="kpi-trend trend-up" id="kpi-prev-trend">↑ Mes anterior</div>
       </div>
       <div class="kpi-card" style="--accent-color: #f59e0b">
-        <div class="kpi-label">Declaraciones Febrero 2026</div>
-        <div class="kpi-value heat-yellow">43.9%</div>
-        <div class="kpi-sub">68/155 declarados · 75 sin iniciar</div>
-        <div class="kpi-trend trend-warn">⚠ Deadline crítico activo</div>
+        <div class="kpi-label" id="kpi-act-label">Declaraciones —</div>
+        <div class="kpi-value heat-yellow" id="kpi-act-pct">—</div>
+        <div class="kpi-sub" id="kpi-act-sub">Cargando…</div>
+        <div class="kpi-trend trend-warn" id="kpi-act-trend">⚠ Período activo</div>
       </div>
       <div class="kpi-card" style="--accent-color: #f97316">
         <div class="kpi-label">Accesos Seller Central</div>
@@ -1073,33 +1074,33 @@ function gateSubmit() {
       </div>
     </div>
 
-    <!-- MONTH CARDS -->
+    <!-- MONTH CARDS — filled dynamically by loadDeclaracionesData() -->
     <div class="month-cards" style="margin-bottom:24px;">
       <div class="month-card">
-        <div class="month-name">📅 ENERO 2026 — 138 clientes</div>
+        <div class="month-name" id="declPrev_label">📅 — cargando…</div>
         <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;">
-          <div><div class="month-big heat-green">91.3%</div><div style="font-size:12px;color:var(--muted);">completado</div></div>
+          <div><div class="month-big heat-green" id="declPrev_pct">—</div><div style="font-size:12px;color:var(--muted);">completado</div></div>
           <div style="flex:1;">
-            <div class="progress-bar" style="height:12px;"><div class="progress-fill fill-green" style="width:91.3%"></div></div>
+            <div class="progress-bar" style="height:12px;"><div class="progress-fill fill-green" id="declPrev_bar" style="width:0%"></div></div>
           </div>
         </div>
-        <div class="month-stat"><span>✅ Declarado</span><span style="color:var(--green);font-weight:700;">126</span></div>
-        <div class="month-stat"><span>🔄 En proceso</span><span style="color:var(--yellow);font-weight:700;">10</span></div>
-        <div class="month-stat"><span>📊 Reportado</span><span style="color:var(--accent);font-weight:700;">1</span></div>
-        <div class="month-stat"><span>⏳ Sin iniciar</span><span style="color:var(--muted);font-weight:700;">1</span></div>
+        <div class="month-stat"><span>✅ Declarado</span><span style="color:var(--green);font-weight:700;" id="declPrev_dec">—</span></div>
+        <div class="month-stat"><span>🔄 En proceso</span><span style="color:var(--yellow);font-weight:700;" id="declPrev_proc">—</span></div>
+        <div class="month-stat"><span>⏳ Sin iniciar</span><span style="color:var(--muted);font-weight:700;" id="declPrev_sin">—</span></div>
+        <div class="month-stat"><span>🚫 Bloqueado</span><span style="color:var(--red);font-weight:700;" id="declPrev_blq">—</span></div>
       </div>
       <div class="month-card">
-        <div class="month-name">📅 FEBRERO 2026 — 155 clientes</div>
+        <div class="month-name" id="declAct_label">📅 — cargando…</div>
         <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;">
-          <div><div class="month-big heat-yellow">43.9%</div><div style="font-size:12px;color:var(--muted);">completado</div></div>
+          <div><div class="month-big heat-yellow" id="declAct_pct">—</div><div style="font-size:12px;color:var(--muted);">completado</div></div>
           <div style="flex:1;">
-            <div class="progress-bar" style="height:12px;"><div class="progress-fill fill-yellow" style="width:43.9%"></div></div>
+            <div class="progress-bar" style="height:12px;"><div class="progress-fill fill-yellow" id="declAct_bar" style="width:0%"></div></div>
           </div>
         </div>
-        <div class="month-stat"><span>✅ Declarado</span><span style="color:var(--green);font-weight:700;">68</span></div>
-        <div class="month-stat"><span>⏳ Sin iniciar</span><span style="color:var(--red);font-weight:700;">75</span></div>
-        <div class="month-stat"><span>🔄 En proceso</span><span style="color:var(--yellow);font-weight:700;">8</span></div>
-        <div class="month-stat"><span>🚫 Bloqueado</span><span style="color:var(--red);font-weight:700;">4</span></div>
+        <div class="month-stat"><span>✅ Declarado</span><span style="color:var(--green);font-weight:700;" id="declAct_dec">—</span></div>
+        <div class="month-stat"><span>⏳ Sin iniciar</span><span style="color:var(--red);font-weight:700;" id="declAct_sin">—</span></div>
+        <div class="month-stat"><span>🔄 En proceso</span><span style="color:var(--yellow);font-weight:700;" id="declAct_proc">—</span></div>
+        <div class="month-stat"><span>🚫 Bloqueado</span><span style="color:var(--red);font-weight:700;" id="declAct_blq">—</span></div>
       </div>
     </div>
 
@@ -1214,23 +1215,23 @@ function gateSubmit() {
           </div>
         </div>
         <div style="margin-bottom:10px;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ene 2026</div>
-          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-purple" style="width:64%;"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="equipoCristina_prev_lbl">—</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-purple" id="equipoCristina_prev_fill" style="width:0%;"></div></div>
           <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
-            <span style="color:var(--green);">✓ ~22 declarados</span>
-            <span style="color:var(--yellow);">⏳ ~8 proceso</span>
-            <span style="color:var(--red);">✗ ~12 sin iniciar</span>
-            <span style="color:var(--accent2);">🔒 ~8 bloq.</span>
+            <span style="color:var(--green);">✓ <span id="equipoCristina_prev_dec">—</span> dec.</span>
+            <span style="color:var(--yellow);">⏳ <span id="equipoCristina_prev_proc">—</span> proc.</span>
+            <span style="color:var(--red);">✗ <span id="equipoCristina_prev_sin">—</span> sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 <span id="equipoCristina_prev_blq">—</span> bloq.</span>
           </div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Feb 2026</div>
-          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-red" style="width:32%;"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="equipoCristina_act_lbl">—</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-red" id="equipoCristina_act_fill" style="width:0%;"></div></div>
           <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
-            <span style="color:var(--green);">✓ ~10 declarados</span>
-            <span style="color:var(--yellow);">⏳ ~6 proceso</span>
-            <span style="color:var(--red);">✗ ~20 sin iniciar</span>
-            <span style="color:var(--accent2);">🔒 ~10 bloq.</span>
+            <span style="color:var(--green);">✓ <span id="equipoCristina_act_dec">—</span> dec.</span>
+            <span style="color:var(--yellow);">⏳ <span id="equipoCristina_act_proc">—</span> proc.</span>
+            <span style="color:var(--red);">✗ <span id="equipoCristina_act_sin">—</span> sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 <span id="equipoCristina_act_blq">—</span> bloq.</span>
           </div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--red);">
@@ -1252,23 +1253,23 @@ function gateSubmit() {
           </div>
         </div>
         <div style="margin-bottom:10px;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ene 2026</div>
-          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-blue" style="width:73%;"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="equipoLina_prev_lbl">—</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-blue" id="equipoLina_prev_fill" style="width:0%;"></div></div>
           <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
-            <span style="color:var(--green);">✓ ~32 declarados</span>
-            <span style="color:var(--yellow);">⏳ ~5 proceso</span>
-            <span style="color:var(--red);">✗ ~10 sin iniciar</span>
-            <span style="color:var(--accent2);">🔒 ~8 bloq.</span>
+            <span style="color:var(--green);">✓ <span id="equipoLina_prev_dec">—</span> dec.</span>
+            <span style="color:var(--yellow);">⏳ <span id="equipoLina_prev_proc">—</span> proc.</span>
+            <span style="color:var(--red);">✗ <span id="equipoLina_prev_sin">—</span> sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 <span id="equipoLina_prev_blq">—</span> bloq.</span>
           </div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Feb 2026</div>
-          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-yellow" style="width:43%;"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="equipoLina_act_lbl">—</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-yellow" id="equipoLina_act_fill" style="width:0%;"></div></div>
           <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
-            <span style="color:var(--green);">✓ ~18 declarados</span>
-            <span style="color:var(--yellow);">⏳ ~8 proceso</span>
-            <span style="color:var(--red);">✗ ~22 sin iniciar</span>
-            <span style="color:var(--accent2);">🔒 ~7 bloq.</span>
+            <span style="color:var(--green);">✓ <span id="equipoLina_act_dec">—</span> dec.</span>
+            <span style="color:var(--yellow);">⏳ <span id="equipoLina_act_proc">—</span> proc.</span>
+            <span style="color:var(--red);">✗ <span id="equipoLina_act_sin">—</span> sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 <span id="equipoLina_act_blq">—</span> bloq.</span>
           </div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--yellow);">
@@ -1290,19 +1291,23 @@ function gateSubmit() {
           </div>
         </div>
         <div style="margin-bottom:10px;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ene 2026</div>
-          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-green" style="width:80%;"></div></div>
-          <div style="display:flex;gap:10px;font-size:11px;">
-            <span style="color:var(--green);">✓ 2 declarados</span>
-            <span style="color:var(--red);">✗ 1 pendiente</span>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="equipoEdgar_prev_lbl">—</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-green" id="equipoEdgar_prev_fill" style="width:0%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:var(--green);">✓ <span id="equipoEdgar_prev_dec">—</span> dec.</span>
+            <span style="color:var(--yellow);">⏳ <span id="equipoEdgar_prev_proc">—</span> proc.</span>
+            <span style="color:var(--red);">✗ <span id="equipoEdgar_prev_sin">—</span> sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 <span id="equipoEdgar_prev_blq">—</span> bloq.</span>
           </div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Feb 2026</div>
-          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-yellow" style="width:33%;"></div></div>
-          <div style="display:flex;gap:10px;font-size:11px;">
-            <span style="color:var(--green);">✓ 1 declarado</span>
-            <span style="color:var(--red);">✗ 2 pendientes</span>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="equipoEdgar_act_lbl">—</div>
+          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-yellow" id="equipoEdgar_act_fill" style="width:0%;"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
+            <span style="color:var(--green);">✓ <span id="equipoEdgar_act_dec">—</span> dec.</span>
+            <span style="color:var(--yellow);">⏳ <span id="equipoEdgar_act_proc">—</span> proc.</span>
+            <span style="color:var(--red);">✗ <span id="equipoEdgar_act_sin">—</span> sin iniciar</span>
+            <span style="color:var(--accent2);">🔒 <span id="equipoEdgar_act_blq">—</span> bloq.</span>
           </div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);">
@@ -1877,6 +1882,22 @@ async function loadAutomationsData() {
 
   if (note) note.textContent = lastSisLog && lastSisLog.date ? 'Último log: ' + lastSisLog.date : 'Fuente: log automatizaciones';
 
+  // --- Alert banner: count inactive automations ---
+  var inactiveCount = agentRows.filter(function(row) {
+    var c = row.c || [];
+    var name = (c[0] && c[0].v) ? String(c[0].v) : '';
+    var log  = (c[3] && c[3].v) ? String(c[3].v) : '';
+    return isAgentInactive(name, log);
+  }).length;
+  var alertEmailEl = document.getElementById('alertEmailStatus');
+  if (alertEmailEl) {
+    if (inactiveCount > 0) {
+      alertEmailEl.innerHTML = '<b>' + inactiveCount + ' automatizacion' + (inactiveCount > 1 ? 'es' : '') + '</b> desactivada' + (inactiveCount > 1 ? 's' : '');
+    } else {
+      alertEmailEl.innerHTML = 'todas las automatizaciones <b>activas</b>';
+    }
+  }
+
   if (!agentRows.length) {
     if (grid) grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin automatizaciones registradas</div>';
     return;
@@ -1989,8 +2010,32 @@ async function loadAutomationsData() {
 }
 
 // ── Declaraciones helpers ─────────────────────────────────────────────────────
-var clientOwnerMap = {};   // { companyId: ownerName }
+var clientOwnerMap  = {};  // { companyId: ownerName }
 var declDataByOwner = {};  // { ownerName: { declarado, enProceso, sinIniciar, bloqueado } }
+var monthlyDeclData = null; // { labels[], declarado[], sinOp[], enProceso[], sinIniciar[], bloqueado[] }
+
+// Push live monthly data into both Declaraciones charts (overview + decl tab)
+function updateDeclCharts() {
+  if (!monthlyDeclData) return;
+  var d = monthlyDeclData;
+  var upd = function(ch) {
+    if (!ch) return;
+    ch.data.labels        = d.labels;
+    ch.data.datasets[0].data = d.declarado;
+    ch.data.datasets[1].data = d.sinOp;
+    ch.data.datasets[2].data = d.enProceso;
+    ch.data.datasets[3].data = d.sinIniciar;
+    ch.data.datasets[4].data = d.bloqueado;
+    ch.update();
+  };
+  upd(charts.decl);
+  upd(charts.meses);
+  // Also update overview badge
+  if (d.labels.length >= 2) {
+    var badge = document.querySelector('#section-overview .card-title .badge');
+    if (badge) badge.textContent = d.labels[0] + ' \u2013 ' + d.labels[d.labels.length - 1];
+  }
+}
 
 // ── Registro de Correos ───────────────────────────────────────────────────────
 var correosRawData = [];
@@ -2289,7 +2334,17 @@ function showTab(id) {
     initClientesCharts();
     if (Object.keys(timelineRawData).length === 0) loadTimelineData();
   }
-  if (id === 'declaraciones') initDeclCharts();
+  if (id === 'declaraciones') {
+    initDeclCharts();
+    // If monthlyDeclData not yet loaded, trigger fetch (clientOwnerMap must be ready first)
+    if (!monthlyDeclData) {
+      if (Object.keys(clientOwnerMap).length === 0) {
+        loadClientsLoad().then(function() { loadDeclaracionesData(); });
+      } else {
+        loadDeclaracionesData();
+      }
+    }
+  }
   if (id === 'equipo') {
     if (Object.keys(equipoClientsData).length === 0) loadClientsLoad();
     else initEquipoCharts();
@@ -2311,42 +2366,20 @@ const COLORS = {
 let charts = {};
 
 function initOverviewCharts() {
-  // Stacked bar chart: months as X axis, status as color stacks
+  // Stacked bar: initialized empty — filled by loadDeclaracionesData() → updateDeclCharts()
   if (charts.decl) charts.decl.destroy();
   const ctx1 = document.getElementById('chartDeclaraciones')?.getContext('2d');
   if (!ctx1) return;
-  // Data: Jul 2025 → Feb 2026. 2025 months mostly Declarado/Sin Operación (estimated from DB)
-  const months = ['Jul 25','Ago 25','Sep 25','Oct 25','Nov 25','Dic 25','Ene 26','Feb 26'];
   charts.decl = new Chart(ctx1, {
     type: 'bar',
     data: {
-      labels: months,
+      labels: [],
       datasets: [
-        {
-          label: 'Declarado',
-          data: [102, 100, 103, 101, 100, 92, 126, 68],
-          backgroundColor: COLORS.green + 'dd', borderRadius: 2
-        },
-        {
-          label: 'Sin Operación',
-          data: [30, 28, 30, 29, 28, 27, 0, 0],
-          backgroundColor: COLORS.blue + '77', borderRadius: 2
-        },
-        {
-          label: 'En proceso',
-          data: [5, 7, 6, 7, 8, 10, 10, 8],
-          backgroundColor: COLORS.yellow + 'dd', borderRadius: 2
-        },
-        {
-          label: 'Sin iniciar',
-          data: [7, 7, 6, 7, 7, 8, 1, 75],
-          backgroundColor: COLORS.red + 'dd', borderRadius: 2
-        },
-        {
-          label: 'Bloqueado',
-          data: [0, 0, 0, 0, 0, 0, 0, 4],
-          backgroundColor: COLORS.purple + 'dd', borderRadius: 2
-        }
+        { label: 'Declarado',    data: [], backgroundColor: COLORS.green  + 'dd', borderRadius: 2 },
+        { label: 'Sin Operación',data: [], backgroundColor: COLORS.blue   + '77', borderRadius: 2 },
+        { label: 'En proceso',   data: [], backgroundColor: COLORS.yellow + 'dd', borderRadius: 2 },
+        { label: 'Sin iniciar',  data: [], backgroundColor: COLORS.red    + 'dd', borderRadius: 2 },
+        { label: 'Bloqueado',    data: [], backgroundColor: COLORS.purple + 'dd', borderRadius: 2 }
       ]
     },
     options: {
@@ -2361,6 +2394,8 @@ function initOverviewCharts() {
       }
     }
   });
+  // If data already loaded (e.g. tab re-visit), push it immediately
+  if (monthlyDeclData) updateDeclCharts();
 
   // Accesos donut
   if (charts.accesos) charts.accesos.destroy();
@@ -2416,6 +2451,14 @@ async function loadWeeklyPlanData() {
 
   renderDificultades();
   renderPrioridad();
+
+  // --- Alert banner: count critical tasks not yet finished ---
+  var criticalPending = weeklyPlanRawData.filter(function(t) {
+    return (t.nivel === 'Crítico' || t.nivel === 'Alto') &&
+           t.progreso !== 'Finalizado' && t.progreso !== 'Completado';
+  }).length;
+  var alertEl = document.getElementById('alertCriticalCount');
+  if (alertEl) alertEl.textContent = criticalPending || '—';
 }
 
 function renderDificultades() {
@@ -2573,74 +2616,197 @@ async function loadClientsLoad() {
 }
 
 // ── Declaraciones por Responsable (conectado a Clientes_por_periodo) ──────────
+// ── Declaraciones Data — fuente única para KPIs, charts y tablas ────────────
 async function loadDeclaracionesData() {
   const data = await fetchSheet('Clientes_por_periodo');
   if (!data || !data.table) return;
   const rows = data.table.rows || [];
   // Columns: [0]PeriodID [1]Company_id [7]EstadoCliente [13]MesPeriodo [14]AñoPeríodo
 
-  // --- Dynamic period detection: find year+month with most non-empty EstadoCliente ---
-  const periodCounts = {};
-  rows.forEach(row => {
-    const c = row.c || [];
-    const estado = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
-    const mes    = (c[13] && c[13].v) ? String(c[13].v).trim() : '';
-    const anio   = (c[14] && c[14].v) ? String(c[14].v).trim() : '';
-    if (estado && mes && anio) {
-      const key = anio + '|' + mes;
-      periodCounts[key] = (periodCounts[key] || 0) + 1;
-    }
-  });
-  let activePeriodKey = '';
-  let maxCount = 0;
-  Object.keys(periodCounts).forEach(k => {
-    if (periodCounts[k] > maxCount) { maxCount = periodCounts[k]; activePeriodKey = k; }
-  });
-  if (!activePeriodKey) return;
-  const [activeAnio, activeMes] = activePeriodKey.split('|');
+  const mesToNum = { 'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
+                     'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12 };
+  const monthShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const monthFull  = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const OWNERS = ['Cristina', 'Lina', 'Edgar'];
 
-  // Update period labels in chart title and table title
-  const periodLabel = activeMes + ' ' + activeAnio;
-  const periodLabelEl = document.getElementById('declChartPeriodLabel');
-  if (periodLabelEl) periodLabelEl.textContent = periodLabel;
-  const tblLabelEl = document.getElementById('declTblPeriodLabel');
-  if (tblLabelEl) tblLabelEl.textContent = periodLabel;
-
-  // --- Count by owner for active period (Cristina, Lina, Edgar only) ---
-  const owners = ['Cristina', 'Lina', 'Edgar'];
-  const fresh = {};
-  owners.forEach(o => { fresh[o] = { declarado: 0, enProceso: 0, sinIniciar: 0, bloqueado: 0 }; });
-
+  // ── 1. Build monthly aggregates (all periods) ──
+  const monthlyAgg = {}; // { 'YYYY-MM': { declarado,enProceso,sinIniciar,bloqueado,sinOp,total } }
   rows.forEach(row => {
     const c = row.c || [];
     const companyId = (c[1] && c[1].v) ? String(c[1].v).trim() : '';
     const estado    = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
     const mes       = (c[13] && c[13].v) ? String(c[13].v).trim() : '';
     const anio      = (c[14] && c[14].v) ? String(c[14].v).trim() : '';
-    if (mes !== activeMes || anio !== activeAnio || !estado || !companyId) return;
-    const owner = clientOwnerMap[companyId] || '';
-    if (!owners.includes(owner)) return;
-    const bucket = fresh[owner];
-    if      (estado === 'Declarado')   bucket.declarado++;
-    else if (estado === 'En proceso')  bucket.enProceso++;
-    else if (estado === 'Sin iniciar') bucket.sinIniciar++;
-    else if (estado === 'Bloqueado')   bucket.bloqueado++;
+    if (!mes || !anio || !companyId) return;
+    const mesNum = mesToNum[mes]; if (!mesNum) return;
+    const pk = anio + '-' + String(mesNum).padStart(2,'0');
+    if (!monthlyAgg[pk]) monthlyAgg[pk] = { declarado:0,enProceso:0,sinIniciar:0,bloqueado:0,sinOp:0,total:0 };
+    monthlyAgg[pk].total++;
+    if      (estado === 'Declarado')   monthlyAgg[pk].declarado++;
+    else if (estado === 'En proceso')  monthlyAgg[pk].enProceso++;
+    else if (estado === 'Sin iniciar') monthlyAgg[pk].sinIniciar++;
+    else if (estado === 'Bloqueado')   monthlyAgg[pk].bloqueado++;
+    else                               monthlyAgg[pk].sinOp++;
   });
-  declDataByOwner = fresh;
 
-  // --- Update bottleneck table cells ---
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  owners.forEach(o => {
+  const sortedKeys = Object.keys(monthlyAgg).sort();
+  if (!sortedKeys.length) return;
+
+  // ── 2. Set monthlyDeclData global + update charts ──
+  monthlyDeclData = {
+    labels:    sortedKeys.map(k => { const [y,m]=k.split('-'); return monthShort[parseInt(m,10)-1]+' '+y.slice(2); }),
+    declarado:  sortedKeys.map(k => monthlyAgg[k].declarado),
+    sinOp:      sortedKeys.map(k => monthlyAgg[k].sinOp),
+    enProceso:  sortedKeys.map(k => monthlyAgg[k].enProceso),
+    sinIniciar: sortedKeys.map(k => monthlyAgg[k].sinIniciar),
+    bloqueado:  sortedKeys.map(k => monthlyAgg[k].bloqueado)
+  };
+  updateDeclCharts();
+
+  // ── 3. Detect active period (latest with Sin iniciar/En proceso/Bloqueado) ──
+  let activePK = sortedKeys[sortedKeys.length-1];
+  for (let i = sortedKeys.length-1; i >= 0; i--) {
+    const m = monthlyAgg[sortedKeys[i]];
+    if (m.enProceso + m.sinIniciar + m.bloqueado > 0) { activePK = sortedKeys[i]; break; }
+  }
+  const activeIdx = sortedKeys.indexOf(activePK);
+  const prevPK    = activeIdx > 0 ? sortedKeys[activeIdx-1] : '';
+
+  const [activeY, activeMN] = activePK.split('-');
+  const activeMesFull = monthFull[parseInt(activeMN,10)];
+  const activeLabel   = activeMesFull + ' ' + activeY;
+
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  const setCls = (id, cls) => { const el=document.getElementById(id); if(el) el.className=cls; };
+  const setW   = (id, w)   => { const el=document.getElementById(id); if(el) el.style.width=w; };
+
+  // ── 4. Update period labels ──
+  set('declChartPeriodLabel', activeLabel);
+  set('declTblPeriodLabel',   activeLabel);
+  set('alertActivePeriodName', activeLabel);
+
+  // ── 5. Helper: pct + heat class ──
+  const pctOf = (dec, tot) => tot > 0 ? (dec/tot*100).toFixed(1) : '0.0';
+  const heatCls = (pct) => parseFloat(pct) >= 80 ? 'heat-green' : parseFloat(pct) >= 50 ? 'heat-yellow' : 'heat-red';
+  const fillCls = (pct) => parseFloat(pct) >= 80 ? 'fill-green' : parseFloat(pct) >= 50 ? 'fill-yellow' : 'fill-red';
+
+  // ── 6. KPI Cards: previous period (left) + active period (right) ──
+  if (prevPK) {
+    const [prevY, prevMN] = prevPK.split('-');
+    const prevMesFull = monthFull[parseInt(prevMN,10)];
+    const prevLabel   = prevMesFull + ' ' + prevY;
+    const pm = monthlyAgg[prevPK];
+    const ppct = pctOf(pm.declarado, pm.total);
+    set('kpi-prev-label', 'Declaraciones ' + prevLabel);
+    set('kpi-prev-pct',   ppct + '%');
+    setCls('kpi-prev-pct', 'kpi-value ' + heatCls(ppct));
+    set('kpi-prev-sub',   pm.declarado + '/' + pm.total + ' declarados · ' + pm.enProceso + ' en proceso');
+    set('kpi-prev-trend', '↑ Mes más avanzado del ciclo');
+  }
+  const am = monthlyAgg[activePK];
+  const apct = pctOf(am.declarado, am.total);
+  set('kpi-act-label', 'Declaraciones ' + activeLabel);
+  set('kpi-act-pct',   apct + '%');
+  setCls('kpi-act-pct', 'kpi-value ' + heatCls(apct));
+  set('kpi-act-sub',   am.declarado + '/' + am.total + ' declarados · ' + am.sinIniciar + ' sin iniciar');
+  const pendingTotal = am.sinIniciar + am.enProceso + am.bloqueado;
+  if (parseFloat(apct) < 60) {
+    set('kpi-act-trend', '⚠ Deadline crítico activo');
+    const el = document.getElementById('kpi-act-trend'); if(el) el.className='kpi-trend trend-warn';
+  } else {
+    set('kpi-act-trend', '→ En progreso');
+  }
+
+  // ── 7. Alert banner: pending count ──
+  set('alertPendingCount', pendingTotal);
+  // Dynamic week info
+  const now = new Date();
+  const weekNum = Math.ceil((((now - new Date(now.getFullYear(),0,1))/86400000)+1)/7);
+  const days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const months2 = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  set('alertWeekInfo', 'semana ' + weekNum + ' (hoy ' + days[now.getDay()] + ' ' + now.getDate() + ' ' + months2[now.getMonth()] + ' ' + now.getFullYear() + ')');
+
+  // ── 8. Declaraciones tab: month cards ──
+  const fillCard = (sfx, pk) => {
+    if (!pk || !monthlyAgg[pk]) return;
+    const [y,mn] = pk.split('-');
+    const mf = monthFull[parseInt(mn,10)];
+    const mo = monthlyAgg[pk];
+    const pct = pctOf(mo.declarado, mo.total);
+    set('decl' + sfx + '_label', '📅 ' + mf.toUpperCase() + ' ' + y + ' — ' + mo.total + ' clientes');
+    set('decl' + sfx + '_pct',   pct + '%');
+    setCls('decl' + sfx + '_pct', 'month-big ' + heatCls(pct));
+    setW('decl' + sfx + '_bar',  pct + '%');
+    const barEl = document.getElementById('decl' + sfx + '_bar');
+    if (barEl) barEl.className = 'progress-fill ' + fillCls(pct);
+    set('decl' + sfx + '_dec',  mo.declarado);
+    set('decl' + sfx + '_proc', mo.enProceso);
+    set('decl' + sfx + '_sin',  mo.sinIniciar);
+    set('decl' + sfx + '_blq',  mo.bloqueado);
+  };
+  fillCard('Prev', prevPK);
+  fillCard('Act',  activePK);
+
+  // ── 9. Per-owner aggregation for active + previous periods ──
+  const ownerData = {};
+  OWNERS.forEach(o => {
+    ownerData[o] = {
+      act:  { declarado:0,enProceso:0,sinIniciar:0,bloqueado:0,total:0 },
+      prev: { declarado:0,enProceso:0,sinIniciar:0,bloqueado:0,total:0 }
+    };
+  });
+  rows.forEach(row => {
+    const c = row.c || [];
+    const companyId = (c[1] && c[1].v) ? String(c[1].v).trim() : '';
+    const estado    = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
+    const mes       = (c[13] && c[13].v) ? String(c[13].v).trim() : '';
+    const anio      = (c[14] && c[14].v) ? String(c[14].v).trim() : '';
+    if (!mes || !anio || !companyId) return;
+    const mesNum = mesToNum[mes]; if (!mesNum) return;
+    const pk = anio + '-' + String(mesNum).padStart(2,'0');
+    const slot = pk === activePK ? 'act' : (pk === prevPK ? 'prev' : null);
+    if (!slot) return;
+    const owner = clientOwnerMap[companyId] || '';
+    if (!OWNERS.includes(owner)) return;
+    const b = ownerData[owner][slot];
+    b.total++;
+    if      (estado === 'Declarado')   b.declarado++;
+    else if (estado === 'En proceso')  b.enProceso++;
+    else if (estado === 'Sin iniciar') b.sinIniciar++;
+    else if (estado === 'Bloqueado')   b.bloqueado++;
+  });
+
+  // Equipo tab: update per-owner progress bar cards
+  OWNERS.forEach(o => {
+    const fillPeriodCard = (slot, periodLabel) => {
+      const b = ownerData[o][slot];
+      const pct = b.total > 0 ? Math.round(b.declarado/b.total*100) : 0;
+      set('equipo' + o + '_' + slot + '_lbl',  periodLabel);
+      setW('equipo' + o + '_' + slot + '_fill', pct + '%');
+      set('equipo' + o + '_' + slot + '_dec',  b.declarado);
+      set('equipo' + o + '_' + slot + '_proc', b.enProceso);
+      set('equipo' + o + '_' + slot + '_sin',  b.sinIniciar);
+      set('equipo' + o + '_' + slot + '_blq',  b.bloqueado);
+    };
+    fillPeriodCard('act',  activeLabel);
+    if (prevPK) { const [py,pmn]=prevPK.split('-'); fillPeriodCard('prev', monthFull[parseInt(pmn,10)]+' '+py); }
+  });
+
+  // ── 10. Bottleneck table + declDataByOwner (for bar chart) ──
+  declDataByOwner = {};
+  OWNERS.forEach(o => {
+    const b = ownerData[o].act;
+    declDataByOwner[o] = { declarado:b.declarado, enProceso:b.enProceso, sinIniciar:b.sinIniciar, bloqueado:b.bloqueado };
     const key = o.toLowerCase();
-    const b = fresh[o];
     const total = b.declarado + b.enProceso + b.sinIniciar + b.bloqueado;
-    const pct   = total > 0 ? Math.round((b.declarado / total) * 100) : 0;
+    const pct   = total > 0 ? Math.round((b.declarado/total)*100) : 0;
     set('declTbl_' + key,   b.declarado);
     set('declPct_' + key,   pct + '%');
     set('declBlock_' + key, b.bloqueado);
   });
 
-  // --- Redraw declarations bar chart ---
+  // ── 11. Redraw equipo bar chart if tab visible ──
   if (document.getElementById('section-equipo')?.style.display !== 'none') {
     initEquipoCharts();
   }
@@ -3571,20 +3737,20 @@ function buildTop10ClientsTable() {
 }
 
 function initDeclCharts() {
+  // Stacked bar: initialized empty — filled by loadDeclaracionesData() → updateDeclCharts()
   if (charts.meses) charts.meses.destroy();
   const ctx = document.getElementById('chartMeses')?.getContext('2d');
   if (!ctx) return;
-  const months = ['Jul 25','Ago 25','Sep 25','Oct 25','Nov 25','Dic 25','Ene 26','Feb 26'];
   charts.meses = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: months,
+      labels: [],
       datasets: [
-        { label: 'Declarado', data: [102,100,103,101,100,92,126,68], backgroundColor: COLORS.green+'dd', borderRadius: 2 },
-        { label: 'Sin Operación', data: [30,28,30,29,28,27,0,0], backgroundColor: COLORS.blue+'77', borderRadius: 2 },
-        { label: 'En proceso', data: [5,7,6,7,8,10,10,8], backgroundColor: COLORS.yellow+'dd', borderRadius: 2 },
-        { label: 'Sin iniciar', data: [7,7,6,7,7,8,1,75], backgroundColor: COLORS.red+'dd', borderRadius: 2 },
-        { label: 'Bloqueado', data: [0,0,0,0,0,0,0,4], backgroundColor: COLORS.purple+'dd', borderRadius: 2 }
+        { label: 'Declarado',    data: [], backgroundColor: COLORS.green  + 'dd', borderRadius: 2 },
+        { label: 'Sin Operación',data: [], backgroundColor: COLORS.blue   + '77', borderRadius: 2 },
+        { label: 'En proceso',   data: [], backgroundColor: COLORS.yellow + 'dd', borderRadius: 2 },
+        { label: 'Sin iniciar',  data: [], backgroundColor: COLORS.red    + 'dd', borderRadius: 2 },
+        { label: 'Bloqueado',    data: [], backgroundColor: COLORS.purple + 'dd', borderRadius: 2 }
       ]
     },
     options: {
@@ -3599,6 +3765,8 @@ function initDeclCharts() {
       }
     }
   });
+  // If data already loaded, push it immediately
+  if (monthlyDeclData) updateDeclCharts();
 }
 
 // ============================================================
