@@ -739,9 +739,9 @@ function gateSubmit() {
       </div>
       <div class="kpi-card" style="--accent-color: #f59e0b">
         <div class="kpi-label">Anuales 2025</div>
-        <div class="kpi-value heat-yellow">16.1%</div>
-        <div class="kpi-sub">25 de 155 cuentas activas (base Feb 2026)</div>
-        <div class="kpi-trend trend-warn">= 25 anuales / 155 Feb × 100</div>
+        <div class="kpi-value heat-yellow" id="kpi-anuales-pct">—</div>
+        <div class="kpi-sub" id="kpi-anuales-sub">Cargando…</div>
+        <div class="kpi-trend trend-warn" id="kpi-anuales-trend">cargando…</div>
       </div>
 
     </div>
@@ -2931,6 +2931,16 @@ async function loadAnualesData() {
       tbody.appendChild(tr);
     });
   }
+  // ── Overview KPI card ──
+  var kpiPct = document.getElementById('kpi-anuales-pct');
+  var kpiSub = document.getElementById('kpi-anuales-sub');
+  var kpiTrend = document.getElementById('kpi-anuales-trend');
+  if (kpiPct) kpiPct.textContent = pctDecl ? pctDecl + '%' : totalDeclarado + ' decl.';
+  if (kpiSub) kpiSub.textContent = pctDecl
+    ? totalDeclarado + ' de ' + totalClientes + ' clientes activos'
+    : totalDeclarado + ' declaraciones presentadas';
+  if (kpiTrend) kpiTrend.textContent = conDatos + ' con datos · ' + enCeros + ' en ceros';
+
   anualesDataLoaded = true;
 }
 
