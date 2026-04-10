@@ -2865,13 +2865,22 @@ async function loadAnualesData() {
   var totalDeclarado = conDatos + enCeros;
   if (totalDeclarado === 0) return;
 
-  // Percentages relative to total declared (self-contained — no external denominator)
+  // Percentages relative to total declared
   var pctCon   = Math.round(conDatos / totalDeclarado * 100);
   var pctCeros = Math.round(enCeros  / totalDeclarado * 100);
 
+  // Denominator: clients assigned to Cristina / Lina / Edgar (exclude Arturo=external + unassigned)
+  var totalElegibles = Object.keys(clientOwnerMap).filter(function(id) {
+    var o = clientOwnerMap[id];
+    return o && o !== 'Arturo';
+  }).length;
+  var pctDecl = totalElegibles > 0 ? (totalDeclarado / totalElegibles * 100).toFixed(1) : null;
+
   // ── Badge ──
   var badge = document.getElementById('anual-badge');
-  if (badge) badge.textContent = totalDeclarado + ' presentadas · ' + conDatos + ' con datos · ' + enCeros + ' en ceros';
+  if (badge) badge.textContent = pctDecl
+    ? totalDeclarado + ' de ' + totalElegibles + ' (' + pctDecl + '%)'
+    : totalDeclarado + ' presentadas';
 
   // ── Con Datos progress bar ──
   var el;
@@ -2886,11 +2895,13 @@ async function loadAnualesData() {
   el = document.getElementById('anual-en-ceros-bar');
   if (el) el.style.width = pctCeros + '%';
 
-  // ── Total presentadas bar (always 100% since all rows = declarado) ──
+  // ── Declarado overall bar ──
   el = document.getElementById('anual-declarado-pct');
-  if (el) el.textContent = totalDeclarado + ' declaraciones presentadas';
+  if (el) el.textContent = pctDecl
+    ? totalDeclarado + ' de ' + totalElegibles + ' (' + pctDecl + '%)'
+    : totalDeclarado + ' declaraciones presentadas';
   el = document.getElementById('anual-declarado-bar');
-  if (el) el.style.width = '100%';
+  if (el) el.style.width = (pctDecl ? pctDecl : '100') + '%';
 
   // ── Notas especiales ──
   var notasDiv = document.getElementById('anual-notas');
@@ -2925,9 +2936,9 @@ async function loadAnualesData() {
   var kpiPct = document.getElementById('kpi-anuales-pct');
   var kpiSub = document.getElementById('kpi-anuales-sub');
   var kpiTrend = document.getElementById('kpi-anuales-trend');
-  if (kpiPct) kpiPct.textContent = totalDeclarado + ' decl.';
-  if (kpiSub) kpiSub.textContent = conDatos + ' con datos · ' + enCeros + ' en ceros';
-  if (kpiTrend) kpiTrend.textContent = '↑ ' + pctCon + '% completadas con información';
+  if (kpiPct) kpiPct.textContent = pctDecl ? pctDecl + '%' : totalDeclarado + ' decl.';
+  if (kpiSub) kpiSub.textContent = totalDeclarado + ' de ' + totalElegibles + ' clientes (Cris·Lina·Edgar)';
+  if (kpiTrend) kpiTrend.textContent = conDatos + ' con datos · ' + enCeros + ' en ceros';
 
   anualesDataLoaded = true;
 }
