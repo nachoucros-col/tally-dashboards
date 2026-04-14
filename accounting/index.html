@@ -924,93 +924,8 @@ function gateSubmit() {
         Señales: negativas explícitas, responsable sin permisos, ausencia prolongada, problemas técnicos recurrentes.
       </div>
 
-      <div class="grid-3" style="margin-bottom:16px;">
-        <!-- ALTO RIESGO -->
-        <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.22);border-radius:10px;padding:14px;">
-          <div style="font-size:12px;color:#ef4444;font-weight:700;margin-bottom:8px;">🔴 ALTO RIESGO — 7 clientes</div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Negativa explícita, ausencia prolongada o +5 contactos sin respuesta</div>
-          <div style="display:flex;flex-direction:column;gap:7px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Meister</span><span style="font-size:10px;color:var(--red);text-align:right;">Niega acceso "por seguridad"</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Adult Children of ALC.</span><span style="font-size:10px;color:var(--red);text-align:right;">Contacto sin permiso</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Brighticonic</span><span style="font-size:10px;color:var(--red);text-align:right;">Niega acceso banco</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Soluciones Caseras</span><span style="font-size:10px;color:var(--red);text-align:right;">Sin banco confirmado</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Alexander Home LLC</span><span style="font-size:10px;color:var(--red);text-align:right;">5+ emails sin respuesta</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">SSC Designs</span><span style="font-size:10px;color:var(--red);text-align:right;">2 meses sin respuesta</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Wholesome Story LLC</span><span style="font-size:10px;color:var(--red);text-align:right;">2 meses sin respuesta</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- MEDIO RIESGO -->
-        <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.22);border-radius:10px;padding:14px;">
-          <div style="font-size:12px;color:#f59e0b;font-weight:700;margin-bottom:8px;">🟡 MEDIO RIESGO — 5 clientes</div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">En proceso con fricción técnica o burocrática recurrente</div>
-          <div style="display:flex;flex-direction:column;gap:7px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Doomlings</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Ret. bloqueada técnicamente</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Rollga</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Banco en proceso</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Decibullz LLC</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Confusión SC vs. filing</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">ACAWSO</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Responsable en vacaciones</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">HJJ 3P Inc</span><span style="font-size:10px;color:var(--yellow);text-align:right;">Info fiscal US faltante</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- BAJO RIESGO -->
-        <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.22);border-radius:10px;padding:14px;">
-          <div style="font-size:12px;color:#22c55e;font-weight:700;margin-bottom:8px;">🟢 BAJO RIESGO — Acceso otorgado</div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Respondieron y otorgaron acceso completo o parcial</div>
-          <div style="display:flex;flex-direction:column;gap:7px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Recontour</span><span style="font-size:10px;color:var(--green);">Completo</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Durelife Nutrition</span><span style="font-size:10px;color:var(--green);">Completo</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Fresh Finest</span><span style="font-size:10px;color:var(--green);">Completo</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">ALPAKA</span><span style="font-size:10px;color:var(--green);">Completo</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Hair Safe Solutions</span><span style="font-size:10px;color:var(--green);">Parcial cooperativo</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">GHU Electronics</span><span style="font-size:10px;color:var(--green);">Parcial cooperativo</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">
-              <span style="font-weight:600;">Plymouth · RIFTBOX · Lil Cactus</span><span style="font-size:10px;color:var(--green);">Parciales</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;">
-        <b style="color:var(--text);">💡 Acción recomendada para Alto Riesgo:</b>
-        Para clientes que niegan acceso, documentar el patrón en el expediente y preparar carta sobre <i>obligaciones del representante legal en México</i>.
-        Para clientes sin respuesta +2 meses: activar protocolo de aviso de responsabilidad y evaluar declaración "en ceros" como medida de protección fiscal.
+      <div id="proxy-riesgo-container">
+        <div style="color:var(--muted);font-size:12px;padding:8px;">Cargando clasificación de riesgo…</div>
       </div>
     </div>
 
@@ -2004,6 +1919,7 @@ var clientOwnerMap  = {};  // { companyId: ownerName }
 var declDataByOwner = {};  // { ownerName: { declarado, enProceso, sinIniciar, bloqueado } }
 var monthlyDeclData = null; // { labels[], declarado[], sinOp[], enProceso[], sinIniciar[], bloqueado[] }
 var anualesDataLoaded = false; // flag: true after loadAnualesData() populates the table
+var anualesDeclaradoSet = new Set(); // Company_ids que ya presentaron declaración anual
 
 // Push live monthly data into both Declaraciones charts (overview + decl tab)
 function updateDeclCharts() {
@@ -2169,6 +2085,71 @@ function renderAccesosUI() {
     window.charts.accesos.data.datasets[0].data = [completos.length, parciales.length, pendientes.length];
     window.charts.accesos.update();
   }
+  // Refresh proxy de riesgo with live data
+  renderProxyRiesgo();
+}
+
+// ── Proxy de Riesgo — clasificación dinámica desde Accesos_SellerCentral ─────
+function renderProxyRiesgo() {
+  var container = document.getElementById('proxy-riesgo-container');
+  if (!container) return;
+  var d = accesosRawData;
+  if (!d.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;">Cargando clasificación de riesgo…</div>';
+    return;
+  }
+
+  var alto = [], medio = [], bajo = [];
+
+  d.forEach(function(r) {
+    var modCount = [r.ret, r.vtas, r.inv, r.pay, r.banco].filter(Boolean).length;
+    var notas = (r.notas || '').trim();
+
+    if (r.estado === 'Acceso completo') {
+      bajo.push({ name: r.name, note: 'Completo · 5/5 módulos' });
+    } else if (r.estado === 'Acceso Parcial') {
+      if (modCount >= 3) {
+        bajo.push({ name: r.name, note: 'Parcial · ' + modCount + '/5 módulos' + (notas ? ' · ' + notas.slice(0,35) : '') });
+      } else {
+        var noteText = notas ? notas.slice(0,45) : modCount + '/5 módulos activos';
+        medio.push({ name: r.name, note: noteText });
+      }
+    } else {
+      // Pendiente — solo aparece en el proxy si hay notas documentando el problema
+      if (notas) {
+        alto.push({ name: r.name, note: notas.slice(0, 50) });
+      }
+    }
+  });
+
+  function makeCol(items, color, bgColor, borderColor, icon, title, subtitle) {
+    var rows = items.length
+      ? items.map(function(item) {
+          return '<div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:4px;">' +
+            '<span style="font-weight:600;">' + escH(item.name) + '</span>' +
+            '<span style="font-size:10px;color:' + color + ';text-align:right;max-width:55%;line-height:1.3;">' + escH(item.note) + '</span>' +
+          '</div>';
+        }).join('')
+      : '<div style="font-size:11px;color:var(--muted);">Sin clientes en esta categoría</div>';
+    return '<div style="background:' + bgColor + ';border:1px solid ' + borderColor + ';border-radius:10px;padding:14px;">' +
+      '<div style="font-size:12px;color:' + color + ';font-weight:700;margin-bottom:8px;">' + icon + ' ' + title + ' — ' + items.length + ' clientes</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">' + subtitle + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:7px;">' + rows + '</div>' +
+    '</div>';
+  }
+
+  var html = '<div class="grid-3" style="margin-bottom:16px;">' +
+    makeCol(alto,  '#ef4444', 'rgba(239,68,68,0.07)',  'rgba(239,68,68,0.22)',  '🔴', 'ALTO RIESGO',  'Negativa explícita, ausencia prolongada o contacto sin permisos') +
+    makeCol(medio, '#f59e0b', 'rgba(245,158,11,0.07)', 'rgba(245,158,11,0.22)', '🟡', 'MEDIO RIESGO', 'Acceso parcial con fricción técnica o burocrática documentada') +
+    makeCol(bajo,  '#22c55e', 'rgba(34,197,94,0.07)',  'rgba(34,197,94,0.22)',  '🟢', 'CON ACCESO',   'Acceso otorgado — completo o parcial cooperativo') +
+  '</div>' +
+  '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;">' +
+    '<b style="color:var(--text);">💡 Acción recomendada para Alto Riesgo:</b> ' +
+    'Para clientes que niegan acceso, documentar el patrón en el expediente y preparar carta sobre <i>obligaciones del representante legal en México</i>. ' +
+    'Para clientes sin respuesta +2 meses: activar protocolo de aviso de responsabilidad y evaluar declaración "en ceros" como medida de protección fiscal.' +
+  '</div>';
+
+  container.innerHTML = html;
 }
 
 async function refreshData() {
@@ -2188,6 +2169,7 @@ async function refreshData() {
     ]);
     // Load declarations + anuales after clientOwnerMap is ready (depends on loadClientsLoad)
     await Promise.all([loadDeclaracionesData(), loadAnualesData()]);
+    await loadClientDB(); // rebuild CLIENT_DB with fresh anualesDeclaradoSet
     // Re-render equipo charts if that section is currently visible
     if (document.getElementById('section-equipo')?.style.display !== 'none') {
       initEquipoCharts();
@@ -2324,6 +2306,8 @@ function showTab(id) {
   if (id === 'clientes') {
     initClientesCharts();
     if (Object.keys(timelineRawData).length === 0) loadTimelineData();
+    // Trigger CLIENT_DB load if not yet populated
+    if (Object.keys(CLIENT_DB).length === 0) loadClientDB();
   }
   if (id === 'declaraciones') {
     initDeclCharts();
@@ -2835,6 +2819,9 @@ async function loadAnualesData() {
     var periodId = (c[0] && c[0].v != null) ? String(c[0].v) : '';
     if (!periodId) return; // skip empty/blank rows
 
+    var companyId = (c[1] && c[1].v != null) ? String(c[1].v).trim() : '';
+    if (companyId) anualesDeclaradoSet.add(companyId); // track declared companies
+
     var nombre   = (c[2] && c[2].v != null) ? String(c[2].v) : '';
     var tipo     = (c[4] && c[4].v != null) ? String(c[4].v).trim() : '';
     var rfc      = (c[5] && c[5].v != null) ? String(c[5].v) : '';
@@ -3011,7 +2998,72 @@ function initClientesCharts() {
 // CLIENT VIEWER — Historia del Cliente
 // ============================================================
 
-const CLIENT_DB = {
+// CLIENT_DB is built dynamically by loadClientDB() from Google Sheets:
+// - Clients_Load  → name, rfc, owner, suspended
+// - Folder_Clientes → drive URL
+// - anualesDeclaradoSet → declStatus (completa/pendiente)
+var CLIENT_DB = {};
+
+// ── Load client database from live sheets ────────────────────────────────────
+async function loadClientDB() {
+  var results = await Promise.all([
+    fetchSheet('Clients_load'),
+    fetchSheet('Folder_Clientes')
+  ]);
+  var clData     = results[0];
+  var folderData = results[1];
+  if (!clData || !clData.table) return;
+
+  // Build drive URL map: Company_Id → Google Drive URL
+  var driveMap = {};
+  if (folderData && folderData.table) {
+    (folderData.table.rows || []).forEach(function(row) {
+      var c = row.c || [];
+      // Folder_Clientes columns: [5]friendly_id (Company_Id), [3]drive_folder_link
+      var fid = c[5] && c[5].v != null ? String(c[5].v).trim() : '';
+      var url = c[3] && c[3].v != null ? String(c[3].v) : '';
+      if (fid && url) driveMap[fid] = url;
+    });
+  }
+
+  // Build CLIENT_DB entries from Clients_Load
+  var newDB = {};
+  (clData.table.rows || []).forEach(function(row) {
+    var c = row.c || [];
+    // Clients_Load columns: [0]Company_Id [1]RFC [2]ClientName [3]Owner [6]Suspension
+    var id    = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+    var owner = c[3] && c[3].v != null ? String(c[3].v).trim() : '';
+    if (!id || !owner || owner === 'Arturo') return; // skip unmanaged/external
+
+    var suspended = String(c[6] && c[6].v != null ? c[6].v : '').toUpperCase() === 'TRUE';
+    var declared  = anualesDeclaradoSet.has(id);
+
+    newDB[id] = {
+      name:       c[2] && c[2].v != null ? String(c[2].v) : id,
+      rfc:        c[1] && c[1].v != null ? String(c[1].v) : '',
+      owner:      owner,
+      email:      '',
+      suspended:  suspended,
+      drive:      driveMap[id] || '',
+      sem:        'green',
+      semReason:  '',
+      declStatus: suspended ? 'bloqueada' : (declared ? 'completa' : 'pendiente'),
+      declReason: suspended ? 'suspended' : '',
+      tags:       []
+    };
+  });
+
+  CLIENT_DB = newDB;
+
+  // Refresh client list if the clientes tab is currently shown
+  var q = document.getElementById('clientSearch') ? (document.getElementById('clientSearch').value || '') : '';
+  populateClientList(q);
+}
+
+// LEGACY — hardcoded CLIENT_DB entries, no longer in use.
+// CLIENT_DB is now fully dynamic (built by loadClientDB() at runtime).
+// This object is never read and can be removed in a future cleanup commit.
+const _CLIENT_DB_PLACEHOLDER = {
   'AZ006499':{ name:'Stealth Mode', rfc:'SMO241111E73', owner:'Lina', email:'', suspended:false,
     drive:'https://drive.google.com/drive/folders/1D-M5CFrG9zc3Izo8goeZTdzmwPHrA5o8',
     sem:'green', semReason:'Cliente activo sin señales de alerta recientes.',
@@ -3910,7 +3962,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTimelineData().then(() => {
     if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
   }); // pre-load timeline + overview sales chart
-  loadClientsLoad().then(() => Promise.all([loadDeclaracionesData(), loadAnualesData()])); // clientOwnerMap must be ready
+  loadClientsLoad().then(() => Promise.all([
+    loadDeclaracionesData(),
+    loadAnualesData().then(() => loadClientDB()) // CLIENT_DB built after anualesDeclaradoSet is ready
+  ])); // clientOwnerMap must be ready
   loadAutomationsData();   // pre-load estado automatizaciones desde Automatizaciones tab
   loadAccesosData();       // pre-load Accesos_SellerCentral → KPIs + tablas + donut
   loadCorreosData();       // pre-load Registro_Correos → correosRawData para perfil de cliente
