@@ -2564,13 +2564,17 @@ async function loadClientsLoad() {
   if (!data) return;
   const counts = { Arturo: 0, Cristina: 0, Lina: 0, Edgar: 0, 'Sin asignar': 0 };
   const rows = data.table?.rows || [];
+  const uniqueIdSet = new Set(); // de-duplicate Company_IDs
   clientOwnerMap = {}; // reset
   rows.forEach(row => {
     const c = row.c || [];
     // Clients_Load columns: [0]Company_Id [1]RFC [2]ClientName [3]Owner
     const companyId = (c[0] && c[0].v) ? String(c[0].v).trim() : '';
     const owner = (c[3] && c[3].v) ? String(c[3].v).trim() : '';
-    if (companyId) clientOwnerMap[companyId] = owner;
+    if (!companyId) return;               // skip blank/formula rows with no ID
+    if (uniqueIdSet.has(companyId)) return; // skip true duplicates
+    uniqueIdSet.add(companyId);
+    clientOwnerMap[companyId] = owner;
     if (owner === 'Arturo') counts.Arturo++;
     else if (owner === 'Cristina') counts.Cristina++;
     else if (owner === 'Lina') counts.Lina++;
@@ -2579,10 +2583,10 @@ async function loadClientsLoad() {
   });
   equipoClientsData = counts;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  // Update total clientes KPI
-  const totalClientes = rows.length;
-  const azCount  = rows.filter(r => { const v = r.c && r.c[0] && r.c[0].v ? String(r.c[0].v) : ''; return v.startsWith('AZ'); }).length;
-  const inCount  = rows.filter(r => { const v = r.c && r.c[0] && r.c[0].v ? String(r.c[0].v) : ''; return v.startsWith('IN'); }).length;
+  // Update total clientes KPI — unique, non-empty Company_IDs only
+  const totalClientes = uniqueIdSet.size;
+  const azCount  = [...uniqueIdSet].filter(id => id.startsWith('AZ')).length;
+  const inCount  = [...uniqueIdSet].filter(id => id.startsWith('IN')).length;
   set('kpi-total-clients', totalClientes);
   const subEl = document.querySelector('#kpi-total-clients + .kpi-sub, #kpi-total-clients ~ .kpi-sub');
   if (subEl) subEl.textContent = azCount + ' Amazon (AZ) · ' + inCount + ' Inbound (IN)';
