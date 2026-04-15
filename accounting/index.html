@@ -971,22 +971,6 @@ function gateSubmit() {
       </div>
     </div>
 
-    <!-- ===== RISK PROXY ===== -->
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">🎯 Proxy de Riesgo — Demoras por Documentación</div>
-        <span class="badge" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.25);">Historial de accesos + señales de correo</span>
-      </div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
-        Clientes AZ clasificados por su patrón histórico de demoras en envío de documentación y accesos a Seller Central.
-        Señales: negativas explícitas, responsable sin permisos, ausencia prolongada, problemas técnicos recurrentes.
-      </div>
-
-      <div id="proxy-riesgo-container">
-        <div style="color:var(--muted);font-size:12px;padding:8px;">Cargando clasificación de riesgo…</div>
-      </div>
-    </div>
-
     <!-- ===== TABLA PRINCIPAL DE ACCESOS ===== -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
@@ -1015,32 +999,38 @@ function gateSubmit() {
         </div>
       </div>
 
-      <!-- Progress by module (compact) -->
-      <div style="display:flex;gap:20px;margin-bottom:16px;flex-wrap:wrap;">
-        <div style="font-size:11px;color:var(--muted);">Módulos: <span style="color:var(--text);font-weight:600;">🔑Ret <span id="prog-ret-lbl">—</span></span></div>
-        <div style="font-size:11px;color:var(--muted);">📈Vtas <span style="color:var(--text);font-weight:600;" id="prog-vtas-lbl">—</span></div>
-        <div style="font-size:11px;color:var(--muted);">📦Inv <span style="color:var(--text);font-weight:600;" id="prog-inv-lbl">—</span></div>
-        <div style="font-size:11px;color:var(--muted);">💳Pay <span style="color:var(--text);font-weight:600;" id="prog-pay-lbl">—</span></div>
-        <div style="font-size:11px;color:var(--muted);">🏦Banco <span style="color:var(--text);font-weight:600;" id="prog-banco-lbl">—</span></div>
+      <!-- Module coverage summary bar -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:0.3px;">COBERTURA:</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:11px;padding:3px 10px;background:rgba(124,92,252,0.1);border:1px solid rgba(124,92,252,0.25);border-radius:20px;color:#7c5cfc;">🔑 Retenciones <b id="prog-ret-lbl">—</b></span>
+          <span style="font-size:11px;padding:3px 10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.22);border-radius:20px;color:#22c55e;">📈 Ventas <b id="prog-vtas-lbl">—</b></span>
+          <span style="font-size:11px;padding:3px 10px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.22);border-radius:20px;color:#3b82f6;">📦 Inventario <b id="prog-inv-lbl">—</b></span>
+          <span style="font-size:11px;padding:3px 10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);border-radius:20px;color:#f59e0b;">💳 Payoneer <b id="prog-pay-lbl">—</b></span>
+          <span style="font-size:11px;padding:3px 10px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.22);border-radius:20px;color:#f97316;">🏦 Banco <b id="prog-banco-lbl">—</b></span>
+        </div>
       </div>
 
-      <div class="table-wrap">
-        <table id="accesosMainTable">
-          <thead>
+      <div class="table-wrap" id="accesosTableWrap" style="max-height:calc(100vh - 460px);overflow-y:auto;">
+        <table id="accesosMainTable" style="table-layout:fixed;width:100%;">
+          <colgroup>
+            <col style="width:88px;">
+            <col style="width:180px;">
+            <col style="width:96px;">
+            <col><!-- Módulos activos - flex -->
+            <col style="width:180px;">
+          </colgroup>
+          <thead style="position:sticky;top:0;z-index:2;background:var(--bg2);">
             <tr>
-              <th style="width:90px;">ID</th>
+              <th>ID</th>
               <th>Cliente</th>
-              <th style="width:100px;">Estado</th>
-              <th style="text-align:center;width:38px;" title="Retenciones">Ret</th>
-              <th style="text-align:center;width:38px;" title="Ventas">Vtas</th>
-              <th style="text-align:center;width:38px;" title="Inventario">Inv</th>
-              <th style="text-align:center;width:38px;" title="Payoneer">Pay</th>
-              <th style="text-align:center;width:46px;" title="Banco">Banco</th>
+              <th>Estado SC</th>
+              <th>Módulos con acceso</th>
               <th>Notas</th>
             </tr>
           </thead>
           <tbody id="accesosMainBody">
-            <tr><td colspan="9" style="text-align:center;color:var(--muted);font-size:12px;padding:24px;">Cargando…</td></tr>
+            <tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:12px;padding:24px;">Cargando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -2115,8 +2105,6 @@ function renderAccesosUI() {
     window.charts.accesos.data.datasets[0].data = [completos.length, parciales.length, pendientes.length];
     window.charts.accesos.update();
   }
-  // Refresh proxy de riesgo with live data
-  renderProxyRiesgo();
   // Render main risk-segmented accesos table
   renderAccesosTable();
 }
@@ -2225,21 +2213,47 @@ function filterAccesosTable() {
   var countEl = document.getElementById('accesosTableCount');
   if (countEl) countEl.textContent = rows.length + ' cliente' + (rows.length !== 1 ? 's' : '');
 
+  // Risk row styles (left border accent + subtle bg tint)
   var riskStyle = {
-    alto:  { bg: 'rgba(239,68,68,0.07)',  border: '3px solid #ef4444', lBorder: 'rgba(239,68,68,0.18)' },
-    medio: { bg: 'rgba(245,158,11,0.06)', border: '3px solid #f59e0b', lBorder: 'rgba(245,158,11,0.16)' },
-    bajo:  { bg: 'rgba(34,197,94,0.04)',  border: '3px solid #22c55e', lBorder: 'rgba(34,197,94,0.12)'  }
+    alto:  { bg: 'rgba(239,68,68,0.06)',  border: '3px solid #ef4444' },
+    medio: { bg: 'rgba(245,158,11,0.05)', border: '3px solid #f59e0b' },
+    bajo:  { bg: 'transparent',           border: '3px solid rgba(34,197,94,0.35)' }
   };
 
-  var ck = function(v) {
-    return v
-      ? '<span style="color:#22c55e;font-weight:700;font-size:14px;">✓</span>'
-      : '<span style="color:var(--bg3);font-size:11px;font-weight:400;">—</span>';
-  };
+  // Estado SC pill
   var estPill = function(e) {
-    if (e === 'Acceso completo') return '<span class="status status-green" style="font-size:10px;">Completo</span>';
-    if (e === 'Acceso Parcial')  return '<span class="status status-yellow" style="font-size:10px;">Parcial</span>';
-    return '<span class="status status-red" style="font-size:10px;">Pendiente</span>';
+    if (e === 'Acceso completo')
+      return '<span style="display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(34,197,94,0.13);color:#22c55e;border:1px solid rgba(34,197,94,0.3);">✅ Completo</span>';
+    if (e === 'Acceso Parcial')
+      return '<span style="display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);">⚡ Parcial</span>';
+    return '<span style="display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(239,68,68,0.11);color:#ef4444;border:1px solid rgba(239,68,68,0.28);">🚫 Pendiente</span>';
+  };
+
+  // Module pills — only enabled ones shown as solid tags; disabled shown as dim outlines
+  var MODULES = [
+    { key:'ret',   icon:'🔑', label:'Retenciones', color:'#7c5cfc', bg:'rgba(124,92,252,0.12)', border:'rgba(124,92,252,0.3)' },
+    { key:'vtas',  icon:'📈', label:'Ventas',      color:'#22c55e', bg:'rgba(34,197,94,0.12)',  border:'rgba(34,197,94,0.3)'  },
+    { key:'inv',   icon:'📦', label:'Inventario',  color:'#3b82f6', bg:'rgba(59,130,246,0.12)', border:'rgba(59,130,246,0.3)' },
+    { key:'pay',   icon:'💳', label:'Payoneer',    color:'#f59e0b', bg:'rgba(245,158,11,0.12)', border:'rgba(245,158,11,0.3)' },
+    { key:'banco', icon:'🏦', label:'Banco',       color:'#f97316', bg:'rgba(249,115,22,0.12)', border:'rgba(249,115,22,0.3)' }
+  ];
+  var modPillsOf = function(r) {
+    var enabled = MODULES.filter(function(m){ return r[m.key]; });
+    var disabled = MODULES.filter(function(m){ return !r[m.key]; });
+    if (!enabled.length && !disabled.length) return '<span style="color:var(--muted);font-size:11px;">Sin módulos</span>';
+    var out = enabled.map(function(m) {
+      return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:' + m.bg + ';color:' + m.color + ';border:1px solid ' + m.border + ';white-space:nowrap;">' + m.icon + ' ' + m.label + '</span>';
+    }).join(' ');
+    if (disabled.length && enabled.length) {
+      // Show disabled as small dim outlines
+      out += ' ' + disabled.map(function(m) {
+        return '<span style="display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:10px;font-size:10px;color:var(--muted);border:1px solid var(--border);opacity:0.45;white-space:nowrap;">' + m.icon + ' ' + m.label + '</span>';
+      }).join(' ');
+    }
+    if (!enabled.length) {
+      out = '<span style="font-size:11px;color:#ef4444;font-weight:600;">Sin acceso a ningún módulo</span>';
+    }
+    return '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">' + out + '</div>';
   };
 
   var body = document.getElementById('accesosMainBody');
@@ -2247,21 +2261,17 @@ function filterAccesosTable() {
   body.innerHTML = rows.length
     ? rows.map(function(r) {
         var risk = classifyAccesoRiesgo(r);
-        var st = riskStyle[risk] || riskStyle.bajo;
-        var notasTxt = r.notas ? escH(r.notas.slice(0, 60) + (r.notas.length > 60 ? '…' : '')) : '<span style="color:var(--bg3);">—</span>';
+        var st   = riskStyle[risk] || riskStyle.bajo;
+        var notasTxt = r.notas ? '<span title="' + escH(r.notas) + '">' + escH(r.notas.length > 55 ? r.notas.slice(0,55) + '…' : r.notas) + '</span>' : '<span style="color:var(--muted);opacity:0.4;">—</span>';
         return '<tr style="background:' + st.bg + ';border-left:' + st.border + ';">' +
-          '<td style="font-size:11px;color:var(--muted);font-family:monospace;letter-spacing:0.5px;">' + escH(r.id) + '</td>' +
-          '<td><b style="font-size:12px;">' + escH(r.name) + '</b></td>' +
+          '<td style="font-size:11px;color:var(--muted);font-family:monospace;letter-spacing:0.4px;white-space:nowrap;">' + escH(r.id) + '</td>' +
+          '<td style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">' + escH(r.name) + '</td>' +
           '<td>' + estPill(r.estado) + '</td>' +
-          '<td style="text-align:center;">' + ck(r.ret)   + '</td>' +
-          '<td style="text-align:center;">' + ck(r.vtas)  + '</td>' +
-          '<td style="text-align:center;">' + ck(r.inv)   + '</td>' +
-          '<td style="text-align:center;">' + ck(r.pay)   + '</td>' +
-          '<td style="text-align:center;">' + ck(r.banco) + '</td>' +
-          '<td style="font-size:11px;color:var(--muted);max-width:220px;">' + notasTxt + '</td>' +
+          '<td>' + modPillsOf(r) + '</td>' +
+          '<td style="font-size:11px;color:var(--muted);">' + notasTxt + '</td>' +
         '</tr>';
       }).join('')
-    : '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">Sin resultados para "' + escH(q) + '"</td></tr>';
+    : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px;font-size:12px;">Sin resultados para "' + escH(q) + '"</td></tr>';
 }
 
 function clearAccesosSearch() {
@@ -3809,7 +3819,53 @@ function renderClientProfile(id) {
   var driveHtml = c.drive ? '<a href="' + c.drive + '" target="_blank" rel="noopener">📁 Abrir carpeta Drive</a>' : '<span style="color:var(--muted)">No vinculado</span>';
   var emailHtml = c.email ? '<a href="mailto:' + c.email + '">' + c.email + '</a>' : '<span style="color:var(--muted)">No registrado</span>';
 
-  // SC access badge color
+  // ── Proxy de Riesgo SC — per-client classification ──
+  var accRec = (typeof accesosRawData !== 'undefined' ? accesosRawData : []).find(function(r) { return r.id === id; });
+  var riskHtml = '';
+  if (accRec) {
+    var riskClass = classifyAccesoRiesgo(accRec);
+    var MODS = [
+      { key:'ret',   icon:'🔑', label:'Retenciones', color:'#7c5cfc', bg:'rgba(124,92,252,0.12)', border:'rgba(124,92,252,0.28)' },
+      { key:'vtas',  icon:'📈', label:'Ventas',      color:'#22c55e', bg:'rgba(34,197,94,0.12)',  border:'rgba(34,197,94,0.28)'  },
+      { key:'inv',   icon:'📦', label:'Inventario',  color:'#3b82f6', bg:'rgba(59,130,246,0.12)', border:'rgba(59,130,246,0.28)' },
+      { key:'pay',   icon:'💳', label:'Payoneer',    color:'#f59e0b', bg:'rgba(245,158,11,0.12)', border:'rgba(245,158,11,0.28)' },
+      { key:'banco', icon:'🏦', label:'Banco',       color:'#f97316', bg:'rgba(249,115,22,0.12)', border:'rgba(249,115,22,0.28)' }
+    ];
+    var modPillsHTML = MODS.map(function(m) {
+      return accRec[m.key]
+        ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;background:' + m.bg + ';color:' + m.color + ';border:1px solid ' + m.border + ';">' + m.icon + ' ' + m.label + '</span>'
+        : '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:12px;font-size:11px;color:var(--muted);border:1px solid var(--border);opacity:0.4;text-decoration:line-through;">' + m.icon + ' ' + m.label + '</span>';
+    }).join(' ');
+    var riskDef = {
+      alto:  { color:'#ef4444', bg:'rgba(239,68,68,0.08)',  border:'rgba(239,68,68,0.28)',  icon:'🔴', label:'Alto Riesgo',
+               desc:'Este cliente tiene operaciones con datos pero no contamos con acceso completo a SC. Declarar correctamente es imposible sin él.',
+               accion:'Solicitar acceso urgente. Documentar en expediente. Preparar carta de obligaciones del representante legal si hay negativa.' },
+      medio: { color:'#f59e0b', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.28)', icon:'🟡', label:'Riesgo Medio',
+               desc:'El cliente ya realizó su first shipment pero sigue reportando en ceros. Puede haber ventas no reportadas o acceso incompleto al reporte de ventas.',
+               accion:'Confirmar con el cliente si hay ventas activas. Verificar acceso al módulo de Ventas en SC.' },
+      bajo:  { color:'#22c55e', bg:'rgba(34,197,94,0.08)',  border:'rgba(34,197,94,0.28)',  icon:'🟢', label:'Sin Riesgo Inmediato',
+               desc:'RFC activo sin operaciones reportadas aún. No hay riesgo fiscal inmediato.',
+               accion:'Monitorear el inicio de operaciones. Preparar setup de accesos cuando inicie su primer shipment.' }
+    };
+    var rd = riskDef[riskClass] || riskDef.bajo;
+    var accEstado = accRec.estado === 'Acceso completo' ? '✅ Acceso completo' : accRec.estado === 'Acceso Parcial' ? '⚡ Acceso parcial' : '🚫 Sin acceso';
+    riskHtml =
+      '<div class="cli-section">' +
+        '<div class="cli-section-title">🔑 Seller Central — Estado de Acceso</div>' +
+        '<div style="background:' + rd.bg + ';border:1px solid ' + rd.border + ';border-radius:10px;padding:12px 14px;margin-bottom:12px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+            '<span style="font-size:13px;font-weight:700;color:' + rd.color + ';">' + rd.icon + ' ' + rd.label + '</span>' +
+            '<span style="font-size:11px;color:var(--muted);margin-left:auto;">' + escH(accEstado) + '</span>' +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--text);line-height:1.65;margin-bottom:8px;">' + escH(rd.desc) + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);line-height:1.5;padding-top:8px;border-top:1px solid ' + rd.border + ';"><b style="color:var(--text);">Acción recomendada:</b> ' + escH(rd.accion) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:5px;">' + modPillsHTML + '</div>' +
+        (accRec.notas ? '<div style="margin-top:10px;font-size:11px;color:var(--muted);padding:8px 10px;background:var(--bg3);border-radius:6px;">📝 ' + escH(accRec.notas) + '</div>' : '') +
+      '</div>';
+  }
+
+  // SC access badge color (legacy, kept for KPI strip)
   var scBadgeClass = 'sc-' + sc.level;
   var scIcons = {completo:'✅', parcial:'⚠️', pendiente:'⏳', sin_acceso:'🚫', na:'—'};
 
@@ -3918,12 +3974,8 @@ function renderClientProfile(id) {
       semReasonHtml +
     '</div>' +
 
-    // ── 4. ACCESO SELLER CENTRAL ──
-    '<div class="cli-section">' +
-      '<div class="cli-section-title">🔑 Acceso Seller Central (AZ)</div>' +
-      '<span class="sc-badge ' + scBadgeClass + '">' + scIcons[sc.level] + ' ' + sc.label + '</span>' +
-      '<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6;">' + escH(sc.note) + '</div>' +
-    '</div>' +
+    // ── 4. ACCESO SELLER CENTRAL (risk card) ──
+    riskHtml +
 
     // ── 5. HISTORIAL DE VENTAS ──
     '<div class="cli-chart-wrap">' +
