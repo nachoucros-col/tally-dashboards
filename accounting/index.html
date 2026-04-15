@@ -749,7 +749,7 @@ function gateSubmit() {
     <!-- CHARTS ROW -->
     <div class="grid-2">
       <div class="card">
-        <div class="card-title">📊 Declaraciones por Mes <span class="badge">Jul 2025 – Feb 2026</span></div>
+        <div class="card-title">📊 Declaraciones por Mes <span class="badge" id="declBadgePeriodRange">—</span></div>
         <div class="chart-container" style="height:260px;">
           <canvas id="chartDeclaraciones"></canvas>
         </div>
@@ -1075,34 +1075,21 @@ function gateSubmit() {
           <div style="width:42px;height:42px;background:rgba(239,68,68,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#ef4444;">A</div>
           <div>
             <div style="font-size:15px;font-weight:700;">Arturo</div>
-            <div style="font-size:11px;color:var(--muted);">Responsable principal · IN (Inbound)</div>
+            <div style="font-size:11px;color:var(--muted);">Contador externo · Sin datos en sistema</div>
           </div>
           <div style="margin-left:auto;text-align:right;">
             <div style="font-size:28px;font-weight:700;color:#ef4444;" id="equipoCount_arturo">—</div>
             <div style="font-size:10px;color:var(--muted);">clientes</div>
           </div>
         </div>
-        <div style="margin-bottom:10px;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ene 2026</div>
-          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-green" style="width:90%;"></div></div>
-          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
-            <span style="color:var(--green);">✓ ~85 declarados</span>
-            <span style="color:var(--yellow);">⏳ ~10 en proceso</span>
-            <span style="color:var(--red);">✗ ~5 sin iniciar</span>
+        <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:12px;margin-top:4px;">
+          <div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:6px;">⚠ Proveedor externo</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+            Arturo opera como contador externo. Sus clientes no están vinculados al sistema de declaraciones interno — actualmente no contamos con datos de su operación en tiempo real.
           </div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Feb 2026</div>
-          <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill fill-yellow" style="width:47%;"></div></div>
-          <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;">
-            <span style="color:var(--green);">✓ ~45 declarados</span>
-            <span style="color:var(--yellow);">⏳ ~15 proceso</span>
-            <span style="color:var(--red);">✗ ~20 sin iniciar</span>
-            <span style="color:var(--accent2);">🔒 ~5 bloq.</span>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:8px;">
+            Para visibilidad operativa, solicitar reporte manual periódico.
           </div>
-        </div>
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);">
-          🟢 Flujo estable · Clientes IN de menor complejidad fiscal · Carga alta en volumen
         </div>
       </div>
 
@@ -1436,7 +1423,7 @@ function gateSubmit() {
             <span style="font-weight:700;">Edgar</span>
           </div>
           <ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
-            <li><b>Cerrar 2 declaraciones Feb pendientes</b> — Sus 3 clientes son pocos; sin excusa para no tener Feb cerrado al 100% hoy.</li>
+            <li id="edgar-pending-task"><b>Cerrar declaraciones período activo pendientes</b> — Sus clientes son pocos; sin excusa para no tener el período cerrado al 100%.</li>
             <li><b>Disponible para reasignación</b> — Comunicar a Juan capacidad disponible. Listo para absorber 2-3 clientes IN simples de la cartera de Arturo.</li>
           </ol>
         </div>
@@ -1920,6 +1907,9 @@ var declDataByOwner = {};  // { ownerName: { declarado, enProceso, sinIniciar, b
 var monthlyDeclData = null; // { labels[], declarado[], sinOp[], enProceso[], sinIniciar[], bloqueado[] }
 var anualesDataLoaded = false; // flag: true after loadAnualesData() populates the table
 var anualesDeclaradoSet = new Set(); // Company_ids que ya presentaron declaración anual
+var activeDeclPeriod = '';   // e.g. "Marzo 2026" — exposed from loadDeclaracionesData()
+var prevDeclPeriod   = '';   // e.g. "Febrero 2026"
+var clientDeclMap    = {};   // { companyId: { 'YYYY-MM': estado } } — per-client monthly states
 
 // Push live monthly data into both Declaraciones charts (overview + decl tab)
 function updateDeclCharts() {
@@ -2637,6 +2627,9 @@ async function loadDeclaracionesData() {
     else if (estado === 'Sin iniciar') monthlyAgg[pk].sinIniciar++;
     else if (estado === 'Bloqueado')   monthlyAgg[pk].bloqueado++;
     else                               monthlyAgg[pk].sinOp++;
+    // Build per-client period map (used by getClientDeclarations)
+    if (!clientDeclMap[companyId]) clientDeclMap[companyId] = {};
+    clientDeclMap[companyId][pk] = estado;
   });
 
   const sortedKeys = Object.keys(monthlyAgg).sort();
@@ -2666,9 +2659,18 @@ async function loadDeclaracionesData() {
   const activeMesFull = monthFull[parseInt(activeMN,10)];
   const activeLabel   = activeMesFull + ' ' + activeY;
 
+  // ── Expose globals ──
+  activeDeclPeriod = activeLabel;
+  prevDeclPeriod = prevPK ? (function(){ const [py,pmn]=prevPK.split('-'); return monthFull[parseInt(pmn,10)]+' '+py; })() : '';
+
   const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
   const setCls = (id, cls) => { const el=document.getElementById(id); if(el) el.className=cls; };
   const setW   = (id, w)   => { const el=document.getElementById(id); if(el) el.style.width=w; };
+
+  // ── Badge: date range ──
+  const fk = sortedKeys[0]; const lk = sortedKeys[sortedKeys.length-1];
+  const badgeTxt = monthShort[parseInt(fk.split('-')[1],10)-1]+' '+fk.split('-')[0]+' – '+monthShort[parseInt(lk.split('-')[1],10)-1]+' '+lk.split('-')[0];
+  set('declBadgePeriodRange', badgeTxt);
 
   // ── 4. Update period labels ──
   set('declChartPeriodLabel', activeLabel);
@@ -2781,6 +2783,20 @@ async function loadDeclaracionesData() {
     fillPeriodCard('act',  activeLabel);
     if (prevPK) { const [py,pmn]=prevPK.split('-'); fillPeriodCard('prev', monthFull[parseInt(pmn,10)]+' '+py); }
   });
+
+  // ── Edgar dynamic task ──
+  if (ownerData['Edgar']) {
+    const eb = ownerData['Edgar'].act;
+    const edgarPending = eb.sinIniciar + eb.enProceso;
+    const edgarEl = document.getElementById('edgar-pending-task');
+    if (edgarEl) {
+      if (edgarPending > 0) {
+        edgarEl.innerHTML = '<b>Cerrar ' + edgarPending + ' declaraci' + (edgarPending === 1 ? 'ón' : 'ones') + ' ' + activeLabel + ' pendientes</b> — Sus ' + eb.total + ' clientes son pocos; sin excusa para no tener ' + activeLabel + ' cerrado al 100%.';
+      } else {
+        edgarEl.innerHTML = '<b>' + activeLabel + ' cerrado al 100%</b> — Disponible para absorber clientes adicionales.';
+      }
+    }
+  }
 
   // ── 10. Bottleneck table + declDataByOwner (for bar chart) ──
   declDataByOwner = {};
@@ -3481,42 +3497,44 @@ function getClientSCAccess(id, c) {
 
 function getClientDeclarations(id, c) {
   var rows = [];
-  // Annual 2025
-  if (c.declStatus === 'completa') {
-    rows.push({period:'Anual 2025', tipo:'Anual', status:'finalizada'});
-  } else if (c.suspended) {
-    rows.push({period:'Anual 2025', tipo:'Anual', status:'bloqueada'});
-  } else if (c.declReason === 'noinfo' || c.declStatus === 'bloqueada') {
-    rows.push({period:'Anual 2025', tipo:'Anual', status:'bloqueada'});
+  var mShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  // ── Annual ──
+  var annualStatus;
+  if (anualesDeclaradoSet.has(id)) {
+    annualStatus = 'finalizada';
+  } else if (c.suspended || c.declStatus === 'bloqueada') {
+    annualStatus = 'bloqueada';
   } else {
-    rows.push({period:'Anual 2025', tipo:'Anual', status:'pendiente'});
+    annualStatus = 'pendiente';
   }
-  // Jan 2026
-  if (c.declStatus === 'completa') {
-    rows.push({period:'Ene 2026', tipo:'Mensual', status:'finalizada'});
-  } else if (c.suspended) {
-    rows.push({period:'Ene 2026', tipo:'Mensual', status:'bloqueada'});
-  } else if (c.declStatus === 'bloqueada') {
-    rows.push({period:'Ene 2026', tipo:'Mensual', status:'bloqueada'});
-  } else if (c.declReason === 'team') {
-    rows.push({period:'Ene 2026', tipo:'Mensual', status:'finalizada'});
-  } else if (c.declReason === 'noinfo') {
-    rows.push({period:'Ene 2026', tipo:'Mensual', status:'pendiente'});
+  rows.push({period:'Anual 2025', tipo:'Anual', status: annualStatus});
+
+  // ── Monthly: use live clientDeclMap ──
+  var periodos = clientDeclMap[id] ? Object.keys(clientDeclMap[id]).sort() : [];
+
+  if (periodos.length > 0) {
+    periodos.forEach(function(pk) {
+      var estado = clientDeclMap[id][pk];
+      var parts = pk.split('-');
+      var label = mShort[parseInt(parts[1],10)-1] + ' ' + parts[0];
+      var st;
+      if      (estado === 'Declarado')   st = 'finalizada';
+      else if (estado === 'En proceso')  st = 'en_proceso';
+      else if (estado === 'Sin iniciar') st = 'sin_iniciar';
+      else if (estado === 'Bloqueado')   st = 'bloqueada';
+      else                               st = 'pendiente';
+      // Override: suspended clients are blocked on all periods
+      if (c.suspended) st = 'bloqueada';
+      rows.push({period: label, tipo:'Mensual', status: st});
+    });
   } else {
-    rows.push({period:'Ene 2026', tipo:'Mensual', status:'en_proceso'});
+    // Fallback: no monthly data found — show current active period
+    var pLabel = activeDeclPeriod || 'Período activo';
+    var fallbackSt = c.suspended ? 'bloqueada' : (c.declStatus === 'bloqueada' ? 'bloqueada' : 'sin_iniciar');
+    rows.push({period: pLabel, tipo:'Mensual', status: fallbackSt});
   }
-  // Feb 2026
-  if (c.declStatus === 'completa') {
-    rows.push({period:'Feb 2026', tipo:'Mensual', status:'finalizada'});
-  } else if (c.suspended) {
-    rows.push({period:'Feb 2026', tipo:'Mensual', status:'bloqueada'});
-  } else if (c.declStatus === 'bloqueada') {
-    rows.push({period:'Feb 2026', tipo:'Mensual', status:'bloqueada'});
-  } else if (c.declReason === 'team') {
-    rows.push({period:'Feb 2026', tipo:'Mensual', status:'en_proceso'});
-  } else {
-    rows.push({period:'Feb 2026', tipo:'Mensual', status:'pendiente'});
-  }
+
   return rows;
 }
 
@@ -3535,7 +3553,7 @@ function getClientTasks(id, c, sem) {
     tasks.push({text:'Notificar al cliente estatus de cuenta', priority:'media', done:false});
   }
   if (c.declStatus === 'incompleta' && c.declReason === 'team') {
-    tasks.push({text:'Completar carga de declaración Feb 2026', priority:'media', done:false});
+    tasks.push({text:'Completar carga de declaración ' + (activeDeclPeriod || 'período activo'), priority:'media', done:false});
   }
   if (c.declStatus === 'bloqueada' && !c.suspended && c.declReason === 'noinfo') {
     tasks.push({text:'Seguimiento a envío de documentación del cliente', priority:'alta', done:false});
