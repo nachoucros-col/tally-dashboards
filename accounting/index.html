@@ -1151,15 +1151,6 @@ function gateSubmit() {
           </div>
         </div>
         <div id="anual-notas" style="margin-top:16px; padding:14px; background:var(--bg3); border-radius:10px; font-size:12px; color:var(--muted); line-height:1.6; display:none;"></div>
-        <div class="card-title" style="margin-top:16px;">Detalle Declaraciones Anuales</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Cliente</th><th>Tipo</th><th>RFC</th><th>Fecha</th></tr></thead>
-            <tbody id="anualDetailBody">
-              <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:18px;">Cargando…</td></tr>
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   </div>
@@ -3115,22 +3106,6 @@ async function loadAnualesData() {
     }
   }
 
-  // ── Detail table ──
-  var tbody = document.getElementById('anualDetailBody');
-  if (tbody) {
-    tbody.innerHTML = '';
-    tableRows.forEach(function(r) {
-      var tipoCls = r.tipo === 'Con datos' ? 'status-blue' : 'status-gray';
-      var tipoTxt = r.tipo === 'Con datos' ? 'Con datos' : (r.tipo === 'Ceros' ? 'Ceros' : 'Sin tipo');
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' + r.nombre + (r.notas ? ' <span title="' + r.notas.replace(/"/g,'&quot;') + '" style="cursor:help;color:var(--yellow)">📝</span>' : '') + '</td>' +
-        '<td><span class="status ' + tipoCls + '">' + tipoTxt + '</span></td>' +
-        '<td style="font-size:11px">' + (r.rfc || '—') + '</td>' +
-        '<td>' + r.fechaFmt + '</td>';
-      tbody.appendChild(tr);
-    });
-  }
   // ── Overview KPI card ──
   var kpiPct = document.getElementById('kpi-anuales-pct');
   var kpiSub = document.getElementById('kpi-anuales-sub');
