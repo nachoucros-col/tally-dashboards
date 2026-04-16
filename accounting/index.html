@@ -3658,19 +3658,20 @@ function calcClientTotals(clientId) {
 //   2+ yellows combinados            → orange
 function calcClientSem(id, c) {
   if (c.suspended) return 'yellow';
+  var isAZ = id.startsWith('AZ');  // IN clients don't use Seller Central
   var reds = 0, yellows = 0;
 
-  // -- SC: sin acceso o sin respuesta de cliente
-  var noSC   = (c.tags && c.tags.includes('nosc')) || c.declReason === 'nosc';
-  var noInfo = c.declReason === 'noinfo';
+  // -- SC: sin acceso o sin respuesta — solo aplica a clientes AZ
+  var noSC   = isAZ && ((c.tags && c.tags.includes('nosc')) || c.declReason === 'nosc');
+  var noInfo = isAZ && c.declReason === 'noinfo';
   if (noSC || noInfo) yellows++;
 
   // -- Declaraciones faltantes
-  if (c.declStatus === 'bloqueada' && !c.suspended) reds++;       // 2+ faltantes → rojo
-  else if (c.declStatus === 'pendiente')             yellows++;   // 2 faltantes → amarillo
-  else if (c.declStatus === 'incompleta')            yellows++;   // 1 faltante (mes pasado) → amarillo
+  if (c.declStatus === 'bloqueada' && !c.suspended) reds++;
+  else if (c.declStatus === 'pendiente')             yellows++;
+  else if (c.declStatus === 'incompleta')            yellows++;
 
-  // -- Conteo de tareas bloqueantes (proxy para regla >3 tareas con 5+ días)
+  // -- Conteo de tareas bloqueantes
   var taskCount = 0;
   if (noSC)                                                          taskCount++;
   if (noInfo)                                                        taskCount++;
@@ -3678,14 +3679,15 @@ function calcClientSem(id, c) {
   if (c.declStatus === 'bloqueada' && !c.suspended)                  taskCount++;
   if (taskCount > 3) reds++;
 
-  // -- Agregar
-  if (reds > 0)    return 'red';
+  if (reds > 0)     return 'red';
   if (yellows >= 2) return 'orange';
   if (yellows >= 1) return 'yellow';
   return 'green';
 }
 
 function getClientSCAccess(id, c) {
+  // Inbound (IN) clients operate outside Amazon — Seller Central not applicable
+  if (id.startsWith('IN')) return {level:'na', label:'No aplica', note:'Cliente Inbound (IN) — no opera en Amazon. Seller Central no requerido.'};
   // Prefer live data from Accesos_SellerCentral sheet if available
   if (typeof accesosRawData !== 'undefined' && accesosRawData.length) {
     var live = accesosRawData.find(function(r) { return r.id === id; });
@@ -3766,12 +3768,13 @@ function getClientDeclarations(id, c) {
 
 function getClientTasks(id, c, sem) {
   var tasks = [];
-  var noSC = (c.tags && c.tags.includes('nosc')) || c.declReason === 'nosc';
+  var isAZ = id.startsWith('AZ');
+  var noSC = isAZ && ((c.tags && c.tags.includes('nosc')) || c.declReason === 'nosc');
   if (sem === 'red') {
     tasks.push({text:'Enviar correo de escalada — notificar riesgo de churn', priority:'alta', done:false});
     tasks.push({text:'Revisar historial completo en Google Drive', priority:'alta', done:false});
   }
-  if (noSC || c.declReason === 'noinfo') {
+  if (noSC || (isAZ && c.declReason === 'noinfo')) {
     tasks.push({text:'Confirmar acceso Seller Central con cliente', priority:'alta', done:false});
   }
   if (c.suspended) {
@@ -3791,38 +3794,129 @@ function getClientTasks(id, c, sem) {
 }
 
 function buildAnalisisEstrategico(id, c, totals, sem) {
-  var n = escH(c.name);
+  var n    = escH(c.name);
+  var isIN = id.startsWith('IN');
+  var isAZ = id.startsWith('AZ');
+
+  // ── Live email signals ──────────────────────────────────────────────────────
+  var allEmails = (typeof correosRawData !== 'undefined' ? correosRawData : [])
+    .filter(function(r) { return r.clientId === id; })
+    .sort(function(a, b) { return b.fechaEnvio.localeCompare(a.fechaEnvio); });
+  var lastEmail    = allEmails[0] || null;
+  var pendingConf  = allEmails.filter(function(e) { return !e.fechaConf; }).length;
+  var totalEmails  = allEmails.length;
+  var tipoLabels   = { Fiscal_SAT:'SAT/Fiscal', Banco:'Banco', Marketplace:'Marketplace',
+                       Comunicacion_General:'comunicación general', Tax_Compliance:'Tax Compliance',
+                       Legal:'legal', Reporte:'reporte', Facturacion:'facturación' };
+
+  // ── Live declaration signals ────────────────────────────────────────────────
+  var declMap     = (typeof clientDeclMap !== 'undefined' && clientDeclMap[id]) ? clientDeclMap[id] : {};
+  var estadoActivo = (typeof activeDeclPK !== 'undefined' && activeDeclPK) ? (declMap[activeDeclPK] || null) : null;
+  var hasAnnual   = (typeof anualesDeclaradoSet !== 'undefined') && anualesDeclaradoSet.has(id);
+  var periodoLabel = (typeof activeDeclPeriod !== 'undefined' && activeDeclPeriod) ? activeDeclPeriod : 'período activo';
+
+  // ── Live SC signals (AZ only) ───────────────────────────────────────────────
+  var accRec    = isAZ ? ((typeof accesosRawData !== 'undefined' ? accesosRawData : []).find(function(r) { return r.id === id; }) || null) : null;
+  var accRiesgo = accRec ? classifyAccesoRiesgo(accRec) : null;
+
+  // ── Sales ───────────────────────────────────────────────────────────────────
+  var hasSales = totals.totalSales > 0;
+  var salesStr = hasSales ? '<b>' + fmtMXN(totals.totalSales) + '</b> MXN en ' + totals.periods + ' períodos' : null;
+
+  // Helper: compose last-contact sentence
+  function contactCtx() {
+    if (!lastEmail) return '';
+    var tl  = tipoLabels[lastEmail.tipo] || lastEmail.tipo;
+    var out = 'Último contacto: correo de ' + tl + ' enviado el ' + lastEmail.fechaEnvio.slice(0, 10);
+    if (pendingConf > 0) out += ' — <b>' + pendingConf + ' correo' + (pendingConf > 1 ? 's' : '') + ' sin confirmar lectura</b>';
+    else out += ' — ✓ lectura confirmada';
+    return out + '.';
+  }
+
+  // ── SUSPENDED ──────────────────────────────────────────────────────────────
   if (c.suspended) {
-    return n + ' se encuentra <b>suspendida</b> — sin actividad comercial activa en México. La cuenta no genera importaciones y no requiere declaración mensual mientras esté inactiva. <b>Decisión requerida:</b> offboarding formal o plan de reactivación con timeline definido. Cada mes adicional sin resolución consume atención del equipo sin retorno operativo.';
+    var sp = [n + ' se encuentra <b>suspendida</b> — sin actividad comercial activa en México.'];
+    if (lastEmail) sp.push('Último contacto registrado: ' + (tipoLabels[lastEmail.tipo] || lastEmail.tipo) + ' el ' + lastEmail.fechaEnvio.slice(0, 10) + '.');
+    else           sp.push('Sin historial de contacto en el sistema.');
+    sp.push('<b>Decisión requerida:</b> offboarding formal o plan de reactivación con timeline definido. Cada mes adicional sin resolución consume atención del equipo sin retorno operativo.');
+    return sp.join(' ');
   }
+
+  // ── RED ────────────────────────────────────────────────────────────────────
   if (sem === 'red') {
-    return '<b>Situación crítica.</b> ' + n + ' tiene declaraciones bloqueadas por falta de información o acceso. El riesgo operativo es elevado. Se requiere <b>escalada inmediata</b> — correo formal con fecha límite de respuesta o inicio de proceso de cierre controlado.';
+    var rp = ['<b>Situación crítica.</b> ' + n + ' tiene declaraciones bloqueadas.'];
+    if (estadoActivo === 'bloqueada') rp.push('Estado del período <b>' + escH(periodoLabel) + '</b>: <span style="color:#ef4444;font-weight:700;">Bloqueada</span>.');
+    else if (!estadoActivo)           rp.push('Sin registro de declaración para el período activo.');
+    if (isAZ && accRiesgo === 'alto') rp.push('Acceso a Seller Central insuficiente — extracción de datos de ventas imposible con el acceso actual.');
+    if (pendingConf > 0)              rp.push(pendingConf + ' correo' + (pendingConf > 1 ? 's' : '') + ' enviado' + (pendingConf > 1 ? 's' : '') + ' sin confirmación de lectura del cliente.');
+    else if (!lastEmail)              rp.push('Sin historial de contacto registrado — canal de comunicación no verificado.');
+    var rAction = 'escalada formal con fecha límite de respuesta del cliente';
+    if (isAZ) rAction += ', solicitud de acceso SC urgente';
+    rp.push('<b>Acción inmediata:</b> ' + rAction + ', o inicio de proceso de cierre controlado.');
+    return rp.join(' ');
   }
+
+  // ── ORANGE ─────────────────────────────────────────────────────────────────
   if (sem === 'orange') {
-    return n + ' tiene <b>múltiples alertas activas</b> — combinación de bloqueos que requieren atención simultánea. Sin resolver el acceso SC y la documentación pendiente, los períodos faltantes seguirán acumulándose. Priorizar para esta semana.';
+    var op = [n + ' tiene <b>múltiples alertas activas</b>.'];
+    if (estadoActivo) op.push('Estado declaración ' + escH(periodoLabel) + ': <b>' + estadoActivo.replace('_',' ') + '</b>.');
+    if (hasSales)     op.push('Ventas acumuladas: ' + salesStr + '.');
+    if (isAZ && accRiesgo === 'alto') op.push('Sin acceso completo a SC — declaración precisa imposible con la información actual.');
+    var cc = contactCtx();
+    if (cc) op.push(cc);
+    op.push('Sin resolver los bloqueos activos, los períodos pendientes seguirán acumulándose. <b>Priorizar esta semana.</b>');
+    return op.join(' ');
   }
+
+  // ── YELLOW ─────────────────────────────────────────────────────────────────
   if (sem === 'yellow') {
+    var yp = [];
+    var cc2 = contactCtx();
     if (c.declReason === 'team') {
-      return n + ' tiene contacto activo e información disponible. El bloqueo es <b>interno</b> — el equipo aún no ha completado la declaración. Caso resoluble en el corto plazo sin dependencia externa. Priorizar dentro del flujo de trabajo actual.';
+      yp.push(n + ' tiene contacto activo e información disponible. El bloqueo es <b>interno</b> — el equipo aún no ha completado la declaración de <b>' + escH(periodoLabel) + '</b>.');
+      if (hasSales) yp.push('Ventas acumuladas: ' + salesStr + '.');
+      if (cc2) yp.push(cc2);
+      yp.push('Caso resoluble en el corto plazo sin dependencia externa. Priorizar dentro del flujo de trabajo actual.');
+    } else if (c.declReason === 'noinfo') {
+      yp.push(n + ' requiere <b>documentación del cliente</b> para proceder con la declaración de <b>' + escH(periodoLabel) + '</b>.');
+      if (cc2) {
+        yp.push(cc2);
+        if (pendingConf > 0) yp.push('<b>Acción:</b> hacer seguimiento de los correos sin confirmar. Sin respuesta en 48h, escalar por canal alternativo.');
+        else if (lastEmail)  yp.push('El cliente leyó el último correo. <b>Acción:</b> solicitar explícitamente la información faltante con fecha límite.');
+      } else {
+        yp.push('Sin historial de contacto. <b>Acción:</b> contactar al cliente para solicitar documentación fiscal pendiente.');
+      }
+      yp.push('Seguimiento activo recomendado antes de fin de mes para evitar atraso.');
+    } else if (c.declReason === 'nosc' && isAZ) {
+      yp.push(n + ' tiene <b>bloqueo por acceso a Seller Central.</b> Sin acceso SC no es posible extraer datos de ventas para la declaración mensual.');
+      if (accRec && accRec.estado) yp.push('Estado actual: <b>' + escH(accRec.estado) + '</b>.');
+      if (cc2) yp.push(cc2);
+      yp.push('<b>Acción:</b> enviar instrucciones de configuración de acceso SC y confirmar recepción. La resolución depende del cliente.');
+    } else {
+      yp.push(n + ' requiere <b>atención en el corto plazo.</b>');
+      if (estadoActivo) yp.push('Estado declaración ' + escH(periodoLabel) + ': <b>' + estadoActivo.replace('_',' ') + '</b>.');
+      if (cc2) yp.push(cc2);
+      if (c.semReason) yp.push(escH(c.semReason));
     }
-    if (c.declReason === 'noinfo') {
-      return n + ' requiere <b>documentación del cliente</b> para proceder. El contacto existe pero la información fiscal o de ventas no ha sido entregada completa. Seguimiento activo recomendado antes de fin de mes para no entrar en atraso.';
-    }
-    if (c.declReason === 'nosc') {
-      return n + ' tiene <b>bloqueo por acceso a Seller Central.</b> Sin acceso SC no es posible extraer los datos de ventas para la declaración mensual. La resolución depende del cliente.';
-    }
-    return n + ' requiere <b>atención en el corto plazo.</b> ' + (c.semReason ? escH(c.semReason) : 'Revisar estado de declaraciones y acceso SC.');
+    return yp.join(' ');
   }
-  // green
-  var txt = n + ' está <b>al día.</b> Cuenta activa con declaraciones en orden';
-  if (c.email) txt += ', contacto directo disponible en <a href="mailto:' + c.email + '">' + c.email + '</a>';
-  txt += '.';
-  if (totals.totalSales > 0) {
-    txt += ' Historial de ' + totals.periods + ' períodos reportados con <b>' + fmtMXN(totals.totalSales) + '</b> MXN en ventas acumuladas.';
-  } else {
-    txt += ' Sin historial de ventas cargado aún en el sistema.';
+
+  // ── GREEN ──────────────────────────────────────────────────────────────────
+  var gp = [n + ' está <b>al día.</b>'];
+  if      (estadoActivo === 'finalizada') gp.push('Declaración de <b>' + escH(periodoLabel) + '</b> finalizada ✓.');
+  else if (estadoActivo)                  gp.push('Declaración ' + escH(periodoLabel) + ': ' + estadoActivo.replace('_',' ') + '.');
+  if (hasAnnual) gp.push('Declaración anual 2025 presentada ✓.');
+  if (hasSales)  gp.push('Historial de ' + totals.periods + ' períodos con ' + salesStr + ' en ventas acumuladas.');
+  else           gp.push('Sin historial de ventas registrado aún en el sistema.');
+  if (isAZ && accRec && accRiesgo === 'bajo') gp.push('Acceso SC: ' + escH(accRec.estado || 'activo') + '.');
+  var cc3 = contactCtx();
+  if (cc3) {
+    gp.push(cc3);
+    if (totalEmails > 1) gp.push('Total: ' + totalEmails + ' comunicaciones registradas con este cliente.');
+  } else if (c.email) {
+    gp.push('Contacto directo disponible en <a href="mailto:' + c.email + '">' + c.email + '</a>.');
   }
-  return txt;
+  return gp.join(' ');
 }
 
 function renderClientProfile(id) {
@@ -3850,8 +3944,10 @@ function renderClientProfile(id) {
   var driveHtml = c.drive ? '<a href="' + c.drive + '" target="_blank" rel="noopener">📁 Abrir carpeta Drive</a>' : '<span style="color:var(--muted)">No vinculado</span>';
   var emailHtml = c.email ? '<a href="mailto:' + c.email + '">' + c.email + '</a>' : '<span style="color:var(--muted)">No registrado</span>';
 
-  // ── Proxy de Riesgo SC — per-client classification ──
-  var accRec = (typeof accesosRawData !== 'undefined' ? accesosRawData : []).find(function(r) { return r.id === id; });
+  // ── Proxy de Riesgo SC — per-client classification (AZ only) ──
+  var accRec = (!id.startsWith('IN') && typeof accesosRawData !== 'undefined')
+    ? accesosRawData.find(function(r) { return r.id === id; })
+    : null;
   var riskHtml = '';
   if (accRec) {
     var riskClass = classifyAccesoRiesgo(accRec);
@@ -4279,13 +4375,14 @@ function generateCriticalActions() {
   var periodLabel = activeDeclPeriod || 'período activo';
 
   clientIds.forEach(function(id) {
-    var c  = CLIENT_DB[id];
+    var c    = CLIENT_DB[id];
+    var isIN = id.startsWith('IN');  // Inbound/International — no Amazon SC required
 
     // Estado en período activo
     var estadoActivo = (activeDeclPK && clientDeclMap[id]) ? (clientDeclMap[id][activeDeclPK] || '') : '';
 
-    // SC access record
-    var accRec = (typeof accesosRawData !== 'undefined' ? accesosRawData : []).find(function(r) { return r.id === id; });
+    // SC access record — only relevant for AZ clients
+    var accRec    = (!isIN && typeof accesosRawData !== 'undefined') ? accesosRawData.find(function(r) { return r.id === id; }) : null;
     var riesgoSC  = accRec ? classifyAccesoRiesgo(accRec) : null;
     var hasFullSC = accRec && accRec.estado === 'Acceso completo';
 
@@ -4296,8 +4393,8 @@ function generateCriticalActions() {
     // Annual
     var hasAnual  = anualesDeclaradoSet.has(id);
 
-    // ── SIGNAL 1: Bloqueado + sin acceso SC + operaciones ────────────────
-    if (estadoActivo === 'Bloqueado' && riesgoSC === 'alto') {
+    // ── SIGNAL 1: Bloqueado + sin acceso SC + operaciones (AZ only) ──────
+    if (!isIN && estadoActivo === 'Bloqueado' && riesgoSC === 'alto') {
       push(100, 'CRÍTICO', '🔒 SC + Decl.', '#ef4444', id,
         'Declaración ' + periodLabel + ' BLOQUEADA y sin acceso SC. Doble riesgo fiscal activo — resolver acceso e iniciar desbloqueo de inmediato.');
     }
@@ -4308,8 +4405,8 @@ function generateCriticalActions() {
         'Declaración de ' + periodLabel + ' está BLOQUEADA. Identificar causa y desbloquear antes del cierre del período.');
     }
 
-    // ── SIGNAL 3: Con ventas pero sin acceso SC completo ──────────────────
-    if (riesgoSC === 'alto') {
+    // ── SIGNAL 3: Con ventas pero sin acceso SC completo (AZ only) ────────
+    if (!isIN && riesgoSC === 'alto') {
       var modFaltantes = accRec
         ? ['ret','vtas','inv','pay','banco'].filter(function(m){ return !accRec[m]; }).join(', ')
         : 'todos';
@@ -4347,8 +4444,8 @@ function generateCriticalActions() {
         'Declaración ' + periodLabel + ' en proceso — requiere seguimiento para asegurar cierre antes de deadline del período.');
     }
 
-    // ── SIGNAL 9: First shipment hecho pero reportando en ceros ──────────
-    if (riesgoSC === 'medio' && !hasFullSC) {
+    // ── SIGNAL 9: First shipment hecho pero reportando en ceros (AZ only) ─
+    if (!isIN && riesgoSC === 'medio' && !hasFullSC) {
       push(22, 'MEDIO', '📦 Ceros / SC', '#f59e0b', id,
         'Ya hizo first shipment pero sigue reportando en ceros. Verificar si hay ventas no declaradas o acceso incompleto al módulo Ventas SC.');
     }
