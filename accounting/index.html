@@ -746,6 +746,55 @@ function gateSubmit() {
 
     </div>
 
+    <!-- ⚡ TOP 10 ACCIONES CRÍTICAS DEL DÍA -->
+    <div class="card" style="margin-bottom:24px;padding:0;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:16px 20px 12px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:3px;">⚡ 10 Acciones Críticas del Día</div>
+          <div style="font-size:11px;color:var(--muted);">Generado en tiempo real · cruza SC, declaraciones, anuales y accesos desde Google Sheets</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:11px;color:var(--muted);" id="critActLastRun">Calculando…</span>
+          <span style="font-size:11px;padding:3px 10px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.25);border-radius:12px;" id="critActCount">—</span>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div style="display:flex;gap:16px;padding:0 20px 10px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;"></span>Crítico — acción inmediata</span>
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;"></span>Alto — resolver hoy</span>
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;"></span>Medio — seguimiento</span>
+      </div>
+
+      <div class="table-wrap" style="margin:0;border-radius:0;border-left:none;border-right:none;border-bottom:none;">
+        <table style="width:100%;">
+          <colgroup>
+            <col style="width:32px;">
+            <col style="width:100px;">
+            <col style="width:150px;">
+            <col style="width:76px;">
+            <col><!-- Acción — toma el espacio restante -->
+            <col style="width:88px;">
+            <col style="width:80px;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="text-align:center;">#</th>
+              <th>Prioridad</th>
+              <th>Cliente</th>
+              <th>Resp.</th>
+              <th>Acción requerida</th>
+              <th>Área</th>
+              <th style="text-align:center;">Ver</th>
+            </tr>
+          </thead>
+          <tbody id="critActBody">
+            <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;font-size:12px;">Cargando datos…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- CHARTS ROW -->
     <div class="grid-2">
       <div class="card">
@@ -2107,6 +2156,8 @@ function renderAccesosUI() {
   }
   // Render main risk-segmented accesos table
   renderAccesosTable();
+  // Re-score critical actions — accesosRawData may change SC classification
+  renderCriticalActions();
 }
 
 // ── Proxy de Riesgo — clasificación dinámica desde Accesos_SellerCentral ─────
@@ -2307,6 +2358,8 @@ async function refreshData() {
   }
   if (lbl)  lbl.textContent = 'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
   if (btn) { btn.disabled = false; btn.textContent = '↻ Actualizar'; }
+  // Re-score critical actions after full data refresh
+  renderCriticalActions();
 }
 
 // ============================================================
@@ -3216,6 +3269,9 @@ async function loadClientDB() {
 
   // Refresh client list respecting active filters
   filterClientList();
+
+  // Re-score critical actions now that CLIENT_DB + declarations are ready
+  renderCriticalActions();
 }
 
 // LEGACY — hardcoded CLIENT_DB entries, no longer in use.
@@ -4214,6 +4270,175 @@ function initDeclCharts() {
 // ============================================================
 // INIT
 // ============================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// ⚡ MOTOR DE ACCIONES CRÍTICAS — generación automática desde datos en vivo
+// ═══════════════════════════════════════════════════════════════════════════
+function generateCriticalActions() {
+  var actions = [];
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+  var clientIds = Object.keys(CLIENT_DB);
+  var hasLoaded = clientIds.length > 0 && activeDeclPK;
+  if (!hasLoaded) return [];  // data not ready yet
+
+  var seenClient = {};  // cap at 2 actions per client to ensure breadth
+
+  function push(score, priority, type, typeColor, clientId, action) {
+    var c = CLIENT_DB[clientId];
+    if (!c) return;
+    seenClient[clientId] = (seenClient[clientId] || 0) + 1;
+    if (seenClient[clientId] > 2) return; // max 2 signals per client
+    actions.push({
+      score:    score,
+      priority: priority,
+      pColor:   priority === 'CRÍTICO' ? '#ef4444' : priority === 'ALTO' ? '#f97316' : '#f59e0b',
+      type:     type,
+      typeColor:typeColor,
+      id:       clientId,
+      name:     c.name,
+      owner:    c.owner || '—',
+      action:   action
+    });
+  }
+
+  var periodLabel = activeDeclPeriod || 'período activo';
+
+  clientIds.forEach(function(id) {
+    var c  = CLIENT_DB[id];
+
+    // Estado en período activo
+    var estadoActivo = (activeDeclPK && clientDeclMap[id]) ? (clientDeclMap[id][activeDeclPK] || '') : '';
+
+    // SC access record
+    var accRec = (typeof accesosRawData !== 'undefined' ? accesosRawData : []).find(function(r) { return r.id === id; });
+    var riesgoSC  = accRec ? classifyAccesoRiesgo(accRec) : null;
+    var hasFullSC = accRec && accRec.estado === 'Acceso completo';
+
+    // Sales history
+    var entries   = timelineRawData[id] || [];
+    var hasSales  = entries.some(function(e) { return (e.sales || 0) > 0; });
+
+    // Annual
+    var hasAnual  = anualesDeclaradoSet.has(id);
+
+    // ── SIGNAL 1: Bloqueado + sin acceso SC + operaciones ────────────────
+    if (estadoActivo === 'Bloqueado' && riesgoSC === 'alto') {
+      push(100, 'CRÍTICO', '🔒 SC + Decl.', '#ef4444', id,
+        'Declaración ' + periodLabel + ' BLOQUEADA y sin acceso SC. Doble riesgo fiscal activo — resolver acceso e iniciar desbloqueo de inmediato.');
+    }
+
+    // ── SIGNAL 2: Bloqueado en período activo ─────────────────────────────
+    if (estadoActivo === 'Bloqueado') {
+      push(85, 'CRÍTICO', '🔒 Declaración', '#ef4444', id,
+        'Declaración de ' + periodLabel + ' está BLOQUEADA. Identificar causa y desbloquear antes del cierre del período.');
+    }
+
+    // ── SIGNAL 3: Con ventas pero sin acceso SC completo ──────────────────
+    if (riesgoSC === 'alto') {
+      var modFaltantes = accRec
+        ? ['ret','vtas','inv','pay','banco'].filter(function(m){ return !accRec[m]; }).join(', ')
+        : 'todos';
+      push(75, 'CRÍTICO', '🔑 Sin acceso SC', '#ef4444', id,
+        'Tiene operaciones con datos pero sin acceso SC completo (faltan: ' + modFaltantes + '). Declarar correctamente es imposible.');
+    }
+
+    // ── SIGNAL 4: Cliente suspendido + declaración activa sin iniciar ─────
+    if (c.suspended && (estadoActivo === 'Sin iniciar' || !estadoActivo)) {
+      push(68, 'CRÍTICO', '⛔ Suspendido', '#ef4444', id,
+        'Cliente SUSPENDIDO con declaración de ' + periodLabel + ' sin iniciar. Definir decisión: offboarding o reactivación.');
+    }
+
+    // ── SIGNAL 5: Sin iniciar + tiene historial de operaciones ───────────
+    if (estadoActivo === 'Sin iniciar' && hasSales) {
+      push(60, 'ALTO', '📋 Sin iniciar', '#f97316', id,
+        'Declaración ' + periodLabel + ' SIN INICIAR y el cliente tiene historial de ventas. Riesgo de multa por entrega tardía.');
+    }
+
+    // ── SIGNAL 6: Sin iniciar en período activo (sin historial previo) ────
+    if (estadoActivo === 'Sin iniciar' && !hasSales) {
+      push(45, 'ALTO', '📋 Sin iniciar', '#f97316', id,
+        'Declaración ' + periodLabel + ' sin iniciar. Confirmar si hay operaciones y preparar declaración en ceros si aplica.');
+    }
+
+    // ── SIGNAL 7: Anual 2025 pendiente + cliente activo ──────────────────
+    if (!hasAnual && !c.suspended) {
+      push(40, 'ALTO', '📅 Anual 2025', '#f97316', id,
+        'Declaración anual 2025 aún no presentada. Coordinar con ' + (c.owner || 'responsable') + ' y confirmar documentación.');
+    }
+
+    // ── SIGNAL 8: En proceso — siguiente acción del equipo ────────────────
+    if (estadoActivo === 'En proceso') {
+      push(30, 'MEDIO', '⏳ En proceso', '#f59e0b', id,
+        'Declaración ' + periodLabel + ' en proceso — requiere seguimiento para asegurar cierre antes de deadline del período.');
+    }
+
+    // ── SIGNAL 9: First shipment hecho pero reportando en ceros ──────────
+    if (riesgoSC === 'medio' && !hasFullSC) {
+      push(22, 'MEDIO', '📦 Ceros / SC', '#f59e0b', id,
+        'Ya hizo first shipment pero sigue reportando en ceros. Verificar si hay ventas no declaradas o acceso incompleto al módulo Ventas SC.');
+    }
+  });
+
+  // ── Sort by score desc, deduplicate top 10 ──────────────────────────────
+  actions.sort(function(a, b) { return b.score - a.score; });
+  return actions.slice(0, 10);
+}
+
+function renderCriticalActions() {
+  var body = document.getElementById('critActBody');
+  var countEl = document.getElementById('critActCount');
+  var lastEl  = document.getElementById('critActLastRun');
+  if (!body) return;
+
+  var actions = generateCriticalActions();
+
+  if (!actions.length) {
+    // Not enough data yet — show loading if CLIENT_DB is empty, success if all good
+    var noDB = Object.keys(CLIENT_DB).length === 0;
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px;font-size:12px;">' +
+      (noDB ? '⏳ Cargando datos de clientes…' : '✅ Sin acciones críticas pendientes') + '</td></tr>';
+    if (countEl) countEl.textContent = noDB ? '—' : '0 críticas';
+    return;
+  }
+
+  // Priority badge HTML
+  var pBadge = function(a) {
+    return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;' +
+      'background:' + a.pColor + '18;color:' + a.pColor + ';border:1px solid ' + a.pColor + '44;">' +
+      (a.priority === 'CRÍTICO' ? '●' : a.priority === 'ALTO' ? '●' : '●') + ' ' + a.priority + '</span>';
+  };
+
+  body.innerHTML = actions.map(function(a, i) {
+    var rowBg = a.priority === 'CRÍTICO' ? 'rgba(239,68,68,0.04)' : a.priority === 'ALTO' ? 'rgba(249,115,22,0.03)' : '';
+    var lBorder = 'border-left:3px solid ' + a.pColor + ';';
+    return '<tr style="background:' + rowBg + ';' + lBorder + '">' +
+      '<td style="text-align:center;font-size:11px;color:var(--muted);font-weight:600;">' + (i + 1) + '</td>' +
+      '<td>' + pBadge(a) + '</td>' +
+      '<td>' +
+        '<div style="font-size:12px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escH(a.name) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);font-family:monospace;">' + escH(a.id) + '</div>' +
+      '</td>' +
+      '<td style="font-size:11px;color:var(--muted);">' + escH(a.owner) + '</td>' +
+      '<td style="font-size:12px;line-height:1.5;padding-right:12px;">' + escH(a.action) + '</td>' +
+      '<td>' +
+        '<span style="display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;' +
+          'background:' + a.typeColor + '18;color:' + a.typeColor + ';border:1px solid ' + a.typeColor + '33;">' + escH(a.type) + '</span>' +
+      '</td>' +
+      '<td style="text-align:center;">' +
+        '<button onclick="showTab(\'clientes\');setTimeout(function(){selectClient(\'' + escH(a.id) + '\')},300);" ' +
+          'style="padding:4px 10px;font-size:11px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);cursor:pointer;">Ver →</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
+  var critCount = actions.filter(function(a){ return a.priority === 'CRÍTICO'; }).length;
+  if (countEl) countEl.textContent = critCount + ' crítica' + (critCount !== 1 ? 's' : '');
+  if (lastEl) {
+    var now = new Date();
+    lastEl.textContent = 'Actualizado ' + now.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('lastUpdate').textContent =
     'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
