@@ -2373,8 +2373,8 @@ async function loadTimelineData() {
     const get = i => (c[i] && c[i].v != null) ? c[i].v : null;
     const periodId  = String(get(0) || '');   // "2025-07_AZ005337"
     const companyId = String(get(1) || '');   // "AZ005337"
-    const sales     = parseFloat(get(6)) || 0;
-    const retention = parseFloat(get(9)) || 0;
+    const sales     = parseFloat(get(11)) || 0;  // VentasList (col L)
+    const retention = parseFloat(get(9))  || 0;  // PeriodoRetencion (col J)
     if (!companyId || !periodId) return;
     // Extract YYYY-MM from PeriodID (handles "2025-7" and "2025-07" and "2026-3")
     const pm = periodId.match(/^(\d{4})-(\d{1,2})/);
