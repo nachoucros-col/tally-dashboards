@@ -2416,24 +2416,26 @@ async function loadDeclaracionesData() {
   const fillCls = (pct) => parseFloat(pct) >= 80 ? 'fill-green' : parseFloat(pct) >= 50 ? 'fill-yellow' : 'fill-red';
 
   // ── 6. KPI Cards: previous period (left) + active period (right) ──
+  // Denominator = elegiblesDecl (Clients_load: sin suspensión + Fecha_FIEL válida)
+  const denom = elegiblesDecl > 0 ? elegiblesDecl : 1;
   if (prevPK) {
     const [prevY, prevMN] = prevPK.split('-');
     const prevMesFull = monthFull[parseInt(prevMN,10)];
     const prevLabel   = prevMesFull + ' ' + prevY;
     const pm = monthlyAgg[prevPK];
-    const ppct = pctOf(pm.declarado, pm.total);
+    const ppct = pctOf(pm.declarado, denom);
     set('kpi-prev-label', 'Declaraciones ' + prevLabel);
     set('kpi-prev-pct',   ppct + '%');
     setCls('kpi-prev-pct', 'kpi-value ' + heatCls(ppct));
-    set('kpi-prev-sub',   pm.declarado + '/' + pm.total + ' declarados · ' + pm.enProceso + ' en proceso');
+    set('kpi-prev-sub',   pm.declarado + '/' + denom + ' declarados · ' + pm.enProceso + ' en proceso');
     set('kpi-prev-trend', '↑ Mes más avanzado del ciclo');
   }
   const am = monthlyAgg[activePK];
-  const apct = pctOf(am.declarado, am.total);
+  const apct = pctOf(am.declarado, denom);
   set('kpi-act-label', 'Declaraciones ' + activeLabel);
   set('kpi-act-pct',   apct + '%');
   setCls('kpi-act-pct', 'kpi-value ' + heatCls(apct));
-  set('kpi-act-sub',   am.declarado + '/' + am.total + ' declarados · ' + am.sinIniciar + ' sin iniciar');
+  set('kpi-act-sub',   am.declarado + '/' + denom + ' declarados · ' + am.sinIniciar + ' sin iniciar');
   const pendingTotal = am.sinIniciar + am.enProceso + am.bloqueado;
   if (parseFloat(apct) < 60) {
     set('kpi-act-trend', '⚠ Deadline crítico activo');
@@ -2457,8 +2459,8 @@ async function loadDeclaracionesData() {
     const [y,mn] = pk.split('-');
     const mf = monthFull[parseInt(mn,10)];
     const mo = monthlyAgg[pk];
-    const pct = pctOf(mo.declarado, mo.total);
-    set('decl' + sfx + '_label', '📅 ' + mf.toUpperCase() + ' ' + y + ' — ' + mo.total + ' clientes');
+    const pct = pctOf(mo.declarado, denom);
+    set('decl' + sfx + '_label', '📅 ' + mf.toUpperCase() + ' ' + y + ' — ' + denom + ' clientes');
     set('decl' + sfx + '_pct',   pct + '%');
     setCls('decl' + sfx + '_pct', 'month-big ' + heatCls(pct));
     setW('decl' + sfx + '_bar',  pct + '%');
