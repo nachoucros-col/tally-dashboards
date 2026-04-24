@@ -689,9 +689,6 @@ function gateSubmit() {
   <div class="sidebar-item" data-tab="equipo" onclick="showTab('equipo')">
     <span class="sidebar-icon">👤</span><span>Equipo / Carga</span>
   </div>
-  <div class="sidebar-item" data-tab="automations" onclick="showTab('automations')">
-    <span class="sidebar-icon">🤖</span><span>Automatizaciones</span>
-  </div>
 </nav>
 
 <!-- MAIN -->
@@ -707,8 +704,7 @@ function gateSubmit() {
       <div class="alert-icon">🚨</div>
       <div>
         <b><span id="alertCriticalCount">—</span> tareas críticas sin iniciar</b> en la <span id="alertWeekInfo">semana actual</span> —
-        <span id="alertPendingCount">—</span> clientes en <span id="alertActivePeriodName">—</span> aún sin declaración |
-        <span id="alertEmailStatus">cargando estado automatizaciones…</span>
+        <span id="alertPendingCount">—</span> clientes en <span id="alertActivePeriodName">—</span> aún sin declaración
       </div>
     </div>
 
@@ -870,16 +866,6 @@ function gateSubmit() {
         </table>
       </div>
     </div>
-
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">🤖 Estado Automatizaciones Claude</div>
-        <div style="font-size:11px;color:var(--muted);" id="automationsUpdatedAt">Cargando…</div>
-      </div>
-      <div class="task-grid" id="automationsGrid" style="margin-top:4px;">
-        <div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Cargando automatizaciones…</div>
-      </div>
-    </div>
   </div>
 
   <!-- ============================================================ -->
@@ -1035,16 +1021,60 @@ function gateSubmit() {
         </div>
       </div>
 
-      <!-- Legend -->
-      <div style="display:flex;gap:18px;margin-bottom:12px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);">
-          <div style="width:10px;height:10px;background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.5);border-radius:2px;flex-shrink:0;"></div>🔴 Con operaciones · sin acceso SC
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);">
-          <div style="width:10px;height:10px;background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.45);border-radius:2px;flex-shrink:0;"></div>🟡 First shipment · reportando en ceros
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);">
-          <div style="width:10px;height:10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.35);border-radius:2px;flex-shrink:0;"></div>🟢 RFC activo · sin operaciones aún
+      <!-- Filter Bar -->
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:0.3px;">FILTROS:</span>
+        <select id="accesosFiltroRiesgo" onchange="filterAccesosTable()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--bg2);color:var(--text);cursor:pointer;">
+          <option value="">— Riesgo</option>
+          <option value="alto">🔴 Alto Riesgo</option>
+          <option value="medio">🟡 Medio Riesgo</option>
+          <option value="bajo">🟢 Bajo Riesgo</option>
+        </select>
+        <select id="accesosFiltroEstado" onchange="filterAccesosTable()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--bg2);color:var(--text);cursor:pointer;">
+          <option value="">— Estado</option>
+          <option value="Acceso completo">✅ Acceso Completo</option>
+          <option value="Acceso Parcial">⚡ Acceso Parcial</option>
+          <option value="Pendiente">🚫 Pendiente</option>
+        </select>
+        <select id="accesosFiltroMod" onchange="filterAccesosTable()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--bg2);color:var(--text);cursor:pointer;">
+          <option value="">— Módulo</option>
+          <option value="ret">🔑 Retenciones</option>
+          <option value="vtas">📈 Ventas</option>
+          <option value="inv">📦 Inventario</option>
+          <option value="pay">💳 Payoneer</option>
+          <option value="banco">🏦 Banco</option>
+        </select>
+        <button onclick="resetAccesosFilters()" style="padding:4px 10px;font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;">↺ Limpiar</button>
+      </div>
+
+      <!-- Legend as tooltip/modal -->
+      <div style="margin-bottom:12px;">
+        <button onclick="document.getElementById('accesosLeyendaModal').style.display='flex'" style="background:rgba(124,92,252,0.08);border:1px solid rgba(124,92,252,0.22);border-radius:20px;padding:4px 14px;font-size:11px;color:#7c5cfc;cursor:pointer;font-weight:600;">ℹ️ Ver leyenda de colores de riesgo</button>
+      </div>
+
+      <!-- Legend Modal -->
+      <div id="accesosLeyendaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;max-width:420px;width:90%;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:16px;">Leyenda — Riesgo de Acceso SC</div>
+          <div style="display:flex;flex-direction:column;gap:14px;font-size:13px;">
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:13px;height:13px;margin-top:3px;background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.5);border-radius:3px;flex-shrink:0;"></div>
+              <div><b>🔴 Alto riesgo</b><br><span style="color:var(--muted);font-size:12px;">Tiene ventas/operaciones con datos pero sin acceso completo a módulos core (Retenciones + Ventas + Inventario).</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:13px;height:13px;margin-top:3px;background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.45);border-radius:3px;flex-shrink:0;"></div>
+              <div><b>🟡 Riesgo medio</b><br><span style="color:var(--muted);font-size:12px;">Realizó su primer envío pero sigue reportando ventas en ceros. Posible acceso incompleto o ventas no reportadas.</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:13px;height:13px;margin-top:3px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.35);border-radius:3px;flex-shrink:0;"></div>
+              <div><b>🟢 Sin riesgo inmediato</b><br><span style="color:var(--muted);font-size:12px;">RFC activo sin operaciones reportadas aún. Monitorear inicio de actividad.</span></div>
+            </div>
+            <div style="padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);">
+              <b style="color:var(--text);">Acceso completo</b> = Retenciones + Ventas + Inventario.<br>
+              Payoneer y Banco son <b>accesos complementarios</b> — no requeridos para declarar correctamente.
+            </div>
+          </div>
+          <button onclick="document.getElementById('accesosLeyendaModal').style.display='none'" style="margin-top:20px;width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Cerrar</button>
         </div>
       </div>
 
@@ -1060,7 +1090,7 @@ function gateSubmit() {
         </div>
       </div>
 
-      <div class="table-wrap" id="accesosTableWrap" style="max-height:calc(100vh - 460px);overflow-y:auto;">
+      <div class="table-wrap" id="accesosTableWrap" style="max-height:calc(100vh - 320px);overflow-y:auto;">
         <table id="accesosMainTable" style="table-layout:fixed;width:100%;">
           <colgroup>
             <col style="width:88px;">
@@ -1373,101 +1403,6 @@ function gateSubmit() {
       </div>
     </div>
 
-    <!-- DIFICULTADES ACTIVAS -->
-    <div class="card" style="border-left:4px solid #ef4444;">
-      <div class="card-title">🚧 Dificultades Activas por Responsable</div>
-      <div class="grid-2" style="gap:16px;margin-top:4px;" id="dificultadesGrid">
-
-        <!-- CRISTINA dificultades -->
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-            <div style="width:30px;height:30px;background:rgba(124,92,252,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#7c5cfc;">C</div>
-            <span style="font-weight:700;">Cristina</span>
-            <span class="status status-red" style="margin-left:auto;">⚠ 4 bloqueos</span>
-          </div>
-          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#ef4444;flex-shrink:0;">🔴</span>
-              <span><b>Wholesome Story LLC</b> — Sin respuesta +2 meses. 5 correos enviados. Sin SC, sin documentación. Riesgo de churn total.</span>
-            </li>
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#f59e0b;flex-shrink:0;">🟡</span>
-              <span><b>Tiege Hanley</b> — Declaración original en ceros, requiere complementaria. Contacto activo (kelley.thornton@tiege.com) pero sin cierre.</span>
-            </li>
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#f97316;flex-shrink:0;">🟠</span>
-              <span><b>3 clientes suspendidos</b> (FUNZIES, KORDIZ, Adult Children) — Requieren offboarding o regularización. Cartera muerta que consume atención.</span>
-            </li>
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#f97316;flex-shrink:0;">🟠</span>
-              <span><b>10+ clientes sin acceso SC</b> — Solicitudes enviadas sin respuesta. Bloquea declaración directa. Requiere campaña coordinada de seguimiento.</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- LINA dificultades -->
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-            <div style="width:30px;height:30px;background:rgba(79,127,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#4f7fff;">L</div>
-            <span style="font-weight:700;">Lina</span>
-            <span class="status status-yellow" style="margin-left:auto;">⚠ 3 bloqueos</span>
-          </div>
-          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#f97316;flex-shrink:0;">🟠</span>
-              <span><b>5 clientes suspendidos</b> (WYMM, Xero Pixs, Proempire, Tailor Toys + 1) — Sin actividad de importación. Requieren definición: offboarding o reactivación.</span>
-            </li>
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#f59e0b;flex-shrink:0;">🟡</span>
-              <span><b>SC pendiente en 4 clientes</b> (Rollga, PlusEV, HJJ + 1) — Acceso solicitado, sin confirmación. Bloquea declaraciones de Feb actualmente.</span>
-            </li>
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#f59e0b;flex-shrink:0;">🟡</span>
-              <span><b>~22 declaraciones Feb sin iniciar</b> — Documentación recibida pero flujo de carga AZ no completado. Riesgo de rezago acumulado hacia Mar.</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- ARTURO dificultades -->
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-            <div style="width:30px;height:30px;background:rgba(239,68,68,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#ef4444;">A</div>
-            <span style="font-weight:700;">Arturo</span>
-            <span class="status status-yellow" style="margin-left:auto;">⚠ 2 bloqueos</span>
-          </div>
-          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#ef4444;flex-shrink:0;">🔴</span>
-              <span><b>Sobrecarga estructural (180 clientes)</b> — Volumen IN supera capacidad individual sostenible. ~20 clientes con documentación incompleta sin poder procesarse.</span>
-            </li>
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#f59e0b;flex-shrink:0;">🟡</span>
-              <span><b>~20 clientes sin documentación IN completa</b> — Pedimentos sin soporte documental. No se pueden declarar hasta que el cliente envíe complemento.</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- EDGAR dificultades -->
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-            <div style="width:30px;height:30px;background:rgba(34,197,94,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#22c55e;">E</div>
-            <span style="font-weight:700;">Edgar</span>
-            <span class="status status-green" style="margin-left:auto;">✓ Sin bloqueos</span>
-          </div>
-          <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#22c55e;flex-shrink:0;">🟢</span>
-              <span><b>Cartera activa en orden</b> — 3 clientes asignados, sin reportes de bloqueo ni acceso faltante. Flujo normal.</span>
-            </li>
-            <li style="display:flex;gap:8px;align-items:flex-start;">
-              <span style="color:#22c55e;flex-shrink:0;">🟢</span>
-              <span><b>Capacidad disponible</b> — Puede absorber 2-3 clientes de alta prioridad o apoyar en backlog de Arturo (IN de bajo riesgo).</span>
-            </li>
-          </ul>
-        </div>
-
-      </div>
-    </div>
 
     <!-- PRIORIDAD HOY -->
     <div class="card" style="border-left:4px solid #4f7fff;">
@@ -1532,210 +1467,6 @@ function gateSubmit() {
 
   </div>
 
-  <!-- ============================================================ -->
-  <!-- TAB: AUTOMATIZACIONES -->
-  <!-- ============================================================ -->
-  <div class="section" id="section-automations">
-    <div class="section-header">
-      <div>
-        <div class="section-title">🤖 Automatizaciones Claude — Sistema Contabilidad</div>
-        <div class="section-sub">Tareas programadas activas dentro del contexto de Claude para Contabilidad Tally</div>
-      </div>
-    </div>
-
-    <!-- Kaizen intro banner -->
-    <div style="background:linear-gradient(135deg,rgba(79,127,255,0.08),rgba(124,92,252,0.08));border:1px solid rgba(79,127,255,0.2);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;">
-      <div style="font-size:13px;line-height:1.7;color:var(--text);">
-        <b style="color:var(--accent);">Marco Kaizen Tally:</b> Cada automatización tiene una descripción de lo que hace hoy y la <b>siguiente acción concreta</b> para mejorar el sistema un 1% — mejoras pequeñas, iterables y de bajo esfuerzo. Un sistema que mejora 1% diario es <b>3.7× mejor al final del año</b>.
-      </div>
-    </div>
-
-    <!-- Sistema General status banner — populated dynamically -->
-    <div id="sistemaBanner" style="display:none;margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--radius);padding:12px 16px;">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <span style="font-size:12px;font-weight:700;color:var(--accent);">📋 Último Reporte Sistema General</span>
-        <span id="sistemaBannerDate" style="font-size:11px;color:var(--muted);"></span>
-      </div>
-      <div id="sistemaBannerLog" style="font-size:12px;color:var(--text);margin-top:6px;line-height:1.6;"></div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:20px;" id="automatizacionesDetailCards">
-
-      <!-- Dynamic cards are rendered by loadAutomationsData() into automatizacionesDetailCards -->
-      <!-- Legacy placeholder removed —— cards below are rendered via JS -->
-      <div style="display:none;"><!-- TASK 1 -->
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
-        <div style="display:flex;align-items:flex-start;gap:16px;">
-          <div style="font-size:28px;line-height:1;">📢</div>
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-              <div style="font-size:14px;font-weight:700;">Briefing Diario Marketplace — Slack</div>
-              <span class="status status-green">✅ Activo</span>
-              <div style="font-size:11px;color:var(--accent);">L-V 09:35am · cron: 30 9 * * 1-5</div>
-            </div>
-            <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-              <b style="color:var(--text);">Qué hace:</b> Cada mañana de lunes a viernes envía 3 preguntas operativas críticas al canal de Marketplace en Slack para que el equipo arranque el día con visibilidad sobre prioridades, bloqueos y clientes urgentes. Funciona como un "pulso diario" que reemplaza juntas matutinas.
-            </div>
-            <div style="background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 14px;">
-              <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">→ MEJORA 1% — PRÓXIMO PASO</div>
-              <div style="font-size:12px;color:var(--text);line-height:1.6;">Agregar al mensaje una <b>tabla de los 3 clientes más críticos del día</b> (por deadline más próximo o más días bloqueados) tomando el dato directamente de WeeklyPlan en Sheets, para que el equipo no tenga que inferir las prioridades.</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:11px;color:var(--muted);">Último: 31 Mar 09:35</div>
-            <div style="font-size:11px;color:var(--muted);">Próximo: 01 Abr 09:35</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TASK 2 - DISABLED -->
-      <div style="background:var(--card);border:1px solid rgba(239,68,68,0.35);border-radius:var(--radius);padding:20px;opacity:0.85;">
-        <div style="display:flex;align-items:flex-start;gap:16px;">
-          <div style="font-size:28px;line-height:1;">📧</div>
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-              <div style="font-size:14px;font-weight:700;">Monitor de Correos — 5 Cuentas Gmail</div>
-              <span class="status status-red">❌ DESACTIVADO</span>
-              <div style="font-size:11px;color:var(--red);">Cada 3 días · cron: 0 9 */3 * *</div>
-            </div>
-            <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-              <b style="color:var(--text);">Qué hace:</b> Extrae correos de 5 cuentas Gmail del equipo (elizabeth, leonardo, cristina, contabilidad, edgar.martinez), los inserta en la hoja <i>Registro_Correos</i> de Google Sheets clasificados por remitente/cliente, y envía un reporte resumen al canal de Slack. Garantiza que ningún correo con impacto fiscal se pierda entre cuentas.
-            </div>
-            <div style="background:rgba(239,68,68,0.07);border-left:3px solid var(--red);border-radius:0 8px 8px 0;padding:12px 14px;">
-              <div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:6px;">⚠ ACCIÓN INMEDIATA — REACTIVAR HOY</div>
-              <div style="font-size:12px;color:var(--text);line-height:1.6;">Esta tarea está <b>desactivada</b> y es el cuello de botella #2 del sistema. El próximo paso es reactivarla y agregar <b>clasificación automática por urgencia</b> (Urgente / Seguimiento / Informativo) para que los correos críticos generen una task en WeeklyPlan el mismo día, sin intervención manual.</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:11px;color:var(--muted);">Último: 30 Mar 17:27</div>
-            <div style="font-size:11px;color:var(--red);font-weight:600;">Sin próxima ejecución</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TASK 3 -->
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
-        <div style="display:flex;align-items:flex-start;gap:16px;">
-          <div style="font-size:28px;line-height:1;">📊</div>
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-              <div style="font-size:14px;font-weight:700;">Reporte Semanal de Salud Contable — Canal CX Slack</div>
-              <span class="status status-green">✅ Activo</span>
-              <div style="font-size:11px;color:var(--accent);">Lunes 09:04am · cron: 0 9 * * 1</div>
-            </div>
-            <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-              <b style="color:var(--text);">Qué hace:</b> Cada lunes genera y publica en el canal CX de Slack un reporte de salud contable del portafolio: declaraciones completadas, clientes con información pendiente, accesos faltantes y alertas de riesgo fiscal. Sirve como reporte ejecutivo semanal que reemplaza el "¿cómo vamos?" informal.
-            </div>
-            <div style="background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 14px;">
-              <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">→ MEJORA 1% — PRÓXIMO PASO</div>
-              <div style="font-size:12px;color:var(--text);line-height:1.6;">Agregar al reporte el <b>porcentaje de clientes AZ con acceso SC vs. sin acceso</b>, con la lista de los 5 clientes más urgentes de gestionar esa semana. Esto convierte el reporte de informativo a <b>accionable</b> — el equipo CX sabe exactamente qué hacer el lunes por la mañana.</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:11px;color:var(--muted);">Último: 30 Mar 09:05</div>
-            <div style="font-size:11px;color:var(--muted);">Próximo: 06 Abr 09:04</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TASK 4 -->
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
-        <div style="display:flex;align-items:flex-start;gap:16px;">
-          <div style="font-size:28px;line-height:1;">📋</div>
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-              <div style="font-size:14px;font-weight:700;">Plan Semanal Scrum — Equipo Contabilidad</div>
-              <span class="status status-green">✅ Activo</span>
-              <div style="font-size:11px;color:var(--accent);">Lunes 10:01am · cron: 0 10 * * 1</div>
-            </div>
-            <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-              <b style="color:var(--text);">Qué hace:</b> Cada lunes a las 10am genera el plan semanal Scrum del equipo de Contabilidad: distribuye las tareas pendientes entre Cristina, Edgar, Leonardo y Elizabeth según carga actual, fechas límite y prioridad fiscal. Funciona como el sprint planning automatizado del equipo — sin juntas de 1 hora.
-            </div>
-            <div style="background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 14px;">
-              <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">→ MEJORA 1% — PRÓXIMO PASO</div>
-              <div style="font-size:12px;color:var(--text);line-height:1.6;">Incorporar al plan la <b>capacidad real del equipo esa semana</b> (días hábiles, vacaciones, días festivos) para que la asignación sea realista y no sobre-cargue a ningún miembro. Esto evita que el plan llegue al viernes con 40% sin completar por sobrecarga no detectada.</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:11px;color:var(--muted);">Sin registro anterior</div>
-            <div style="font-size:11px;color:var(--muted);">Próximo: 06 Abr 10:01</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TASK 5 -->
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
-        <div style="display:flex;align-items:flex-start;gap:16px;">
-          <div style="font-size:28px;line-height:1;">💬</div>
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-              <div style="font-size:14px;font-weight:700;">Briefing Diario Personalizado — Equipo Contabilidad (DM Slack)</div>
-              <span class="status status-green">✅ Activo</span>
-              <div style="font-size:11px;color:var(--accent);">L-V 09:36am · cron: 30 9 * * 1-5</div>
-            </div>
-            <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-              <b style="color:var(--text);">Qué hace:</b> Envía un DM personalizado a cada miembro del equipo contable (Cristina, Edgar, Llyvi/Accounting con cc a Elizabeth) con su Top 5 de tareas del día ordenadas por urgencia, declaraciones próximas a vencer y correos críticos sin responder. A Juan le envía un resumen ejecutivo con el estado del equipo completo.
-            </div>
-            <div style="background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 14px;">
-              <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">→ MEJORA 1% — PRÓXIMO PASO</div>
-              <div style="font-size:12px;color:var(--text);line-height:1.6;">Agregar al DM de cada miembro el <b>score de completitud de la semana anterior</b> (ej. "completaste 8/10 tareas asignadas — 80%") para crear rendición de cuentas sin supervisión directa. Cada persona ve su propio avance y puede ajustar su ritmo antes del viernes.</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:11px;color:var(--muted);">Último: 31 Mar 09:35</div>
-            <div style="font-size:11px;color:var(--muted);">Próximo: 01 Abr 09:36</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TASK 6 -->
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
-        <div style="display:flex;align-items:flex-start;gap:16px;">
-          <div style="font-size:28px;line-height:1;">🔄</div>
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-              <div style="font-size:14px;font-weight:700;">Listener de Hilos Slack → Sync WeeklyPlan / Google Sheets</div>
-              <span class="status status-green">✅ Activo</span>
-              <div style="font-size:11px;color:var(--accent);">L-V 1:35pm + 5:35pm · cron: 30 13,17 * * 1-5</div>
-            </div>
-            <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-              <b style="color:var(--text);">Qué hace:</b> Dos veces al día revisa los hilos de los mensajes del equipo en Slack, interpreta las respuestas en lenguaje natural ("ya terminé la declaración de Rollga", "estoy bloqueado con Alexander Home"), y aplica los cambios automáticamente en WeeklyPlan de Google Sheets — actualizando estado, progreso y notas. Notifica a Juan con un resumen de los cambios para que tenga visibilidad sin tener que preguntar.
-            </div>
-            <div style="background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 14px;">
-              <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">→ MEJORA 1% — PRÓXIMO PASO</div>
-              <div style="font-size:12px;color:var(--text);line-height:1.6;">Agregar detección de <b>patrones de bloqueo recurrente</b>: si el mismo cliente aparece con estado "bloqueado" por segunda semana consecutiva, generar automáticamente una task de escalación asignada a Juan con el resumen del historial del bloqueo — sin que nadie tenga que reportarlo manualmente.</div>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:11px;color:var(--muted);">Último: 31 Mar 19:47</div>
-            <div style="font-size:11px;color:var(--muted);">Próximo: 31 Mar 23:35</div>
-          </div>
-        </div>
-      </div>
-
-    </div></div><!-- /hidden legacy cards -->
-
-    <!-- Summary analysis -->
-    <div class="card" style="margin-top:24px;">
-      <div class="card-title">🗓 Roadmap de Mejoras — Priorización Kaizen</div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Prioridad</th><th>Automatización</th><th>Mejora concreta</th><th>Impacto</th><th>Esfuerzo</th><th>Semana</th></tr></thead>
-          <tbody>
-            <tr><td><span class="status status-red">P0 🔴</span></td><td>Monitor Correos</td><td>Reactivar + clasificación urgencia automática</td><td><span class="prio-green">Muy alto</span></td><td><span class="prio-green">2 min</span></td><td><b>HOY</b></td></tr>
-            <tr><td><span class="status status-red">P1 🔴</span></td><td>Briefing Marketplace</td><td>Top 3 clientes críticos con deadline en el mensaje</td><td><span class="prio-green">Alto</span></td><td><span class="prio-green">Bajo</span></td><td>Sem 15</td></tr>
-            <tr><td><span class="status status-red">P1 🔴</span></td><td>Reporte CX Semanal</td><td>Agregar % acceso SC + lista 5 clientes urgentes</td><td><span class="prio-green">Alto</span></td><td><span class="prio-green">Bajo</span></td><td>Sem 15</td></tr>
-            <tr><td><span class="status status-yellow">P2 🟡</span></td><td>Briefing DM Equipo</td><td>Score de completitud semana anterior por persona</td><td><span class="prio-yellow">Medio</span></td><td><span class="prio-green">Bajo</span></td><td>Sem 16</td></tr>
-            <tr><td><span class="status status-yellow">P2 🟡</span></td><td>Plan Scrum Semanal</td><td>Incorporar capacidad real del equipo por semana</td><td><span class="prio-yellow">Medio</span></td><td><span class="prio-yellow">Medio</span></td><td>Sem 16</td></tr>
-            <tr><td><span class="status status-blue">P3 🔵</span></td><td>Listener Slack→Sheets</td><td>Detección de bloqueos recurrentes → escalación auto</td><td><span class="prio-green">Alto</span></td><td><span class="prio-yellow">Medio</span></td><td>Sem 17</td></tr>
-            <tr><td><span class="status status-blue">P3 🔵</span></td><td>Nueva tarea</td><td>Alerta semanal FIELs próximos a vencer (30/60/90d)</td><td><span class="prio-green">Alto</span></td><td><span class="prio-green">Bajo</span></td><td>Sem 17</td></tr>
-            <tr><td><span class="status status-blue">P3 🔵</span></td><td>Nueva tarea</td><td>Alerta clientes AZ sin acceso SC &gt; 14 días</td><td><span class="prio-green">Alto</span></td><td><span class="prio-green">Bajo</span></td><td>Sem 18</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
 
 </div><!-- /main -->
 </div><!-- /app-layout -->
@@ -1804,201 +1535,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// ── Automatizaciones — carga desde pestaña Automatizaciones en Accounting_DataModel ──
-async function loadAutomationsData() {
-  const grid        = document.getElementById('automationsGrid');
-  const note        = document.getElementById('automationsUpdatedAt');
-  const detailCards = document.getElementById('automatizacionesDetailCards');
-  const sisBanner   = document.getElementById('sistemaBanner');
-  const sisBannerDate = document.getElementById('sistemaBannerDate');
-  const sisBannerLog  = document.getElementById('sistemaBannerLog');
-
-  const data = await fetchSheet('Automatizaciones');
-  if (!data || !data.table) {
-    if (grid) grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin datos disponibles — verifica acceso al Sheet</div>';
-    if (note) note.textContent = 'Error al cargar';
-    return;
-  }
-  const rows = data.table.rows || [];
-
-  // Row 0 = meta/intro, Row 1 = headers, Rows 2+ = agents + Sistema General logs at bottom
-  const agentRows = rows.slice(2).filter(function(r) {
-    const name = r.c && r.c[0] && r.c[0].v ? String(r.c[0].v) : '';
-    return name && name !== 'Sistema General' && name !== 'Agent Name';
-  });
-
-  // Find latest "Sistema General" log row
-  var lastSisLog = null;
-  for (var i = rows.length - 1; i >= 0; i--) {
-    var rc = rows[i].c || [];
-    var rName = rc[0] && rc[0].v ? String(rc[0].v) : '';
-    if (rName === 'Sistema General') {
-      lastSisLog = {
-        date:   rc[1] && rc[1].v ? String(rc[1].v) : '',
-        log:    rc[3] && rc[3].v ? String(rc[3].v) : '',
-        improv: rc[4] && rc[4].v ? String(rc[4].v) : ''
-      };
-      break;
-    }
-  }
-
-  // Show Sistema General banner
-  if (lastSisLog && sisBanner) {
-    sisBanner.style.display = '';
-    if (sisBannerDate) sisBannerDate.textContent = lastSisLog.date;
-    if (sisBannerLog)  sisBannerLog.textContent  = lastSisLog.log;
-  }
-
-  // Extract set of agent names marked DESACTIVADO in the last Sistema General log
-  var desactivados = new Set();
-  if (lastSisLog && lastSisLog.log) {
-    var logText = lastSisLog.log;
-    // Match patterns like "Monitor Correos sigue DESACTIVADO" or "X DESACTIVADO"
-    var deactMatches = logText.match(/([A-Za-záéíóúÁÉÍÓÚñÑ\s\→()]+?)\s+(?:sigue\s+)?DESACTIVADO/gi) || [];
-    deactMatches.forEach(function(m) {
-      var agentHint = m.replace(/\s*(?:sigue\s+)?DESACTIVADO/i, '').trim().toLowerCase();
-      desactivados.add(agentHint);
-    });
-  }
-
-  function isAgentInactive(name, log) {
-    if (log && (log.includes('DESACTIVADO') || log.startsWith('⚠️'))) return true;
-    // Check against Sistema General DESACTIVADO list
-    var nameLower = name.toLowerCase();
-    for (var d of desactivados) {
-      if (nameLower.includes(d) || d.includes(nameLower.split(' ')[0])) return true;
-    }
-    return false;
-  }
-
-  if (note) note.textContent = lastSisLog && lastSisLog.date ? 'Último log: ' + lastSisLog.date : 'Fuente: log automatizaciones';
-
-  // --- Alert banner: count inactive automations ---
-  var inactiveCount = agentRows.filter(function(row) {
-    var c = row.c || [];
-    var name = (c[0] && c[0].v) ? String(c[0].v) : '';
-    var log  = (c[3] && c[3].v) ? String(c[3].v) : '';
-    return isAgentInactive(name, log);
-  }).length;
-  var alertEmailEl = document.getElementById('alertEmailStatus');
-  if (alertEmailEl) {
-    if (inactiveCount > 0) {
-      alertEmailEl.innerHTML = '<b>' + inactiveCount + ' automatizacion' + (inactiveCount > 1 ? 'es' : '') + '</b> desactivada' + (inactiveCount > 1 ? 's' : '');
-    } else {
-      alertEmailEl.innerHTML = 'todas las automatizaciones <b>activas</b>';
-    }
-  }
-
-  if (!agentRows.length) {
-    if (grid) grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin automatizaciones registradas</div>';
-    return;
-  }
-
-  // Icon map by agent name keywords
-  var iconMap = [
-    { kw: 'briefing.*marketplace|marketplace.*briefing', icon: '📢' },
-    { kw: 'correo|email|monitor', icon: '📬' },
-    { kw: 'reporte|cx|semanal', icon: '📊' },
-    { kw: 'scrum|plan semanal', icon: '📋' },
-    { kw: 'contabilidad.*dm|dm.*contabilidad|briefing diario cont', icon: '📩' },
-    { kw: 'listener|hilos|slack.*sheet', icon: '🔄' },
-    { kw: 'revisión diaria|sistema general', icon: '🤖' }
-  ];
-  function getIcon(name) {
-    var lower = name.toLowerCase();
-    for (var m of iconMap) { if (new RegExp(m.kw, 'i').test(lower)) return m.icon; }
-    return '⚙️';
-  }
-
-  // ── Compact overview grid (automationsGrid) ──────────────────────────────────
-  grid.innerHTML = agentRows.map(function(row) {
-    var c = row.c || [];
-    var name        = (c[0] && c[0].v) ? String(c[0].v) : '—';
-    var purpose     = (c[2] && c[2].v) ? String(c[2].v) : '';
-    var log         = (c[3] && c[3].v) ? String(c[3].v) : '';
-    var improvement = (c[4] && c[4].v) ? String(c[4].v) : '';
-
-    var inactive    = isAgentInactive(name, log);
-    var icon        = inactive ? '🔴' : '🟢';
-    var disabledCls = inactive ? ' disabled' : '';
-    var badgeCls    = inactive ? 'status-red' : 'status-green';
-    var badgeLabel  = inactive ? 'Inactivo' : 'Activo';
-
-    var schedMatch = purpose.match(/\(([^)]+(?:am|pm|Sheets)[^)]*)\)/i);
-    var schedule   = schedMatch ? schedMatch[1] : purpose.slice(0, 70);
-
-    var isGenericNote = !improvement || improvement.includes('Registro inicial') || improvement.includes('baseline');
-    var noteHtml = !isGenericNote
-      ? '<div style="font-size:10px;color:var(--accent);margin-top:3px;">→ ' + escH(improvement) + '</div>'
-      : '';
-
-    return '<div class="task-item' + disabledCls + '">' +
-      '<div style="font-size:14px;">' + icon + '</div>' +
-      '<div class="task-info">' +
-        '<div class="task-name">' + escH(name) + '</div>' +
-        '<div class="task-schedule">' + escH(schedule) + '</div>' +
-        noteHtml +
-      '</div>' +
-      '<span class="status ' + badgeCls + '">' + badgeLabel + '</span>' +
-    '</div>';
-  }).join('');
-
-  // ── Detailed cards (section-automations) ─────────────────────────────────────
-  if (detailCards) {
-    detailCards.innerHTML = agentRows.map(function(row) {
-      var c = row.c || [];
-      var name        = (c[0] && c[0].v) ? String(c[0].v) : '—';
-      var actDate     = (c[1] && c[1].v) ? String(c[1].v) : '';
-      var purpose     = (c[2] && c[2].v) ? String(c[2].v) : '';
-      var log         = (c[3] && c[3].v) ? String(c[3].v) : '';
-      var improvement = (c[4] && c[4].v) ? String(c[4].v) : '';
-
-      var inactive   = isAgentInactive(name, log);
-      var statusBadge = inactive
-        ? '<span class="status status-red">🔴 Inactivo</span>'
-        : '<span class="status status-green">✅ Activo</span>';
-
-      // Extract schedule string from purpose
-      var schedMatch = purpose.match(/\(([^)]+(?:am|pm)[^)]*)\)/i);
-      var schedule   = schedMatch ? schedMatch[1] : '';
-
-      // Remove schedule portion from purpose for clean display
-      var purposeClean = purpose.replace(/\s*\([^)]+(?:am|pm)[^)]*\)/i, '').trim();
-
-      // last_improvement — show only if it has real content
-      var isGenericNote = !improvement || improvement.includes('Registro inicial') || improvement.includes('baseline') || improvement.includes('Sin cambios');
-      var kaizen = !isGenericNote ? improvement : '';
-
-      var disabledStyle = inactive ? 'opacity:0.7;' : '';
-
-      return '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;' + disabledStyle + '">' +
-        '<div style="display:flex;align-items:flex-start;gap:16px;">' +
-          '<div style="font-size:28px;line-height:1;">' + getIcon(name) + '</div>' +
-          '<div style="flex:1;">' +
-            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">' +
-              '<div style="font-size:14px;font-weight:700;">' + escH(name) + '</div>' +
-              statusBadge +
-              (schedule ? '<div style="font-size:11px;color:var(--accent);">' + escH(schedule) + '</div>' : '') +
-            '</div>' +
-            '<div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:' + (kaizen ? '12px' : '0') + ';">' +
-              '<b style="color:var(--text);">Qué hace:</b> ' + escH(purposeClean) +
-            '</div>' +
-            (kaizen
-              ? '<div style="background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 14px;">' +
-                  '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">→ ÚLTIMA MEJORA / CAMBIO</div>' +
-                  '<div style="font-size:12px;color:var(--text);line-height:1.6;">' + escH(kaizen) + '</div>' +
-                '</div>'
-              : '') +
-          '</div>' +
-          '<div style="text-align:right;flex-shrink:0;">' +
-            '<div style="font-size:11px;color:var(--muted);">Activado: ' + escH(actDate) + '</div>' +
-            (lastSisLog ? '<div style="font-size:11px;color:var(--muted);">Revisado: ' + escH(lastSisLog.date) + '</div>' : '') +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-  }
-}
 
 // ── Declaraciones helpers ─────────────────────────────────────────────────────
 var clientOwnerMap  = {};  // { companyId: ownerName }
@@ -2010,6 +1546,7 @@ var activeDeclPeriod = '';   // e.g. "Marzo 2026" — exposed from loadDeclaraci
 var prevDeclPeriod   = '';   // e.g. "Febrero 2026"
 var activeDeclPK     = '';   // e.g. "2026-03" — period key for clientDeclMap lookups
 var clientDeclMap    = {};   // { companyId: { 'YYYY-MM': estado } } — per-client monthly states
+var elegiblesDecl    = 0;    // count of clients with FIEL active (excluding suspended/inactive)
 
 // Push live monthly data into both Declaraciones charts (overview + decl tab)
 function updateDeclCharts() {
@@ -2059,6 +1596,21 @@ async function loadCorreosData() {
   });
 }
 
+// ── Información Bancaria ──────────────────────────────────────────────────────
+var bancosRawData = [];
+
+async function loadBancosData() {
+  const data = await fetchSheet('Bancos');
+  if (!data || !data.table) return;
+  const rows = data.table.rows || [];
+  // Columns: [0]Company_id [1]Nombre_Cliente [2]Payoneer [3]Otro [4]STATUS_otro [5]Comentarios
+  bancosRawData = rows.map(function(r) {
+    var c = r.c || [];
+    var get = function(i) { return (c[i] && c[i].v != null) ? String(c[i].v).trim() : ''; };
+    return { id: get(0), payoneer: get(2), otro: get(3), statusOtro: get(4), comentarios: get(5) };
+  }).filter(function(r) { return r.id !== ''; });
+}
+
 // ── Accesos Seller Central ────────────────────────────────────────────────────
 var accesosRawData = [];
 
@@ -2093,9 +1645,9 @@ async function loadAccesosData() {
 function renderAccesosUI() {
   var d = accesosRawData;
   if (!d.length) return;
-  var completos  = d.filter(function(c) { return c.estado === 'Acceso completo'; });
-  var parciales  = d.filter(function(c) { return c.estado === 'Acceso Parcial'; });
-  var pendientes = d.filter(function(c) { return c.estado === 'Pendiente' || (c.estado !== 'Acceso completo' && c.estado !== 'Acceso Parcial'); });
+  var completos  = d.filter(function(c) { return hasAccesoCompleto(c); });
+  var parciales  = d.filter(function(c) { return !hasAccesoCompleto(c) && (c.ret || c.vtas || c.inv || c.pay || c.banco); });
+  var pendientes = d.filter(function(c) { return !hasAccesoCompleto(c) && !parciales.some(function(p) { return p.id === c.id; }); });
   var total      = d.length;
   var conAcceso  = completos.length + parciales.length;
   var retN   = d.filter(function(c){ return c.ret; }).length;
@@ -2167,9 +1719,9 @@ function renderProxyRiesgo() {
     var modCount = [r.ret, r.vtas, r.inv, r.pay, r.banco].filter(Boolean).length;
     var notas = (r.notas || '').trim();
 
-    if (r.estado === 'Acceso completo') {
-      bajo.push({ name: r.name, note: 'Completo · 5/5 módulos' });
-    } else if (r.estado === 'Acceso Parcial') {
+    if (hasAccesoCompleto(r)) {
+      bajo.push({ name: r.name, note: 'Completo · 3/3 módulos core (Ret + Vtas + Inv)' });
+    } else if (r.ret || r.vtas || r.inv || r.pay || r.banco) {
       if (modCount >= 3) {
         bajo.push({ name: r.name, note: 'Parcial · ' + modCount + '/5 módulos' + (notas ? ' · ' + notas.slice(0,35) : '') });
       } else {
@@ -2222,13 +1774,18 @@ function classifyAccesoRiesgo(r) {
   var entries    = timelineRawData[r.id] || [];
   var hasSales   = entries.some(function(e) { return (e.sales || 0) > 0; });
   var hasEntries = entries.length > 0;
-  var hasFullAccess = r.estado === 'Acceso completo';
+  var hasFullAccess = hasAccesoCompleto(r);
   // 🔴 Alto: tiene operaciones con datos pero no tenemos acceso SC
   if (hasSales && !hasFullAccess) return 'alto';
   // 🟡 Medio: hizo first shipment pero sigue en ceros
   if (hasEntries && !hasSales) return 'medio';
   // 🟢 Bajo: RFC activo, sin operaciones (o ya con acceso completo)
   return 'bajo';
+}
+
+// Check if record has Acceso completo (core modules: ret + vtas + inv)
+function hasAccesoCompleto(r) {
+  return r.ret && r.vtas && r.inv;
 }
 
 function renderAccesosTable() {
@@ -2246,11 +1803,36 @@ function filterAccesosTable() {
   var clearBtn = document.getElementById('accesosSearchClear');
   if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
 
-  var rows = q
-    ? accesosTableAll.filter(function(r) {
-        return r.name.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || (r.notas || '').toLowerCase().includes(q);
-      })
-    : accesosTableAll;
+  var filtroRiesgo = (document.getElementById('accesosFiltroRiesgo')?.value || '').trim();
+  var filtroEstado = (document.getElementById('accesosFiltroEstado')?.value || '').trim();
+  var filtroMod = (document.getElementById('accesosFiltroMod')?.value || '').trim();
+
+  var rows = accesosTableAll.filter(function(r) {
+    // Search filter
+    var matchSearch = !q || r.name.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || (r.notas || '').toLowerCase().includes(q);
+    if (!matchSearch) return false;
+
+    // Riesgo filter
+    if (filtroRiesgo) {
+      var risk = classifyAccesoRiesgo(r);
+      if (risk !== filtroRiesgo) return false;
+    }
+
+    // Estado filter (redefine based on core modules)
+    if (filtroEstado) {
+      var hasCompleto = hasAccesoCompleto(r);
+      var hasParcial = !hasCompleto && (r.ret || r.vtas || r.inv || r.pay || r.banco);
+      var estatoCalculado = hasCompleto ? 'Acceso completo' : hasParcial ? 'Acceso Parcial' : 'Pendiente';
+      if (estatoCalculado !== filtroEstado) return false;
+    }
+
+    // Módulo filter
+    if (filtroMod) {
+      if (!r[filtroMod]) return false;
+    }
+
+    return true;
+  });
 
   var countEl = document.getElementById('accesosTableCount');
   if (countEl) countEl.textContent = rows.length + ' cliente' + (rows.length !== 1 ? 's' : '');
@@ -2262,11 +1844,11 @@ function filterAccesosTable() {
     bajo:  { bg: 'transparent',           border: '3px solid rgba(34,197,94,0.35)' }
   };
 
-  // Estado SC pill
-  var estPill = function(e) {
-    if (e === 'Acceso completo')
+  // Estado SC pill (based on core modules: ret + vtas + inv)
+  var estPill = function(r) {
+    if (hasAccesoCompleto(r))
       return '<span style="display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(34,197,94,0.13);color:#22c55e;border:1px solid rgba(34,197,94,0.3);">✅ Completo</span>';
-    if (e === 'Acceso Parcial')
+    if (r.ret || r.vtas || r.inv || r.pay || r.banco)
       return '<span style="display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);">⚡ Parcial</span>';
     return '<span style="display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(239,68,68,0.11);color:#ef4444;border:1px solid rgba(239,68,68,0.28);">🚫 Pendiente</span>';
   };
@@ -2308,7 +1890,7 @@ function filterAccesosTable() {
         return '<tr style="background:' + st.bg + ';border-left:' + st.border + ';">' +
           '<td style="font-size:11px;color:var(--muted);font-family:monospace;letter-spacing:0.4px;white-space:nowrap;">' + escH(r.id) + '</td>' +
           '<td style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">' + escH(r.name) + '</td>' +
-          '<td>' + estPill(r.estado) + '</td>' +
+          '<td>' + estPill(r) + '</td>' +
           '<td>' + modPillsOf(r) + '</td>' +
           '<td style="font-size:11px;color:var(--muted);">' + notasTxt + '</td>' +
         '</tr>';
@@ -2322,6 +1904,15 @@ function clearAccesosSearch() {
   filterAccesosTable();
 }
 
+function resetAccesosFilters() {
+  var inp = document.getElementById('accesosSearch');
+  if (inp) { inp.value = ''; var cl = document.getElementById('accesosSearchClear'); if (cl) cl.style.display = 'none'; }
+  ['accesosFiltroRiesgo','accesosFiltroEstado','accesosFiltroMod'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.selectedIndex = 0;
+  });
+  filterAccesosTable();
+}
+
 async function refreshData() {
   const btn = document.querySelector('.refresh-btn');
   const lbl = document.getElementById('lastUpdate');
@@ -2332,9 +1923,9 @@ async function refreshData() {
     await Promise.all([
       loadTimelineData(),      // recarga Clientes_por_periodo → timelineRawData, monthlySalesData, overviewSalesChart, top10
       loadClientsLoad(),       // recarga Clients_load → equipoClientsData + clientOwnerMap + KPI cards + total clientes
-      loadAutomationsData(),   // recarga pestaña Automatizaciones
       loadAccesosData(),       // recarga Accesos_SellerCentral → KPIs, tablas, donut
       loadCorreosData(),       // recarga Registro_Correos → correosRawData para perfil de cliente
+      loadBancosData(),        // recarga Bancos → bancosRawData para información bancaria
       loadWeeklyPlanData()     // recarga WeeklyPlan → Dificultades Activas + Prioridad Hoy
     ]);
     // Load declarations + anuales after clientOwnerMap is ready (depends on loadClientsLoad)
@@ -2606,7 +2197,6 @@ async function loadWeeklyPlanData() {
     };
   }).filter(function(r) { return r.taskId || r.clientName; });
 
-  renderDificultades();
   renderPrioridad();
 
   // --- Alert banner: count critical tasks not yet finished ---
@@ -2618,62 +2208,6 @@ async function loadWeeklyPlanData() {
   if (alertEl) alertEl.textContent = criticalPending || '—';
 }
 
-function renderDificultades() {
-  var grid = document.getElementById('dificultadesGrid');
-  if (!grid) return;
-
-  var activas = weeklyPlanRawData.filter(function(t) {
-    return t.progreso !== 'Finalizado' && t.progreso !== 'Cancelado';
-  });
-
-  var responsables = [
-    { key: 'Cristina', color: '#7c5cfc', bg: 'rgba(124,92,252,0.15)', initial: 'C' },
-    { key: 'Lina',     color: '#4f7fff', bg: 'rgba(79,127,255,0.15)',  initial: 'L' },
-    { key: 'Arturo',   color: '#ef4444', bg: 'rgba(239,68,68,0.15)',   initial: 'A' },
-    { key: 'Edgar',    color: '#22c55e', bg: 'rgba(34,197,94,0.15)',   initial: 'E' },
-    { key: 'Leonardo', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  initial: 'L2' }
-  ];
-
-  var nivelOrder = { '🔴 Crítico': 0, '🟡 Media': 1, '🟢 Baja': 2 };
-  var nivelBadge = {
-    '🔴 Crítico': 'status-red', '🟡 Media': 'status-yellow', '🟢 Baja': 'status-green'
-  };
-
-  var html = responsables.map(function(r) {
-    var tasks = activas.filter(function(t) {
-      return t.responsable === r.key || t.responsable.toLowerCase() === r.key.toLowerCase();
-    }).sort(function(a, b) {
-      return (nivelOrder[a.nivel] !== undefined ? nivelOrder[a.nivel] : 3)
-           - (nivelOrder[b.nivel] !== undefined ? nivelOrder[b.nivel] : 3);
-    });
-    if (!tasks.length) return '';
-
-    var criticos = tasks.filter(function(t) { return t.nivel === '🔴 Crítico'; }).length;
-    var bloqLabel = criticos > 0
-      ? '<span class="status status-red" style="margin-left:auto;">⚠ ' + criticos + ' crítico' + (criticos > 1 ? 's' : '') + '</span>'
-      : '<span class="status status-green" style="margin-left:auto;">✓ Sin críticos</span>';
-
-    var items = tasks.slice(0, 5).map(function(t) {
-      var dot = t.nivel === '🔴 Crítico' ? '🔴' : t.nivel === '🟡 Media' ? '🟡' : '🟢';
-      var due = t.dueDate ? ' <span style="color:var(--muted);font-size:10px;">· ' + escH(t.dueDate) + '</span>' : '';
-      return '<li style="display:flex;gap:8px;align-items:flex-start;">' +
-        '<span style="flex-shrink:0;">' + dot + '</span>' +
-        '<span><b>' + escH(t.clientName) + '</b> — ' + escH(t.action.slice(0, 90)) + (t.action.length > 90 ? '…' : '') + due + '</span>' +
-      '</li>';
-    }).join('');
-
-    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;">' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">' +
-        '<div style="width:30px;height:30px;background:' + r.bg + ';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:' + r.color + ';">' + r.initial + '</div>' +
-        '<span style="font-weight:700;">' + r.key + '</span>' +
-        bloqLabel +
-      '</div>' +
-      '<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px;">' + items + '</ul>' +
-    '</div>';
-  }).filter(function(h) { return h; }).join('');
-
-  grid.innerHTML = html || '<div style="color:var(--muted);font-size:13px;padding:12px 0;">Sin tareas activas en WeeklyPlan.</div>';
-}
 
 function renderPrioridad() {
   var grid = document.getElementById('prioridadGrid');
@@ -2774,6 +2308,22 @@ async function loadClientsLoad() {
   set('equipoTbl_edgar',    counts.Edgar);
   // Redraw chart if tab is active
   if (document.getElementById('section-equipo')?.style.display !== 'none') initEquipoCharts();
+
+  // ── Calculate elegiblesDecl: clients with active FIEL (not suspended) ──
+  elegiblesDecl = rows.filter(function(row) {
+    var c = row.c || [];
+    var companyId = (c[0] && c[0].v) ? String(c[0].v).trim() : '';
+    if (!companyId) return false;
+    var suspension = (c[6] && c[6].v != null) ? String(c[6].v).trim().toUpperCase() : '';
+    var fechaFiel  = (c[9] && c[9].v != null) ? String(c[9].v).trim() : '';
+    var notSuspended = suspension === '' || suspension === 'NO' || suspension === 'FALSE';
+    var hasFiel    = fechaFiel !== '' && fechaFiel !== 'null';
+    return notSuspended && hasFiel;
+  }).filter((row, i, arr) => {
+    // deduplicate by Company_Id
+    var id = row.c && row.c[0] && row.c[0].v ? String(row.c[0].v).trim() : '';
+    return id && arr.findIndex(r => r.c && r.c[0] && r.c[0].v && String(r.c[0].v).trim() === id) === i;
+  }).length;
 }
 
 // ── Declaraciones por Responsable (conectado a Clientes_por_periodo) ──────────
@@ -3059,17 +2609,13 @@ async function loadAnualesData() {
   var pctCon   = Math.round(conDatos / totalDeclarado * 100);
   var pctCeros = Math.round(enCeros  / totalDeclarado * 100);
 
-  // Denominator: clients assigned to Cristina / Lina / Edgar (exclude Arturo=external + unassigned)
-  var totalElegibles = Object.keys(clientOwnerMap).filter(function(id) {
-    var o = clientOwnerMap[id];
-    return o && o !== 'Arturo';
-  }).length;
-  var pctDecl = totalElegibles > 0 ? (totalDeclarado / totalElegibles * 100).toFixed(1) : null;
+  // Denominator: clients with active FIEL (calculated in loadClientsLoad)
+  var pctDecl = elegiblesDecl > 0 ? (totalDeclarado / elegiblesDecl * 100).toFixed(1) : null;
 
   // ── Badge ──
   var badge = document.getElementById('anual-badge');
   if (badge) badge.textContent = pctDecl
-    ? totalDeclarado + ' de ' + totalElegibles + ' (' + pctDecl + '%)'
+    ? totalDeclarado + ' de ' + elegiblesDecl + ' (' + pctDecl + '%)'
     : totalDeclarado + ' presentadas';
 
   // ── Con Datos progress bar ──
@@ -3088,7 +2634,7 @@ async function loadAnualesData() {
   // ── Declarado overall bar ──
   el = document.getElementById('anual-declarado-pct');
   if (el) el.textContent = pctDecl
-    ? totalDeclarado + ' de ' + totalElegibles + ' (' + pctDecl + '%)'
+    ? totalDeclarado + ' de ' + elegiblesDecl + ' (' + pctDecl + '%)'
     : totalDeclarado + ' declaraciones presentadas';
   el = document.getElementById('anual-declarado-bar');
   if (el) el.style.width = (pctDecl ? pctDecl : '100') + '%';
@@ -3111,7 +2657,7 @@ async function loadAnualesData() {
   var kpiSub = document.getElementById('kpi-anuales-sub');
   var kpiTrend = document.getElementById('kpi-anuales-trend');
   if (kpiPct) kpiPct.textContent = pctDecl ? pctDecl + '%' : totalDeclarado + ' decl.';
-  if (kpiSub) kpiSub.textContent = totalDeclarado + ' de ' + totalElegibles + ' clientes (Cris·Lina·Edgar)';
+  if (kpiSub) kpiSub.textContent = totalDeclarado + ' de ' + elegiblesDecl + ' clientes (con FIEL activa)';
   if (kpiTrend) kpiTrend.textContent = conDatos + ' con datos · ' + enCeros + ' en ceros';
 
   anualesDataLoaded = true;
@@ -3699,10 +3245,10 @@ function getClientSCAccess(id, c) {
       if (live.pay)   mods.push('Pagos');
       if (live.banco) mods.push('Banco');
       var modNote = mods.length ? mods.join(', ') : 'Sin módulos confirmados';
-      if (live.estado === 'Acceso completo') {
-        return {level:'completo', label:'Completo', note:'Acceso completo — ' + modNote + '.'};
+      if (hasAccesoCompleto(live)) {
+        return {level:'completo', label:'Completo', note:'Acceso completo (ret+vtas+inv) — ' + modNote + '.'};
       }
-      if (live.estado === 'Acceso Parcial') {
+      if (live.ret || live.vtas || live.inv || live.pay || live.banco) {
         return {level:'parcial', label:'Parcial', note:'Acceso parcial — ' + modNote + (live.notas ? '. ' + live.notas : '') + '.'};
       }
       return {level:'pendiente', label:'Pendiente', note: live.notas || 'Sin acceso a Seller Central confirmado.'};
@@ -3975,7 +3521,7 @@ function renderClientProfile(id) {
                accion:'Monitorear el inicio de operaciones. Preparar setup de accesos cuando inicie su primer shipment.' }
     };
     var rd = riskDef[riskClass] || riskDef.bajo;
-    var accEstado = accRec.estado === 'Acceso completo' ? '✅ Acceso completo' : accRec.estado === 'Acceso Parcial' ? '⚡ Acceso parcial' : '🚫 Sin acceso';
+    var accEstado = hasAccesoCompleto(accRec) ? '✅ Acceso completo' : (accRec.ret || accRec.vtas || accRec.inv || accRec.pay || accRec.banco) ? '⚡ Acceso parcial' : '🚫 Sin acceso';
     riskHtml =
       '<div class="cli-section">' +
         '<div class="cli-section-title">🔑 Seller Central — Estado de Acceso</div>' +
@@ -4050,6 +3596,24 @@ function renderClientProfile(id) {
   // Build semReason text block
   var semReasonHtml = c.semReason ? '<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6;">' + escH(c.semReason) + '</div>' : '';
 
+  // ── Banking info ──
+  var bancRec = (typeof bancosRawData !== 'undefined' ? bancosRawData : []).find(function(r) { return r.id === id; });
+  var bancosHtml = '';
+  if (bancRec && (bancRec.payoneer || bancRec.otro || bancRec.comentarios)) {
+    var bancItems = [];
+    if (bancRec.payoneer && bancRec.payoneer !== '' && bancRec.payoneer !== 'N/A') {
+      bancItems.push('<div style="display:flex;gap:8px;align-items:flex-start;"><span style="font-size:12px;min-width:70px;color:var(--muted);">Payoneer</span><span style="font-size:12px;font-weight:600;">' + escH(bancRec.payoneer) + '</span></div>');
+    }
+    if (bancRec.otro && bancRec.otro !== '') {
+      var statusStyle = bancRec.statusOtro ? ' <span style="font-size:11px;color:var(--muted);margin-left:6px;">' + escH(bancRec.statusOtro) + '</span>' : '';
+      bancItems.push('<div style="display:flex;gap:8px;align-items:flex-start;"><span style="font-size:12px;min-width:70px;color:var(--muted);">Banco</span><span style="font-size:12px;font-weight:600;">' + escH(bancRec.otro) + statusStyle + '</span></div>');
+    }
+    if (bancRec.comentarios && bancRec.comentarios !== '') {
+      bancItems.push('<div style="font-size:12px;color:var(--muted);padding:8px 10px;background:var(--bg3);border-radius:6px;margin-top:6px;line-height:1.6;">💬 ' + escH(bancRec.comentarios) + '</div>');
+    }
+    bancosHtml = '<div class="cli-section"><div class="cli-section-title">🏦 Infraestructura Bancaria</div><div style="display:flex;flex-direction:column;gap:6px;">' + bancItems.join('') + '</div></div>';
+  }
+
   // KPI strip
   var kpiSalesColor = totals.totalSales > 0 ? 'color:var(--accent);' : 'color:var(--muted);';
   var scKpiHtml = '<span class="sc-badge ' + scBadgeClass + '">' + scIcons[sc.level] + ' ' + sc.label + '</span>';
@@ -4103,6 +3667,9 @@ function renderClientProfile(id) {
 
     // ── 4. ACCESO SELLER CENTRAL (risk card) ──
     riskHtml +
+
+    // ── 4.5 INFRAESTRUCTURA BANCARIA ──
+    bancosHtml +
 
     // ── 5. HISTORIAL DE VENTAS ──
     '<div class="cli-chart-wrap">' +
@@ -4384,7 +3951,7 @@ function generateCriticalActions() {
     // SC access record — only relevant for AZ clients
     var accRec    = (!isIN && typeof accesosRawData !== 'undefined') ? accesosRawData.find(function(r) { return r.id === id; }) : null;
     var riesgoSC  = accRec ? classifyAccesoRiesgo(accRec) : null;
-    var hasFullSC = accRec && accRec.estado === 'Acceso completo';
+    var hasFullSC = accRec && hasAccesoCompleto(accRec);
 
     // Sales history
     var entries   = timelineRawData[id] || [];
@@ -4522,9 +4089,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDeclaracionesData(),
     loadAnualesData().then(() => loadClientDB()) // CLIENT_DB built after anualesDeclaradoSet is ready
   ])); // clientOwnerMap must be ready
-  loadAutomationsData();   // pre-load estado automatizaciones desde Automatizaciones tab
   loadAccesosData();       // pre-load Accesos_SellerCentral → KPIs + tablas + donut
   loadCorreosData();       // pre-load Registro_Correos → correosRawData para perfil de cliente
+  loadBancosData();        // pre-load Bancos → bancosRawData para información bancaria
   loadWeeklyPlanData();    // pre-load WeeklyPlan → Dificultades Activas + Prioridad Hoy
   // Auto-refresh every 5 minutes
   setInterval(refreshData, 5 * 60 * 1000);
