@@ -1769,7 +1769,7 @@ function renderStripeOverview() {
     var d = STRIPE_CATS[k] || STRIPE_CATS['SIN-MATCH'];
     return '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + d.color + '15;color:' + d.color + ';font-weight:600;white-space:nowrap;">' + d.icon + ' ' + catCnts[k] + '</span>';
   }).join('');
-  var summaryHtml = '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;padding:8px 2px;border-bottom:1px solid var(--border);">' + summaryBadges + '</div>';
+  var summaryHtml = '<div style="flex-shrink:0;display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;padding:8px 2px;border-bottom:1px solid #ccc;">' + summaryBadges + '</div>';
 
   // ── Accordion items — no inline event handlers; event delegation below ──
   var accParts = [];
@@ -1830,7 +1830,7 @@ function renderStripeOverview() {
 
     // ── Outer wrapper ──────────────────────────────────────────────────────
     accParts.push(
-      '<div style="border-radius:8px;border:1px solid ' + cat.color + '44;border-left:3px solid ' + cat.color + ';background:#ffffff;overflow:hidden;">'
+      '<div style="flex-shrink:0;border-radius:8px;border:1px solid ' + cat.color + '44;border-left:3px solid ' + cat.color + ';background:#ffffff;overflow:hidden;">'
 
       // Header — carries data-acc-id, no onclick/onmouseenter
       + '<div data-acc-id="' + escH(rawId) + '" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none;min-height:38px;">'
