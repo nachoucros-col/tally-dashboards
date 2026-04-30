@@ -791,6 +791,22 @@ function gateSubmit() {
       </div>
     </div>
 
+    <!-- STRIPE OVERVIEW SECTION -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div class="card">
+        <div class="card-title">💳 Estado Stripe — Resumen</div>
+        <div id="stripeOverviewTotals" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">Cargando…</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚠️ Clientes en Mora o Riesgo de Churn</div>
+        <div id="stripeMoraList" style="overflow-y:auto;height:calc(100vh * 0.55);display:flex;flex-direction:column;gap:8px;">
+          <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">Cargando…</div>
+        </div>
+      </div>
+    </div>
+
     <!-- CHARTS ROW -->
     <div class="grid-2">
       <div class="card">
@@ -1609,6 +1625,164 @@ async function loadBancosData() {
     var get = function(i) { return (c[i] && c[i].v != null) ? String(c[i].v).trim() : ''; };
     return { id: get(0), payoneer: get(2), otro: get(3), statusOtro: get(4), comentarios: get(5) };
   }).filter(function(r) { return r.id !== ''; });
+}
+
+// ── Stripe Classification ─────────────────────────────────────────────────────
+// All category metadata and classification rules are data-driven — no hardcoded
+// category names in branching logic.
+
+var STRIPE_CATS = {
+  'MORA':      { label:'MORA',      desc:'Acción inmediata',          bg:'#FCEBEB', color:'#791F1F', icon:'🔴' },
+  'CHURN':     { label:'CHURN',     desc:'Cliente cerrado',           bg:'#F1EFE8', color:'#444441', icon:'⚫' },
+  'OK':        { label:'OK',        desc:'Al día',                    bg:'#EAF3DE', color:'#27500A', icon:'🟢' },
+  'PENDIENTE': { label:'PENDIENTE', desc:'Cobro en curso',            bg:'#E6F1FB', color:'#0C447C', icon:'🔵' },
+  'TRIAL':     { label:'TRIAL',     desc:'En periodo de prueba',      bg:'#EEEDFE', color:'#3C3489', icon:'🟣' },
+  'SIN-SUB':   { label:'SIN-SUB',   desc:'Sin subscription',          bg:'#E1F5EE', color:'#085041', icon:'🩵' },
+  'REVISAR':   { label:'REVISAR',   desc:'Inconsistente, investigar', bg:'#FAEEDA', color:'#633806', icon:'🟠' },
+  'PAUSE':     { label:'PAUSE',     desc:'Subscription pausada',      bg:'#FAECE7', color:'#712B13', icon:'⏸' },
+  'SIN-MATCH': { label:'SIN-MATCH', desc:'Sin registro en Stripe',    bg:'#FBEAF0', color:'#72243E', icon:'❓' }
+};
+
+// Each entry: [stripe_status, last_invoice, category_key]
+// '*' in last_invoice position matches any value
+var STRIPE_RULES = [
+  ['past_due',           'open',           'MORA'],
+  ['past_due',           'unpaid',         'MORA'],
+  ['past_due',           'uncollectible',  'MORA'],
+  ['unpaid',             'unpaid',         'MORA'],
+  ['unpaid',             'open',           'MORA'],
+  ['canceled',           'paid',           'CHURN'],
+  ['canceled',           'void',           'CHURN'],
+  ['canceled',           'unpaid',         'CHURN'],
+  ['canceled',           'uncollectible',  'CHURN'],
+  ['canceled',           'none',           'CHURN'],
+  ['unpaid',             'uncollectible',  'CHURN'],
+  ['none',               'uncollectible',  'CHURN'],
+  ['incomplete_expired', '*',              'CHURN'],
+  ['active',             'paid',           'OK'],
+  ['active',             'open',           'PENDIENTE'],
+  ['active',             'draft',          'PENDIENTE'],
+  ['trialing',           'paid',           'TRIAL'],
+  ['trialing',           'open',           'TRIAL'],
+  ['trialing',           'draft',          'TRIAL'],
+  ['trialing',           'none',           'TRIAL'],
+  ['trialing',           'void',           'TRIAL'],
+  ['none',               'paid',           'SIN-SUB'],
+  ['none',               'open',           'SIN-SUB'],
+  ['none',               'unpaid',         'SIN-SUB'],
+  ['none',               'void',           'SIN-SUB'],
+  ['none',               'draft',          'SIN-SUB'],
+  ['none',               'none',           'SIN-SUB'],
+  ['active',             'unpaid',         'REVISAR'],
+  ['active',             'uncollectible',  'REVISAR'],
+  ['active',             'void',           'REVISAR'],
+  ['active',             'none',           'REVISAR'],
+  ['past_due',           'paid',           'REVISAR'],
+  ['past_due',           'void',           'REVISAR'],
+  ['past_due',           'draft',          'REVISAR'],
+  ['past_due',           'none',           'REVISAR'],
+  ['unpaid',             'paid',           'REVISAR'],
+  ['unpaid',             'void',           'REVISAR'],
+  ['unpaid',             'draft',          'REVISAR'],
+  ['unpaid',             'none',           'REVISAR'],
+  ['canceled',           'open',           'REVISAR'],
+  ['canceled',           'draft',          'REVISAR'],
+  ['trialing',           'unpaid',         'REVISAR'],
+  ['trialing',           'uncollectible',  'REVISAR'],
+  ['incomplete',         '*',              'REVISAR'],
+  ['paused',             '*',              'PAUSE'],
+  ['no_stripe_match',    'no_stripe_match','SIN-MATCH']
+];
+
+function classifyStripe(status, invoice) {
+  var s = (status  || '').trim().toLowerCase();
+  var i = (invoice || '').trim().toLowerCase();
+  for (var r = 0; r < STRIPE_RULES.length; r++) {
+    var rule = STRIPE_RULES[r];
+    if (rule[0] === s && (rule[1] === '*' || rule[1] === i)) return rule[2];
+  }
+  // Empty / unrecognised → SIN-MATCH
+  return 'SIN-MATCH';
+}
+
+// ── Stripe Overview (called after CLIENT_DB is populated) ─────────────────────
+function renderStripeOverview() {
+  var totalsEl = document.getElementById('stripeOverviewTotals');
+  var listEl   = document.getElementById('stripeMoraList');
+  if (!totalsEl && !listEl) return;
+
+  var entries = Object.entries(CLIENT_DB).map(function(pair) {
+    var id = pair[0], c = pair[1];
+    var cat = classifyStripe(c.stripeStatus, c.lastInvoice);
+    return { id: id, c: c, cat: cat };
+  });
+
+  // ── Totalizadores ──
+  var okCount       = entries.filter(function(e) { return e.cat === 'OK'; }).length;
+  var mora1Count    = entries.filter(function(e) {
+    return e.cat === 'MORA' && (e.c.stripeStatus || '').toLowerCase() === 'past_due';
+  }).length;
+  var moraNCount    = entries.filter(function(e) {
+    return e.cat === 'MORA' && (e.c.stripeStatus || '').toLowerCase() === 'unpaid';
+  }).length;
+  var churnCount    = entries.filter(function(e) { return e.cat === 'CHURN'; }).length;
+
+  var totDefs = [
+    { label:'Activos y al día',         count: okCount,    bg:'#EAF3DE', color:'#27500A', icon:'🟢' },
+    { label:'1 mes en mora',            count: mora1Count, bg:'#FCEBEB', color:'#791F1F', icon:'🔴' },
+    { label:'+1 mes en mora',           count: moraNCount, bg:'#FCEBEB', color:'#791F1F', icon:'🔴' },
+    { label:'Potencial churn',          count: churnCount, bg:'#F1EFE8', color:'#444441', icon:'⚫' }
+  ];
+
+  if (totalsEl) {
+    totalsEl.innerHTML = totDefs.map(function(t) {
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;background:' + t.bg + ';">' +
+        '<span style="font-size:13px;color:' + t.color + ';font-weight:500;">' + t.icon + ' ' + escH(t.label) + '</span>' +
+        '<span style="font-size:22px;font-weight:700;color:' + t.color + ';">' + t.count + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Mora + Churn list ──
+  var atRisk = entries.filter(function(e) { return e.cat === 'MORA' || e.cat === 'CHURN'; });
+  // Sort: MORA past_due first, then MORA unpaid, then CHURN
+  var catOrder = { 'MORA': 0, 'CHURN': 1 };
+  var statusOrder = { 'past_due': 0, 'unpaid': 1 };
+  atRisk.sort(function(a, b) {
+    var catA = catOrder[a.cat] || 99, catB = catOrder[b.cat] || 99;
+    if (catA !== catB) return catA - catB;
+    var sA = statusOrder[(a.c.stripeStatus || '').toLowerCase()] || 9;
+    var sB = statusOrder[(b.c.stripeStatus || '').toLowerCase()] || 9;
+    if (sA !== sB) return sA - sB;
+    return (a.c.name || '').localeCompare(b.c.name || '');
+  });
+
+  if (listEl) {
+    if (atRisk.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">✅ Sin clientes en mora o con riesgo de churn.</div>';
+    } else {
+      listEl.innerHTML = atRisk.map(function(e) {
+        var cat = STRIPE_CATS[e.cat] || STRIPE_CATS['SIN-MATCH'];
+        var stripeLabel = e.c.stripeStatus ? '<code style="font-size:10px;background:var(--bg3);padding:1px 5px;border-radius:4px;">' + escH(e.c.stripeStatus) + '</code>' : '';
+        var invoiceLabel = e.c.lastInvoice ? '<code style="font-size:10px;background:var(--bg3);padding:1px 5px;border-radius:4px;">' + escH(e.c.lastInvoice) + '</code>' : '';
+        var ctx = e.c.stripeContext ? '<div style="font-size:11px;color:var(--muted);margin-top:3px;">' + escH(e.c.stripeContext) + '</div>' : '';
+        return '<div onclick="openClientPanel(\'' + e.id + '\')" style="cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid ' + cat.color + '33;background:' + cat.bg + ';transition:opacity 0.15s;" onmouseenter="this.style.opacity=\'0.8\'" onmouseleave="this.style.opacity=\'1\'">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+            '<span style="font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escH(e.c.name) + '</span>' +
+            '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + cat.color + '22;color:' + cat.color + ';font-weight:700;white-space:nowrap;">' + cat.icon + ' ' + cat.label + '</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;">' +
+            '<span style="font-size:11px;color:var(--muted);">' + escH(e.id) + '</span>' +
+            '<span style="color:var(--border);">·</span>' +
+            '<span style="font-size:11px;color:var(--muted);">' + escH(e.c.owner || '—') + '</span>' +
+            '<span style="color:var(--border);">·</span>' +
+            stripeLabel + invoiceLabel +
+          '</div>' +
+          ctx +
+        '</div>';
+      }).join('');
+    }
+  }
 }
 
 // ── Accesos Seller Central ────────────────────────────────────────────────────
@@ -2774,17 +2948,22 @@ async function loadClientDB() {
     var declared  = anualesDeclaradoSet.has(id);
 
     newDB[id] = {
-      name:       c[2] && c[2].v != null ? String(c[2].v) : id,
-      rfc:        c[1] && c[1].v != null ? String(c[1].v) : '',
-      owner:      owner,
-      email:      '',
-      suspended:  suspended,
-      drive:      driveMap[id] || '',
-      sem:        'green',
-      semReason:  '',
-      declStatus: suspended ? 'bloqueada' : (declared ? 'completa' : 'pendiente'),
-      declReason: suspended ? 'suspended' : '',
-      tags:       []
+      name:            c[2] && c[2].v != null ? String(c[2].v) : id,
+      rfc:             c[1] && c[1].v != null ? String(c[1].v) : '',
+      owner:           owner,
+      email:           '',
+      suspended:       suspended,
+      drive:           driveMap[id] || '',
+      sem:             'green',
+      semReason:       '',
+      declStatus:      suspended ? 'bloqueada' : (declared ? 'completa' : 'pendiente'),
+      declReason:      suspended ? 'suspended' : '',
+      tags:            [],
+      stripeStatus:    c[10] && c[10].v != null ? String(c[10].v).trim() : '',
+      lastInvoice:     c[11] && c[11].v != null ? String(c[11].v).trim() : '',
+      stripeEmail:     c[12] && c[12].v != null ? String(c[12].v).trim() : '',
+      stripeContext:   c[13] && c[13].v != null ? String(c[13].v).trim() : '',
+      stripeTimestamp: c[14] && c[14].v != null ? String(c[14].v).trim() : ''
     };
   });
 
@@ -2795,6 +2974,9 @@ async function loadClientDB() {
 
   // Re-score critical actions now that CLIENT_DB + declarations are ready
   renderCriticalActions();
+
+  // Re-render Stripe overview panels
+  renderStripeOverview();
 }
 
 // LEGACY — hardcoded CLIENT_DB entries, no longer in use.
@@ -3616,6 +3798,37 @@ function renderClientProfile(id) {
     bancosHtml = '<div class="cli-section"><div class="cli-section-title">🏦 Infraestructura Bancaria</div><div style="display:flex;flex-direction:column;gap:6px;">' + bancItems.join('') + '</div></div>';
   }
 
+  // ── Stripe status ──
+  var stripeHtml = '';
+  if (c.stripeStatus || c.lastInvoice) {
+    var stripeCat = classifyStripe(c.stripeStatus, c.lastInvoice);
+    var catDef    = STRIPE_CATS[stripeCat] || STRIPE_CATS['SIN-MATCH'];
+    var stripeRows = [
+      { key: 'Categoría',    val: catDef.icon + ' ' + catDef.label + ' · ' + catDef.desc, mono: false },
+      { key: 'Sub. status',  val: c.stripeStatus  || '—', mono: true  },
+      { key: 'Últ. factura', val: c.lastInvoice   || '—', mono: true  }
+    ];
+    if (c.stripeEmail)     stripeRows.push({ key: 'Email Stripe',   val: c.stripeEmail,     mono: false });
+    if (c.stripeContext)   stripeRows.push({ key: 'Contexto',       val: c.stripeContext,   mono: false });
+    if (c.stripeTimestamp) stripeRows.push({ key: 'Sync',           val: c.stripeTimestamp, mono: false });
+    var rowsHtml = stripeRows.map(function(r) {
+      var valHtml = r.mono
+        ? '<code style="font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">' + escH(r.val) + '</code>'
+        : '<span style="font-size:12px;">' + escH(r.val) + '</span>';
+      return '<div style="display:flex;gap:8px;align-items:flex-start;">' +
+        '<span style="font-size:12px;min-width:90px;color:var(--muted);">' + escH(r.key) + '</span>' +
+        valHtml +
+      '</div>';
+    }).join('');
+    stripeHtml =
+      '<div class="cli-section">' +
+        '<div class="cli-section-title">💳 Estado Stripe</div>' +
+        '<div style="padding:10px 14px;border-radius:8px;border:1px solid ' + catDef.color + '44;background:' + catDef.bg + ';display:flex;flex-direction:column;gap:7px;">' +
+          rowsHtml +
+        '</div>' +
+      '</div>';
+  }
+
   // KPI strip
   var kpiSalesColor = totals.totalSales > 0 ? 'color:var(--accent);' : 'color:var(--muted);';
   var scKpiHtml = '<span class="sc-badge ' + scBadgeClass + '">' + scIcons[sc.level] + ' ' + sc.label + '</span>';
@@ -3672,6 +3885,9 @@ function renderClientProfile(id) {
 
     // ── 4.5 INFRAESTRUCTURA BANCARIA ──
     bancosHtml +
+
+    // ── 4.7 ESTADO STRIPE ──
+    stripeHtml +
 
     // ── 5. HISTORIAL DE VENTAS ──
     '<div class="cli-chart-wrap">' +
