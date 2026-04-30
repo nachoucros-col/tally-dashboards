@@ -742,55 +742,6 @@ function gateSubmit() {
 
     </div>
 
-    <!-- ⚡ TOP 10 ACCIONES CRÍTICAS DEL DÍA -->
-    <div class="card" style="margin-bottom:24px;padding:0;overflow:hidden;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:16px 20px 12px;">
-        <div>
-          <div style="font-size:15px;font-weight:700;margin-bottom:3px;">⚡ 10 Acciones Críticas del Día</div>
-          <div style="font-size:11px;color:var(--muted);">Generado en tiempo real · cruza SC, declaraciones, anuales y accesos desde Google Sheets</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:11px;color:var(--muted);" id="critActLastRun">Calculando…</span>
-          <span style="font-size:11px;padding:3px 10px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.25);border-radius:12px;" id="critActCount">—</span>
-        </div>
-      </div>
-
-      <!-- Legend -->
-      <div style="display:flex;gap:16px;padding:0 20px 10px;flex-wrap:wrap;">
-        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;"></span>Crítico — acción inmediata</span>
-        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;"></span>Alto — resolver hoy</span>
-        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;"></span>Medio — seguimiento</span>
-      </div>
-
-      <div class="table-wrap" style="margin:0;border-radius:0;border-left:none;border-right:none;border-bottom:none;">
-        <table style="width:100%;">
-          <colgroup>
-            <col style="width:32px;">
-            <col style="width:100px;">
-            <col style="width:150px;">
-            <col style="width:76px;">
-            <col><!-- Acción — toma el espacio restante -->
-            <col style="width:88px;">
-            <col style="width:80px;">
-          </colgroup>
-          <thead>
-            <tr>
-              <th style="text-align:center;">#</th>
-              <th>Prioridad</th>
-              <th>Cliente</th>
-              <th>Resp.</th>
-              <th>Acción requerida</th>
-              <th>Área</th>
-              <th style="text-align:center;">Ver</th>
-            </tr>
-          </thead>
-          <tbody id="critActBody">
-            <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;font-size:12px;">Cargando datos…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- STRIPE OVERVIEW SECTION -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
       <div class="card">
@@ -1126,6 +1077,55 @@ function gateSubmit() {
           </thead>
           <tbody id="accesosMainBody">
             <tr><td colspan="5" style="text-align:center;color:var(--muted);font-size:12px;padding:24px;">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ⚡ TOP 10 ACCIONES CRÍTICAS DEL DÍA -->
+    <div class="card" style="margin-top:8px;padding:0;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:16px 20px 12px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:3px;">⚡ 10 Acciones Críticas del Día</div>
+          <div style="font-size:11px;color:var(--muted);">Generado en tiempo real · cruza SC, declaraciones, anuales y accesos desde Google Sheets</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:11px;color:var(--muted);" id="critActLastRun">Calculando…</span>
+          <span style="font-size:11px;padding:3px 10px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.25);border-radius:12px;" id="critActCount">—</span>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div style="display:flex;gap:16px;padding:0 20px 10px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;"></span>Crítico — acción inmediata</span>
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316;"></span>Alto — resolver hoy</span>
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;"></span>Medio — seguimiento</span>
+      </div>
+
+      <div class="table-wrap" style="margin:0;border-radius:0;border-left:none;border-right:none;border-bottom:none;">
+        <table style="width:100%;">
+          <colgroup>
+            <col style="width:32px;">
+            <col style="width:100px;">
+            <col style="width:150px;">
+            <col style="width:76px;">
+            <col><!-- Acción — toma el espacio restante -->
+            <col style="width:88px;">
+            <col style="width:80px;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="text-align:center;">#</th>
+              <th>Prioridad</th>
+              <th>Cliente</th>
+              <th>Resp.</th>
+              <th>Acción requerida</th>
+              <th>Área</th>
+              <th style="text-align:center;">Ver</th>
+            </tr>
+          </thead>
+          <tbody id="critActBody">
+            <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;font-size:12px;">Cargando datos…</td></tr>
           </tbody>
         </table>
       </div>
