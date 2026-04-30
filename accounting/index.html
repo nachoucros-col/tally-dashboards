@@ -800,8 +800,8 @@ function gateSubmit() {
         </div>
       </div>
       <div class="card">
-        <div class="card-title">⚠️ Clientes en Mora o Riesgo de Churn</div>
-        <div id="stripeMoraList" style="overflow-y:auto;height:calc(100vh * 0.55);display:flex;flex-direction:column;gap:8px;">
+        <div class="card-title">📋 Clientes — Estado Stripe</div>
+        <div id="stripeMoraList" style="overflow-y:auto;height:calc(100vh * 0.55);display:flex;flex-direction:column;gap:5px;padding-right:2px;">
           <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">Cargando…</div>
         </div>
       </div>
@@ -1742,99 +1742,94 @@ function renderStripeOverview() {
       : '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin datos Stripe cargados.</div>';
   }
 
-  // ── Panel 2: MORA + CHURN list with enriched context ──
-  var atRisk = entries.filter(function(e) { return e.cat === 'MORA' || e.cat === 'CHURN'; });
-
-  // Sort: MORA past_due → MORA unpaid → CHURN; within tier: active (FIEL+ops) first
-  var riskCatOrder   = { 'MORA': 0, 'CHURN': 1 };
-  var statusOrder    = { 'past_due': 0, 'unpaid': 1 };
-  atRisk.sort(function(a, b) {
-    var ca = riskCatOrder[a.cat] || 99, cb = riskCatOrder[b.cat] || 99;
-    if (ca !== cb) return ca - cb;
-    var sa = statusOrder[(a.c.stripeStatus || '').toLowerCase()] || 9;
-    var sb = statusOrder[(b.c.stripeStatus || '').toLowerCase()] || 9;
-    if (sa !== sb) return sa - sb;
-    // Within same tier: FIEL+ops clients first (highest risk = highest priority)
-    var pa = (a.hasFIEL ? 0 : 2) + (a.hasFirstShipment ? 0 : 1);
-    var pb = (b.hasFIEL ? 0 : 2) + (b.hasFirstShipment ? 0 : 1);
-    if (pa !== pb) return pa - pb;
-    return (a.c.name || '').localeCompare(b.c.name || '');
-  });
-
+  // ── Panel 2: ALL clients — sorted by stripe urgency ──
   if (!listEl) return;
-  if (atRisk.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">✅ Sin clientes en mora o con riesgo de churn.</div>';
+  if (!entries.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">Cargando clientes…</div>';
     return;
   }
 
-  // Context badge rules — data-driven, no hardcoded labels in branching
-  var CTX_RULES = [
-    // [cat, hasFIEL, hasFirstShipment, badge, color, bg]
-    ['MORA', true,  true,  '🔴 Cliente activo con operaciones — cobrar urgente',              '#791F1F','#FCEBEB'],
-    ['MORA', true,  false, '🟡 FIEL activo, sin ventas confirmadas — verificar estado actual', '#633806','#FAEEDA'],
-    ['MORA', false, true,  '🟠 Tiene ventas pero sin FIEL registrado — riesgo fiscal',         '#633806','#FAEEDA'],
-    ['MORA', false, false, '🟠 Sin FIEL ni ventas — revisar onboarding y pago',                '#633806','#FAEEDA'],
-    ['CHURN',true,  true,  '📞 Ex-cliente con historial de operaciones — candidato a recuperación','#444441','#F1EFE8'],
-    ['CHURN',true,  false, '⚫ Cerrado con FIEL activo pero sin ventas registradas',            '#444441','#F1EFE8'],
-    ['CHURN',false, true,  '⚫ Cerrado con ventas pero sin FIEL — revisar cierre fiscal',       '#5a5a58','#EDEDEA'],
-    ['CHURN',false, false, '⚫ Cerrado sin setup fiscal completo — cold lead',                  '#6b7280','#f3f4f6']
-  ];
+  // Urgency sort: MORA (past_due → unpaid) → REVISAR → PENDIENTE → OK → TRIAL → SIN-SUB → PAUSE → CHURN → SIN-MATCH
+  var CAT_URG    = { MORA:0, REVISAR:1, PENDIENTE:2, OK:3, TRIAL:4, 'SIN-SUB':5, PAUSE:6, CHURN:7, 'SIN-MATCH':8 };
+  var STATUS_URG = { past_due:0, unpaid:1 };
+  var sorted = entries.slice().sort(function(a, b) {
+    var ua = CAT_URG[a.cat] != null ? CAT_URG[a.cat] : 99;
+    var ub = CAT_URG[b.cat] != null ? CAT_URG[b.cat] : 99;
+    if (ua !== ub) return ua - ub;
+    var sa = STATUS_URG[(a.c.stripeStatus || '').toLowerCase()] != null ? STATUS_URG[(a.c.stripeStatus || '').toLowerCase()] : 9;
+    var sb = STATUS_URG[(b.c.stripeStatus || '').toLowerCase()] != null ? STATUS_URG[(b.c.stripeStatus || '').toLowerCase()] : 9;
+    if (sa !== sb) return sa - sb;
+    return (a.c.name || '').localeCompare(b.c.name || '');
+  });
 
-  function getCtx(cat, hasFIEL, hasOps) {
-    for (var i = 0; i < CTX_RULES.length; i++) {
-      var r = CTX_RULES[i];
-      if (r[0] === cat && r[1] === hasFIEL && r[2] === hasOps)
-        return { badge: r[3], color: r[4], bg: r[5] };
-    }
-    return { badge: '—', color: 'var(--muted)', bg: 'var(--bg3)' };
-  }
+  listEl.innerHTML = sorted.map(function(e) {
+    var cat    = STRIPE_CATS[e.cat] || STRIPE_CATS['SIN-MATCH'];
+    var safeId = e.id.replace(/'/g, "\\'");
 
-  listEl.innerHTML = atRisk.map(function(e) {
-    var cat = STRIPE_CATS[e.cat] || STRIPE_CATS['SIN-MATCH'];
-    var ctx = getCtx(e.cat, e.hasFIEL, e.hasFirstShipment);
-
-    // Stripe code pills
-    var ssLabel = e.c.stripeStatus
-      ? '<code style="font-size:10px;padding:2px 6px;border-radius:4px;background:' + cat.color + '18;color:' + cat.color + ';border:1px solid ' + cat.color + '33;">' + escH(e.c.stripeStatus) + '</code>'
-      : '';
-    var invLabel = e.c.lastInvoice
-      ? '<code style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg3);color:var(--muted);">' + escH(e.c.lastInvoice) + '</code>'
-      : '';
-
-    // Operational signal pills
-    var fielPill = e.hasFIEL
-      ? '<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:#EAF3DE;color:#27500A;">✅ FIEL ' + escH(e.c.fechaFIEL) + '</span>'
-      : '<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:#f3f4f6;color:#6b7280;">⚠ Sin FIEL</span>';
-    var opsPill = e.hasFirstShipment
-      ? '<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:#E6F1FB;color:#0C447C;">📦 Con operaciones</span>'
-      : '<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:#f3f4f6;color:#6b7280;">📦 Sin ventas aún</span>';
-
-    // stripe_context note
+    // Tooltip content
+    var fielStatus = e.c.fiel
+      ? '<span style="color:#27500A;">✅ ' + escH(e.c.fiel) + '</span>' + (e.hasFIEL ? ' <span style="color:#888;font-size:10px;">(Fecha_FIEL: ' + escH(e.c.fechaFIEL) + ')</span>' : '')
+      : '<span style="color:#6b7280;">⏳ Sin datos en Folder</span>';
+    var shipStatus = e.c.firstShipment
+      ? '<span style="color:#0C447C;">' + escH(e.c.firstShipment) + '</span>'
+      : '<span style="color:#6b7280;">⏳ Pendiente</span>';
     var ctxNote = e.c.stripeContext
-      ? '<div style="font-size:10.5px;color:var(--muted);margin-top:6px;padding:6px 8px;background:var(--bg3);border-radius:5px;line-height:1.55;">' + escH(e.c.stripeContext) + '</div>'
+      ? '<div style="margin-top:8px;padding:7px 9px;background:#f5f5f3;border-radius:6px;font-size:11px;color:#555;line-height:1.55;">' + escH(e.c.stripeContext) + '</div>'
+      : '';
+    var emailRow = e.c.stripeEmail
+      ? '<span style="color:#888;">Email Stripe</span><span style="font-size:11px;">' + escH(e.c.stripeEmail) + '</span>'
       : '';
 
-    return '<div onclick="openClientPanel(\'' + e.id + '\')" style="cursor:pointer;padding:12px 13px;border-radius:9px;border:1px solid ' + cat.color + '33;background:var(--bg2,#fff);margin-bottom:2px;transition:opacity 0.15s;" onmouseenter="this.style.opacity=\'0.8\'" onmouseleave="this.style.opacity=\'1\'">' +
-      // Row 1: name + category badge
-      '<div style="display:flex;align-items:center;gap:8px;">' +
-        '<span style="font-size:12px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escH(e.c.name) + '</span>' +
-        '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:' + cat.color + '18;color:' + cat.color + ';font-weight:700;white-space:nowrap;">' + cat.icon + ' ' + cat.label + '</span>' +
+    var tooltipHtml =
+      '<div style="font-size:12px;font-weight:700;color:' + cat.color + ';margin-bottom:8px;">' + cat.icon + ' ' + escH(cat.label) + ' — ' + escH(cat.desc) + '</div>' +
+      '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:11.5px;">' +
+        '<span style="color:#888;">stripe_status</span><code style="background:' + cat.color + '18;color:' + cat.color + ';padding:1px 5px;border-radius:3px;font-size:10.5px;">' + escH(e.c.stripeStatus || '—') + '</code>' +
+        '<span style="color:#888;">last_invoice</span><code style="background:#f0f0ee;padding:1px 5px;border-radius:3px;font-size:10.5px;">' + escH(e.c.lastInvoice || '—') + '</code>' +
+        '<span style="color:#888;">FIEL</span>' + fielStatus +
+        '<span style="color:#888;">First Shipment</span>' + shipStatus +
+        emailRow +
       '</div>' +
-      // Row 2: ID · owner · stripe codes
-      '<div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;">' +
-        '<span style="font-size:11px;color:var(--muted);">' + escH(e.id) + '</span>' +
-        '<span style="color:var(--border);">·</span>' +
-        '<span style="font-size:11px;color:var(--muted);">' + escH(e.c.owner || '—') + '</span>' +
-        (ssLabel || invLabel ? '<span style="color:var(--border);">·</span>' + ssLabel + ' ' + invLabel : '') +
+      ctxNote;
+
+    var tipEncoded = tooltipHtml.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;border:1px solid ' + cat.color + '22;background:var(--bg2,#fff);">' +
+      '<div onclick="openClientPanel(\'' + safeId + '\')" style="cursor:pointer;flex:1;min-width:0;overflow:hidden;">' +
+        '<div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escH(e.c.name) + '</div>' +
+        '<div style="font-size:10.5px;color:var(--muted);margin-top:2px;">' + escH(e.id) + ' · ' + escH(e.c.owner || '—') + '</div>' +
       '</div>' +
-      // Row 3: context badge
-      '<div style="margin-top:6px;padding:5px 9px;border-radius:5px;background:' + ctx.bg + ';font-size:11px;color:' + ctx.color + ';line-height:1.4;">' + escH(ctx.badge) + '</div>' +
-      // Row 4: operational signals
-      '<div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;">' + fielPill + opsPill + '</div>' +
-      // Row 5: stripe context diagnostic
-      ctxNote +
+      '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + cat.color + '18;color:' + cat.color + ';font-weight:700;white-space:nowrap;flex-shrink:0;">' + cat.icon + ' ' + escH(cat.label) + '</span>' +
+      '<button onclick="showStripeTooltip(this,\''+ tipEncoded +'\')" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 4px;flex-shrink:0;line-height:1;color:var(--muted);" title="Ver detalle Stripe">ℹ️</button>' +
     '</div>';
   }).join('');
+}
+
+// ── Stripe tooltip (floating, position:fixed near the ℹ️ button) ─────────────
+function showStripeTooltip(btn, html) {
+  var existing = document.getElementById('stripeTooltipFloat');
+  if (existing) { if (existing._srcBtn === btn) { existing.remove(); return; } existing.remove(); }
+  var tip = document.createElement('div');
+  tip.id = 'stripeTooltipFloat';
+  tip._srcBtn = btn;
+  tip.style.cssText = 'position:fixed;z-index:9999;width:320px;padding:13px 15px;background:var(--bg,#fff);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.14);font-size:12px;line-height:1.65;color:var(--text);';
+  tip.innerHTML = html;
+  document.body.appendChild(tip);
+  // Position: prefer right of button, flip left if off-screen
+  var rect = btn.getBoundingClientRect();
+  var tw = 320;
+  var left = rect.right + 10;
+  if (left + tw > window.innerWidth - 8) left = rect.left - tw - 10;
+  if (left < 8) left = 8;
+  var top = Math.min(rect.top, window.innerHeight - tip.offsetHeight - 12);
+  if (top < 8) top = 8;
+  tip.style.left = left + 'px';
+  tip.style.top  = top  + 'px';
+  // Dismiss on outside click
+  setTimeout(function() {
+    document.addEventListener('click', function cls(ev) {
+      if (!tip.contains(ev.target) && ev.target !== btn) { tip.remove(); document.removeEventListener('click', cls); }
+    });
+  }, 50);
 }
 
 // ── Accesos Seller Central ────────────────────────────────────────────────────
@@ -2980,10 +2975,12 @@ async function loadClientDB() {
   if (folderData && folderData.table) {
     (folderData.table.rows || []).forEach(function(row) {
       var c = row.c || [];
-      // Folder_Clientes columns: [5]friendly_id (Company_Id), [3]drive_folder_link
-      var fid = c[5] && c[5].v != null ? String(c[5].v).trim() : '';
-      var url = c[3] && c[3].v != null ? String(c[3].v) : '';
-      if (fid && url) driveMap[fid] = url;
+      // Folder_Clientes columns: [5]friendly_id [3]drive_folder_link [7]Fiel [8]First_Shipment
+      var fid       = c[5] && c[5].v != null ? String(c[5].v).trim() : '';
+      var url       = c[3] && c[3].v != null ? String(c[3].v) : '';
+      var fiel      = c[7] && c[7].v != null ? String(c[7].v).trim() : '';
+      var firstShip = c[8] && c[8].v != null ? String(c[8].v).trim() : '';
+      if (fid) driveMap[fid] = { drive: url, fiel: fiel, firstShipment: firstShip };
     });
   }
 
@@ -3005,7 +3002,9 @@ async function loadClientDB() {
       owner:           owner,
       email:           '',
       suspended:       suspended,
-      drive:           driveMap[id] || '',
+      drive:         (driveMap[id] && driveMap[id].drive)         || '',
+      fiel:          (driveMap[id] && driveMap[id].fiel)          || '',
+      firstShipment: (driveMap[id] && driveMap[id].firstShipment) || '',
       sem:             'green',
       semReason:       '',
       declStatus:      suspended ? 'bloqueada' : (declared ? 'completa' : 'pendiente'),
