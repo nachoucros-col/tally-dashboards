@@ -1742,14 +1742,14 @@ function renderStripeOverview() {
       : '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Sin datos Stripe cargados.</div>';
   }
 
-  // ── Panel 2: ALL clients — sorted by stripe urgency ──
+  // ── Panel 2: ALL clients accordion — sorted by stripe urgency ──
   if (!listEl) return;
   if (!entries.length) {
     listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">Cargando clientes…</div>';
     return;
   }
 
-  // Urgency sort: MORA (past_due → unpaid) → REVISAR → PENDIENTE → OK → TRIAL → SIN-SUB → PAUSE → CHURN → SIN-MATCH
+  // Urgency sort: MORA(past_due→unpaid) → REVISAR → PENDIENTE → OK → TRIAL → SIN-SUB → PAUSE → CHURN → SIN-MATCH
   var CAT_URG    = { MORA:0, REVISAR:1, PENDIENTE:2, OK:3, TRIAL:4, 'SIN-SUB':5, PAUSE:6, CHURN:7, 'SIN-MATCH':8 };
   var STATUS_URG = { past_due:0, unpaid:1 };
   var sorted = entries.slice().sort(function(a, b) {
@@ -1762,74 +1762,126 @@ function renderStripeOverview() {
     return (a.c.name || '').localeCompare(b.c.name || '');
   });
 
-  listEl.innerHTML = sorted.map(function(e) {
-    var cat    = STRIPE_CATS[e.cat] || STRIPE_CATS['SIN-MATCH'];
-    var safeId = e.id.replace(/'/g, "\\'");
-
-    // Tooltip content
-    var fielStatus = e.c.fiel
-      ? '<span style="color:#27500A;">✅ ' + escH(e.c.fiel) + '</span>' + (e.hasFIEL ? ' <span style="color:#888;font-size:10px;">(Fecha_FIEL: ' + escH(e.c.fechaFIEL) + ')</span>' : '')
-      : '<span style="color:#6b7280;">⏳ Sin datos en Folder</span>';
-    var shipStatus = e.c.firstShipment
-      ? '<span style="color:#0C447C;">' + escH(e.c.firstShipment) + '</span>'
-      : '<span style="color:#6b7280;">⏳ Pendiente</span>';
-    var ctxNote = e.c.stripeContext
-      ? '<div style="margin-top:8px;padding:7px 9px;background:#f5f5f3;border-radius:6px;font-size:11px;color:#555;line-height:1.55;">' + escH(e.c.stripeContext) + '</div>'
-      : '';
-    var emailRow = e.c.stripeEmail
-      ? '<span style="color:#888;">Email Stripe</span><span style="font-size:11px;">' + escH(e.c.stripeEmail) + '</span>'
-      : '';
-
-    var tooltipHtml =
-      '<div style="font-size:12px;font-weight:700;color:' + cat.color + ';margin-bottom:8px;">' + cat.icon + ' ' + escH(cat.label) + ' — ' + escH(cat.desc) + '</div>' +
-      '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:11.5px;">' +
-        '<span style="color:#888;">stripe_status</span><code style="background:' + cat.color + '18;color:' + cat.color + ';padding:1px 5px;border-radius:3px;font-size:10.5px;">' + escH(e.c.stripeStatus || '—') + '</code>' +
-        '<span style="color:#888;">last_invoice</span><code style="background:#f0f0ee;padding:1px 5px;border-radius:3px;font-size:10.5px;">' + escH(e.c.lastInvoice || '—') + '</code>' +
-        '<span style="color:#888;">FIEL</span>' + fielStatus +
-        '<span style="color:#888;">First Shipment</span>' + shipStatus +
-        emailRow +
-      '</div>' +
-      ctxNote;
-
-    var tipEncoded = tooltipHtml.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-
-    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;border:1px solid ' + cat.color + '22;background:var(--bg2,#fff);">' +
-      '<div onclick="openClientPanel(\'' + safeId + '\')" style="cursor:pointer;flex:1;min-width:0;overflow:hidden;">' +
-        '<div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escH(e.c.name) + '</div>' +
-        '<div style="font-size:10.5px;color:var(--muted);margin-top:2px;">' + escH(e.id) + ' · ' + escH(e.c.owner || '—') + '</div>' +
-      '</div>' +
-      '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + cat.color + '18;color:' + cat.color + ';font-weight:700;white-space:nowrap;flex-shrink:0;">' + cat.icon + ' ' + escH(cat.label) + '</span>' +
-      '<button onclick="showStripeTooltip(this,\''+ tipEncoded +'\')" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 4px;flex-shrink:0;line-height:1;color:var(--muted);" title="Ver detalle Stripe">ℹ️</button>' +
-    '</div>';
+  // ── Summary strip (counts per non-zero category) ──
+  var catCnts = {};
+  sorted.forEach(function(e) { catCnts[e.cat] = (catCnts[e.cat] || 0) + 1; });
+  var summaryBadges = Object.keys(catCnts).sort(function(a,b){ return (CAT_URG[a]||99)-(CAT_URG[b]||99); }).map(function(k) {
+    var d = STRIPE_CATS[k] || STRIPE_CATS['SIN-MATCH'];
+    return '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + d.color + '15;color:' + d.color + ';font-weight:600;white-space:nowrap;">' + d.icon + ' ' + catCnts[k] + '</span>';
   }).join('');
+  var summaryHtml = '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;padding:8px 2px;border-bottom:1px solid var(--border);">' + summaryBadges + '</div>';
+
+  // ── Accordion items ──
+  var accItems = sorted.map(function(e) {
+    var cat  = STRIPE_CATS[e.cat] || STRIPE_CATS['SIN-MATCH'];
+    var safeId = e.id.replace(/[^a-zA-Z0-9]/g, '_');  // safe for element IDs
+    var rawId  = e.id;                                  // used in onclick string (alphanumeric safe)
+
+    // FIEL card
+    var fielVal, fielBg, fielColor;
+    if (e.c.fiel && e.c.fiel.trim()) {
+      fielVal   = '<span style="font-size:13px;">✅</span> <span style="font-weight:600;color:#205a2b;">' + escH(e.c.fiel) + '</span>';
+      fielBg    = '#EFF7ED';
+      fielColor = '#3a7548';
+    } else {
+      fielVal   = '<span style="color:#9ca3af;">⏳ Sin datos</span>';
+      fielBg    = '#f7f7f5';
+      fielColor = '#888';
+    }
+    var fechaLine = e.hasFIEL
+      ? '<div style="font-size:10px;color:#6b9b5e;margin-top:2px;">' + escH(e.c.fechaFIEL) + '</div>'
+      : '';
+
+    // First Shipment card
+    var shipVal, shipBg, shipColor;
+    if (e.c.firstShipment && e.c.firstShipment.trim()) {
+      shipVal   = '<span style="font-size:13px;">📦</span> <span style="font-weight:600;color:#0C447C;">' + escH(e.c.firstShipment) + '</span>';
+      shipBg    = '#EBF3FC';
+      shipColor = '#1a5c9e';
+    } else if (e.hasFirstShipment) {
+      shipVal   = '<span style="font-size:13px;">📦</span> <span style="font-weight:600;color:#0C447C;">Con ventas</span>';
+      shipBg    = '#EBF3FC';
+      shipColor = '#1a5c9e';
+    } else {
+      shipVal   = '<span style="color:#9ca3af;">⏳ Pendiente</span>';
+      shipBg    = '#f7f7f5';
+      shipColor = '#888';
+    }
+
+    // Stripe status pills
+    var ssPill  = '<div style="display:inline-flex;flex-direction:column;gap:2px;"><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;">stripe_status</span>' +
+                  '<code style="font-size:11px;padding:3px 8px;border-radius:5px;background:' + cat.color + '18;color:' + cat.color + ';font-weight:600;">' + escH(e.c.stripeStatus || '—') + '</code></div>';
+    var invPill = '<div style="display:inline-flex;flex-direction:column;gap:2px;"><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;">last_invoice</span>' +
+                  '<code style="font-size:11px;padding:3px 8px;border-radius:5px;background:var(--bg3,#f5f5f3);color:var(--text);">' + escH(e.c.lastInvoice || '—') + '</code></div>';
+
+    // Email row
+    var emailRow = e.c.stripeEmail
+      ? '<div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;color:var(--muted);"><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.4px;background:var(--bg3);padding:2px 5px;border-radius:3px;">email</span><span>' + escH(e.c.stripeEmail) + '</span></div>'
+      : '';
+
+    // Context note
+    var ctxRow = e.c.stripeContext
+      ? '<div style="margin-top:10px;padding:9px 10px;background:var(--bg3,#f5f5f3);border-radius:7px;font-size:11px;color:var(--muted);line-height:1.6;border-left:2px solid ' + cat.color + '66;">' + escH(e.c.stripeContext) + '</div>'
+      : '';
+
+    return '<div style="border-radius:8px;border:1px solid ' + cat.color + '28;border-left:3px solid ' + cat.color + ';background:var(--bg2,#fff);overflow:hidden;">' +
+      // ── Header (click to expand) ──
+      '<div onclick="toggleStripeAcc(\'' + rawId + '\')" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none;" onmouseenter="this.style.background=\'rgba(0,0,0,0.02)\'" onmouseleave="this.style.background=\'\'">' +
+        '<span style="font-size:9.5px;padding:2px 8px;border-radius:20px;background:' + cat.color + '15;color:' + cat.color + ';font-weight:700;letter-spacing:0.3px;flex-shrink:0;white-space:nowrap;">' + cat.icon + ' ' + escH(cat.label) + '</span>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:12.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escH(e.c.name) + '</div>' +
+          '<div style="font-size:10.5px;color:var(--muted);margin-top:1px;">' + escH(rawId) + ' · ' + escH(e.c.owner || '—') + '</div>' +
+        '</div>' +
+        '<span id="stripe-chev-' + safeId + '" style="font-size:14px;color:var(--muted);transform:rotate(0deg);transition:transform 0.22s;flex-shrink:0;font-style:normal;">›</span>' +
+      '</div>' +
+      // ── Detail panel (hidden by default) ──
+      '<div id="stripe-det-' + safeId + '" style="max-height:0;overflow:hidden;transition:max-height 0.28s ease;">' +
+        '<div style="padding:12px 14px 14px;border-top:1px solid ' + cat.color + '18;">' +
+          // Stripe codes row
+          '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;">' + ssPill + invPill + '</div>' +
+          // FIEL + First Shipment
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">' +
+            '<div style="padding:9px 10px;border-radius:7px;background:' + fielBg + ';">' +
+              '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.4px;color:' + fielColor + ';margin-bottom:4px;">FIEL</div>' +
+              '<div style="font-size:12px;display:flex;align-items:center;gap:4px;">' + fielVal + '</div>' +
+              fechaLine +
+            '</div>' +
+            '<div style="padding:9px 10px;border-radius:7px;background:' + shipBg + ';">' +
+              '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.4px;color:' + shipColor + ';margin-bottom:4px;">First Shipment</div>' +
+              '<div style="font-size:12px;display:flex;align-items:center;gap:4px;">' + shipVal + '</div>' +
+            '</div>' +
+          '</div>' +
+          emailRow +
+          ctxRow +
+          // Ver perfil button
+          '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">' +
+            '<button onclick="openClientPanel(\'' + rawId + '\')" style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg2,#fff);cursor:pointer;color:var(--text);font-weight:500;transition:background 0.15s;" onmouseenter="this.style.background=\'var(--bg3,#f5f5f3)\'" onmouseleave="this.style.background=\'var(--bg2,#fff)\'">Ver perfil completo →</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+
+  listEl.innerHTML = summaryHtml + accItems.join('');
 }
 
-// ── Stripe tooltip (floating, position:fixed near the ℹ️ button) ─────────────
-function showStripeTooltip(btn, html) {
-  var existing = document.getElementById('stripeTooltipFloat');
-  if (existing) { if (existing._srcBtn === btn) { existing.remove(); return; } existing.remove(); }
-  var tip = document.createElement('div');
-  tip.id = 'stripeTooltipFloat';
-  tip._srcBtn = btn;
-  tip.style.cssText = 'position:fixed;z-index:9999;width:320px;padding:13px 15px;background:var(--bg,#fff);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.14);font-size:12px;line-height:1.65;color:var(--text);';
-  tip.innerHTML = html;
-  document.body.appendChild(tip);
-  // Position: prefer right of button, flip left if off-screen
-  var rect = btn.getBoundingClientRect();
-  var tw = 320;
-  var left = rect.right + 10;
-  if (left + tw > window.innerWidth - 8) left = rect.left - tw - 10;
-  if (left < 8) left = 8;
-  var top = Math.min(rect.top, window.innerHeight - tip.offsetHeight - 12);
-  if (top < 8) top = 8;
-  tip.style.left = left + 'px';
-  tip.style.top  = top  + 'px';
-  // Dismiss on outside click
-  setTimeout(function() {
-    document.addEventListener('click', function cls(ev) {
-      if (!tip.contains(ev.target) && ev.target !== btn) { tip.remove(); document.removeEventListener('click', cls); }
-    });
-  }, 50);
+// ── Stripe accordion toggle ───────────────────────────────────────────────────
+function toggleStripeAcc(rawId) {
+  var safeId = rawId.replace(/[^a-zA-Z0-9]/g, '_');
+  var det    = document.getElementById('stripe-det-' + safeId);
+  var chev   = document.getElementById('stripe-chev-' + safeId);
+  if (!det) return;
+  var isOpen = det.style.maxHeight && det.style.maxHeight !== '0px';
+  // Collapse all open panels
+  var allDets  = document.querySelectorAll('[id^="stripe-det-"]');
+  var allChevs = document.querySelectorAll('[id^="stripe-chev-"]');
+  allDets.forEach(function(el)  { el.style.maxHeight = '0px'; });
+  allChevs.forEach(function(el) { el.style.transform = 'rotate(0deg)'; });
+  // Open clicked one if it was closed
+  if (!isOpen) {
+    det.style.maxHeight = (det.scrollHeight + 20) + 'px';
+    if (chev) chev.style.transform = 'rotate(90deg)';
+  }
 }
 
 // ── Accesos Seller Central ────────────────────────────────────────────────────
