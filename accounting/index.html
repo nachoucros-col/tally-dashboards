@@ -3091,8 +3091,13 @@ async function loadClientDB() {
     var suspended = String(c[6] && c[6].v != null ? c[6].v : '').toUpperCase() === 'TRUE';
     var declared  = anualesDeclaradoSet.has(id);
 
+    var rawName = c[2] && c[2].v != null ? String(c[2].v).trim() : '';
+    // 'Stealth Mode' is a placeholder in Clients_Load for clients whose real name
+    // hasn't been added to the sheet yet — fall back to Company_Id so each is identifiable.
+    var displayName = (rawName && rawName !== 'Stealth Mode') ? rawName : id;
+
     newDB[id] = {
-      name:            c[2] && c[2].v != null ? String(c[2].v) : id,
+      name:            displayName,
       rfc:             c[1] && c[1].v != null ? String(c[1].v) : '',
       owner:           owner,
       email:           '',
