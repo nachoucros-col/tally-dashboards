@@ -2702,43 +2702,72 @@ async function loadDeclaracionesData() {
   const heatCls = (pct) => parseFloat(pct) >= 80 ? 'heat-green' : parseFloat(pct) >= 50 ? 'heat-yellow' : 'heat-red';
   const fillCls = (pct) => parseFloat(pct) >= 80 ? 'fill-green' : parseFloat(pct) >= 50 ? 'fill-yellow' : 'fill-red';
 
-  // ── 6. KPI Cards: previous period (left) + active period (right) ──
-  // Denominator = elegiblesDecl (Clients_load: sin suspensión + Fecha_FIEL válida)
+  // ── 6. KPI Cards — calendar-based (cutoff: día 5 de cada mes) ──
+  // Antes del día 5: mostrar M-3 (izq) y M-2 (der)
+  // Desde el día 5: mostrar M-2 (izq) y M-1 (der)
   const denom = elegiblesDecl > 0 ? elegiblesDecl : 1;
-  if (prevPK) {
-    const [prevY, prevMN] = prevPK.split('-');
-    const prevMesFull = monthFull[parseInt(prevMN,10)];
-    const prevLabel   = prevMesFull + ' ' + prevY;
-    const pm = monthlyAgg[prevPK];
-    const ppct = pctOf(pm.declarado, denom);
-    set('kpi-prev-label', 'Declaraciones ' + prevLabel);
-    set('kpi-prev-pct',   ppct + '%');
-    setCls('kpi-prev-pct', 'kpi-value ' + heatCls(ppct));
-    set('kpi-prev-sub',   pm.declarado + '/' + denom + ' declarados · ' + pm.enProceso + ' en proceso');
-    set('kpi-prev-trend', '↑ Mes más avanzado del ciclo');
-  }
-  const am = monthlyAgg[activePK];
-  const apct = pctOf(am.declarado, denom);
-  set('kpi-act-label', 'Declaraciones ' + activeLabel);
-  set('kpi-act-pct',   apct + '%');
-  setCls('kpi-act-pct', 'kpi-value ' + heatCls(apct));
-  set('kpi-act-sub',   am.declarado + '/' + denom + ' declarados · ' + am.sinIniciar + ' sin iniciar');
-  const pendingTotal = am.sinIniciar + am.enProceso + am.bloqueado;
-  if (parseFloat(apct) < 60) {
-    set('kpi-act-trend', '⚠ Deadline crítico activo');
-    const el = document.getElementById('kpi-act-trend'); if(el) el.className='kpi-trend trend-warn';
-  } else {
-    set('kpi-act-trend', '→ En progreso');
-  }
+  {
+    const _now    = new Date();
+    const _rOff   = _now.getDate() >= 5 ? 1 : 2;    // card derecha: M-1 o M-2
+    const _lOff   = _rOff + 1;                        // card izquierda: un mes antes
+    const _mkPK   = off => {
+      const d = new Date(_now.getFullYear(), _now.getMonth() - off, 1);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    };
+    const _label  = pk => { const [y,mn] = pk.split('-'); return monthFull[parseInt(mn,10)] + ' ' + y; };
 
-  // ── 7. Alert banner: pending count ──
-  set('alertPendingCount', pendingTotal);
-  // Dynamic week info
-  const now = new Date();
-  const weekNum = Math.ceil((((now - new Date(now.getFullYear(),0,1))/86400000)+1)/7);
-  const days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  const months2 = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  set('alertWeekInfo', 'semana ' + weekNum + ' (hoy ' + days[now.getDay()] + ' ' + now.getDate() + ' ' + months2[now.getMonth()] + ' ' + now.getFullYear() + ')');
+    const leftPK  = _mkPK(_lOff);   // período más antiguo (izquierda)
+    const rightPK = _mkPK(_rOff);   // período más reciente (derecha)
+
+    // ── Card izquierda (período anterior) ──
+    set('kpi-prev-label', 'Declaraciones ' + _label(leftPK));
+    const lm = monthlyAgg[leftPK];
+    if (lm) {
+      const lpct = pctOf(lm.declarado, denom);
+      set('kpi-prev-pct',   lpct + '%');
+      setCls('kpi-prev-pct', 'kpi-value ' + heatCls(lpct));
+      set('kpi-prev-sub',   lm.declarado + '/' + denom + ' declarados · ' + lm.enProceso + ' en proceso');
+      const lPend = lm.sinIniciar + lm.enProceso + lm.bloqueado;
+      set('kpi-prev-trend', lPend === 0 ? '✓ Período cerrado' : '↑ Mes más avanzado del ciclo');
+    } else {
+      set('kpi-prev-pct', '—');
+      set('kpi-prev-sub', 'Sin datos para este período');
+      set('kpi-prev-trend', '');
+    }
+
+    // ── Card derecha (período activo) ──
+    set('kpi-act-label', 'Declaraciones ' + _label(rightPK));
+    const rm = monthlyAgg[rightPK];
+    const pendingTotal = rm ? (rm.sinIniciar + rm.enProceso + rm.bloqueado) : 0;
+    if (rm) {
+      const rpct = pctOf(rm.declarado, denom);
+      set('kpi-act-pct',   rpct + '%');
+      setCls('kpi-act-pct', 'kpi-value ' + heatCls(rpct));
+      set('kpi-act-sub',   rm.declarado + '/' + denom + ' declarados · ' + rm.sinIniciar + ' sin iniciar');
+      if (parseFloat(rpct) < 60) {
+        set('kpi-act-trend', '⚠ Deadline crítico activo');
+        const el = document.getElementById('kpi-act-trend'); if (el) el.className = 'kpi-trend trend-warn';
+      } else if (pendingTotal === 0) {
+        set('kpi-act-trend', '✓ Período cerrado');
+      } else {
+        set('kpi-act-trend', '→ En progreso');
+      }
+    } else {
+      set('kpi-act-pct', '—');
+      set('kpi-act-sub', 'Sin datos para este período');
+      set('kpi-act-trend', '');
+    }
+
+    // ── 7. Alert banner: pendientes del período más reciente ──
+    set('alertPendingCount', pendingTotal);
+
+    // Dynamic week info
+    const now = new Date();
+    const weekNum = Math.ceil((((now - new Date(now.getFullYear(),0,1))/86400000)+1)/7);
+    const days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const months2 = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    set('alertWeekInfo', 'semana ' + weekNum + ' (hoy ' + days[now.getDay()] + ' ' + now.getDate() + ' ' + months2[now.getMonth()] + ' ' + now.getFullYear() + ')');
+  } // end calendar KPI block
 
   // ── 8. Declaraciones tab: month cards ──
   const fillCard = (sfx, pk) => {
