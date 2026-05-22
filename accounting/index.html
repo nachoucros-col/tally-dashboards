@@ -739,6 +739,12 @@ function gateSubmit() {
         <div class="kpi-sub" id="kpi-anuales-sub">Cargando…</div>
         <div class="kpi-trend trend-warn" id="kpi-anuales-trend">cargando…</div>
       </div>
+      <div class="kpi-card" id="kpi-opi-card" style="--accent-color: #06b6d4">
+        <div class="kpi-label">Opinión de Cumplimiento</div>
+        <div class="kpi-value heat-green" id="kpi-opi-pct">—</div>
+        <div class="kpi-sub" id="kpi-opi-sub">Cargando…</div>
+        <div class="kpi-trend" id="kpi-opi-trend">Positivos / elegibles FIEL</div>
+      </div>
 
     </div>
 
@@ -1563,6 +1569,8 @@ var prevDeclPeriod   = '';   // e.g. "Febrero 2026"
 var activeDeclPK     = '';   // e.g. "2026-03" — period key for clientDeclMap lookups
 var clientDeclMap    = {};   // { companyId: { 'YYYY-MM': estado } } — per-client monthly states
 var elegiblesDecl    = 0;    // count of clients with FIEL active (excluding suspended/inactive)
+var clientOpiMap     = {};   // { companyId: 'Positivo'|'Negativo' } — latest non-empty OpiCumplimiento
+var clientOpiMapPK   = {};   // { companyId: 'YYYY-MM' } — period key of that value
 
 // Push live monthly data into both Declaraciones charts (overview + decl tab)
 function updateDeclCharts() {
@@ -2620,6 +2628,11 @@ async function loadDeclaracionesData() {
   if (!data || !data.table) return;
   const rows = data.table.rows || [];
   // Columns: [0]PeriodID [1]Company_id [7]EstadoCliente [13]MesPeriodo [14]AñoPeríodo
+  // OpiCumplimiento index resolved dynamically from cols metadata
+  var opiColIdx = -1;
+  (data.table.cols || []).forEach(function(col, i) {
+    if ((col.label || '').trim() === 'OpiCumplimiento') opiColIdx = i;
+  });
 
   const mesToNum = { 'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
                      'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12 };
@@ -2649,6 +2662,15 @@ async function loadDeclaracionesData() {
     // Build per-client period map (used by getClientDeclarations)
     if (!clientDeclMap[companyId]) clientDeclMap[companyId] = {};
     clientDeclMap[companyId][pk] = estado;
+
+    // Build OpiCumplimiento map: keep value from the latest period that has one
+    if (opiColIdx >= 0) {
+      const opiVal = (c[opiColIdx] && c[opiColIdx].v != null) ? String(c[opiColIdx].v).trim() : '';
+      if (opiVal && (!clientOpiMapPK[companyId] || pk > clientOpiMapPK[companyId])) {
+        clientOpiMap[companyId]   = opiVal;
+        clientOpiMapPK[companyId] = pk;
+      }
+    }
   });
 
   const sortedKeys = Object.keys(monthlyAgg).sort();
@@ -2866,6 +2888,45 @@ async function loadDeclaracionesData() {
   if (document.getElementById('section-equipo')?.style.display !== 'none') {
     initEquipoCharts();
   }
+
+  // Refresh Opi KPI card now that clientOpiMap is populated
+  renderOpiKPI();
+}
+
+// ── Opinión de Cumplimiento KPI ──────────────────────────────────────────────
+// Denominator: clients in CLIENT_DB where fechaFIEL is non-empty OR citaFiel === 'Exitosa'
+// Numerator:   of those, where clientOpiMap[id] === 'Positivo'
+function renderOpiKPI() {
+  var card = document.getElementById('kpi-opi-card');
+  if (!card) return; // KPI card not in DOM yet (called too early)
+
+  var total      = 0;
+  var positivos  = 0;
+  var negativos  = 0;
+  var vacios     = 0;
+
+  Object.keys(CLIENT_DB).forEach(function(id) {
+    var cl = CLIENT_DB[id];
+    // Elegible = tiene FIEL activa o cita exitosa
+    var esFielActivo = (cl.fechaFIEL && cl.fechaFIEL !== '');
+    var esCitaExitosa = (cl.citaFiel === 'Exitosa');
+    if (!esFielActivo && !esCitaExitosa) return;
+    total++;
+    var opi = clientOpiMap[id] || '';
+    if (opi === 'Positivo')      positivos++;
+    else if (opi === 'Negativo') negativos++;
+    else                         vacios++;
+  });
+
+  var pct = total > 0 ? (positivos / total * 100).toFixed(1) : '0.0';
+  var heatCls = parseFloat(pct) >= 80 ? 'heat-green' : parseFloat(pct) >= 50 ? 'heat-yellow' : 'heat-red';
+
+  var el = document.getElementById('kpi-opi-pct');
+  if (el) { el.textContent = pct + '%'; el.className = 'kpi-value ' + heatCls; }
+  var sub = document.getElementById('kpi-opi-sub');
+  if (sub) sub.textContent = positivos + ' positivos · ' + negativos + ' negativos · ' + vacios + ' sin dato de ' + total;
+  var trend = document.getElementById('kpi-opi-trend');
+  if (trend) trend.textContent = total > 0 ? 'Base elegible: ' + total + ' clientes' : 'Sin datos';
 }
 
 // ============================================================
@@ -3080,6 +3141,12 @@ async function loadClientDB() {
   }
 
   // Build CLIENT_DB entries from Clients_Load
+  // Dynamic column index lookup for Cita FIEL (position varies by sheet version)
+  var citaFielColIdx = -1;
+  (clData.table.cols || []).forEach(function(col, i) {
+    if ((col.label || '').trim() === 'Cita FIEL') citaFielColIdx = i;
+  });
+
   var newDB = {};
   (clData.table.rows || []).forEach(function(row) {
     var c = row.c || [];
@@ -3111,6 +3178,7 @@ async function loadClientDB() {
       declReason:      suspended ? 'suspended' : '',
       tags:            [],
       fechaFIEL:       c[9]  && c[9].v  != null ? String(c[9].v).trim()  : '',
+      citaFiel:        citaFielColIdx >= 0 && c[citaFielColIdx] && c[citaFielColIdx].v != null ? String(c[citaFielColIdx].v).trim() : '',
       fielVencimiento: c[5]  && c[5].v  != null ? String(c[5].v).trim()  : '',
       stripeStatus:    c[10] && c[10].v != null ? String(c[10].v).trim() : '',
       lastInvoice:     c[11] && c[11].v != null ? String(c[11].v).trim() : '',
@@ -3130,6 +3198,9 @@ async function loadClientDB() {
 
   // Re-render Stripe overview panels
   renderStripeOverview();
+
+  // Refresh Opi KPI card now that CLIENT_DB (with citaFiel/fechaFIEL) is ready
+  renderOpiKPI();
 }
 
 // LEGACY — hardcoded CLIENT_DB entries, no longer in use.
@@ -3951,6 +4022,26 @@ function renderClientProfile(id) {
     bancosHtml = '<div class="cli-section"><div class="cli-section-title">🏦 Infraestructura Bancaria</div><div style="display:flex;flex-direction:column;gap:6px;">' + bancItems.join('') + '</div></div>';
   }
 
+  // ── Opinión de Cumplimiento (SAT) ──
+  var opiVal = clientOpiMap[id] || '';
+  var opiDisplay, opiColor, opiIcon;
+  if (opiVal === 'Positivo') {
+    opiDisplay = 'Positivo'; opiColor = '#22c55e'; opiIcon = '✅';
+  } else if (opiVal === 'Negativo') {
+    opiDisplay = 'Negativo'; opiColor = '#ef4444'; opiIcon = '❌';
+  } else {
+    opiDisplay = '⚠️ Vacío'; opiColor = '#f59e0b'; opiIcon = '⚠️';
+  }
+  var opiPeriodo = clientOpiMapPK[id] ? ' <span style="font-size:11px;color:var(--muted);margin-left:6px;">' + clientOpiMapPK[id] + '</span>' : '';
+  var opiHtml = '<div class="cli-section">' +
+    '<div class="cli-section-title">📋 Opinión de Cumplimiento SAT</div>' +
+    '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:8px;border-left:3px solid ' + opiColor + ';">' +
+      '<span style="font-size:18px;">' + opiIcon + '</span>' +
+      '<span style="font-size:14px;font-weight:700;color:' + opiColor + ';">' + opiDisplay + '</span>' +
+      opiPeriodo +
+    '</div>' +
+  '</div>';
+
   // ── Stripe status ──
   var stripeHtml = '';
   if (c.stripeStatus || c.lastInvoice) {
@@ -4035,6 +4126,9 @@ function renderClientProfile(id) {
 
     // ── 4. ACCESO SELLER CENTRAL (risk card) ──
     riskHtml +
+
+    // ── 4.2 OPINIÓN DE CUMPLIMIENTO SAT ──
+    opiHtml +
 
     // ── 4.5 INFRAESTRUCTURA BANCARIA ──
     bancosHtml +
