@@ -2630,9 +2630,16 @@ async function loadDeclaracionesData() {
   // Columns: [0]PeriodID [1]Company_id [7]EstadoCliente [13]MesPeriodo [14]AñoPeríodo
   // OpiCumplimiento index resolved dynamically from cols metadata
   var opiColIdx = -1;
-  (data.table.cols || []).forEach(function(col, i) {
-    if ((col.label || '').trim() === 'OpiCumplimiento') opiColIdx = i;
+  const _cols = data.table.cols || [];
+  // Log columns so we can verify GViz label for OpiCumplimiento
+  console.log('[Tally] Clientes_por_periodo cols:', _cols.map(function(col,i){ return i+':'+col.label+'(id='+col.id+')'; }));
+  _cols.forEach(function(col, i) {
+    // Normalize: remove spaces, lowercase — catches "OpiCumplimiento", "Opi Cumplimiento", "opicumplimiento", etc.
+    var lbl = (col.label || '').replace(/\s/g,'').toLowerCase();
+    var cid = (col.id   || '').replace(/\s/g,'').toLowerCase();
+    if (lbl === 'opicumplimiento' || cid === 'opicumplimiento') opiColIdx = i;
   });
+  console.log('[Tally] opiColIdx =', opiColIdx, '| total cols:', _cols.length);
 
   const mesToNum = { 'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
                      'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12 };
