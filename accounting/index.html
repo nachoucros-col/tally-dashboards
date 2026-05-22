@@ -2224,7 +2224,7 @@ async function refreshData() {
       loadWeeklyPlanData()     // recarga WeeklyPlan → Dificultades Activas + Prioridad Hoy
     ]);
     // Load declarations + anuales after clientOwnerMap is ready (depends on loadClientsLoad)
-    await Promise.all([loadDeclaracionesData(), loadAnualesData()]);
+    await Promise.all([loadDeclaracionesData(), loadAnualesData(), loadOpiMap()]);
     await loadClientDB(); // rebuild CLIENT_DB with fresh anualesDeclaradoSet
     // Re-render equipo charts if that section is currently visible
     if (document.getElementById('section-equipo')?.style.display !== 'none') {
@@ -2628,18 +2628,7 @@ async function loadDeclaracionesData() {
   if (!data || !data.table) return;
   const rows = data.table.rows || [];
   // Columns: [0]PeriodID [1]Company_id [7]EstadoCliente [13]MesPeriodo [14]AñoPeríodo
-  // OpiCumplimiento index resolved dynamically from cols metadata
-  var opiColIdx = -1;
-  const _cols = data.table.cols || [];
-  // Log columns so we can verify GViz label for OpiCumplimiento
-  console.log('[Tally] Clientes_por_periodo cols:', _cols.map(function(col,i){ return i+':'+col.label+'(id='+col.id+')'; }));
-  _cols.forEach(function(col, i) {
-    // Normalize: remove spaces, lowercase — catches "OpiCumplimiento", "Opi Cumplimiento", "opicumplimiento", etc.
-    var lbl = (col.label || '').replace(/\s/g,'').toLowerCase();
-    var cid = (col.id   || '').replace(/\s/g,'').toLowerCase();
-    if (lbl === 'opicumplimiento' || cid === 'opicumplimiento') opiColIdx = i;
-  });
-  console.log('[Tally] opiColIdx =', opiColIdx, '| total cols:', _cols.length);
+  // NOTE: OpiCumplimiento (col S) is NOT returned by the GViz proxy — loaded separately via loadOpiMap()
 
   const mesToNum = { 'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
                      'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12 };
@@ -2669,15 +2658,6 @@ async function loadDeclaracionesData() {
     // Build per-client period map (used by getClientDeclarations)
     if (!clientDeclMap[companyId]) clientDeclMap[companyId] = {};
     clientDeclMap[companyId][pk] = estado;
-
-    // Build OpiCumplimiento map: keep value from the latest period that has one
-    if (opiColIdx >= 0) {
-      const opiVal = (c[opiColIdx] && c[opiColIdx].v != null) ? String(c[opiColIdx].v).trim() : '';
-      if (opiVal && (!clientOpiMapPK[companyId] || pk > clientOpiMapPK[companyId])) {
-        clientOpiMap[companyId]   = opiVal;
-        clientOpiMapPK[companyId] = pk;
-      }
-    }
   });
 
   const sortedKeys = Object.keys(monthlyAgg).sort();
@@ -2895,8 +2875,33 @@ async function loadDeclaracionesData() {
   if (document.getElementById('section-equipo')?.style.display !== 'none') {
     initEquipoCharts();
   }
+}
 
-  // Refresh Opi KPI card now that clientOpiMap is populated
+// ── Opinión de Cumplimiento — carga desde pestaña Opi_Map ───────────────────
+// Opi_Map es una pestaña con fórmula QUERY que extrae PeriodID, Company_id, OpiCumplimiento
+// de Clientes_por_periodo (col S), que el GViz proxy general no devuelve.
+// Columnas GViz: [0]PeriodID [1]Company_id [2]OpiCumplimiento
+async function loadOpiMap() {
+  const data = await fetchSheet('Opi_Map');
+  if (!data || !data.table) return;
+
+  clientOpiMap   = {};
+  clientOpiMapPK = {};
+
+  (data.table.rows || []).forEach(function(row) {
+    const c = row.c || [];
+    const pk        = c[0] && c[0].v != null ? String(c[0].v).trim() : ''; // PeriodID "YYYY-MM_COMPANYID"
+    const companyId = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
+    const opiVal    = c[2] && c[2].v != null ? String(c[2].v).trim() : '';
+    if (!companyId || !opiVal) return;
+
+    // PeriodID format: "YYYY-MM_COMPANYID" — lexicographic sort finds the latest
+    if (!clientOpiMapPK[companyId] || pk > clientOpiMapPK[companyId]) {
+      clientOpiMap[companyId]   = opiVal;
+      clientOpiMapPK[companyId] = pk;
+    }
+  });
+
   renderOpiKPI();
 }
 
@@ -4559,6 +4564,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }); // pre-load timeline + overview sales chart
   loadClientsLoad().then(() => Promise.all([
     loadDeclaracionesData(),
+    loadOpiMap(),                                // OpiCumplimiento desde pestaña Opi_Map
     loadAnualesData().then(() => loadClientDB()) // CLIENT_DB built after anualesDeclaradoSet is ready
   ])); // clientOwnerMap must be ready
   loadAccesosData();       // pre-load Accesos_SellerCentral → KPIs + tablas + donut
