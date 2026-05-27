@@ -673,6 +673,9 @@ function gateSubmit() {
       <div class="sidebar-logo-sub">Contabilidad</div>
     </div>
   </div>
+  <div class="sidebar-item" data-tab="ventas" onclick="showTab('ventas')">
+    <span class="sidebar-icon">📊</span><span>Ventas</span>
+  </div>
   <div class="sidebar-item active" data-tab="overview" onclick="showTab('overview')">
     <span class="sidebar-icon">🏠</span><span>Overview</span>
   </div>
@@ -798,7 +801,43 @@ function gateSubmit() {
       </div>
     </div>
 
-    <div class="card">
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: VENTAS -->
+  <!-- ============================================================ -->
+  <div class="section" id="section-ventas">
+    <div class="section-header" style="margin-bottom:10px;">
+      <div>
+        <div class="section-title">📊 Ventas — Análisis de Portafolio</div>
+        <div class="section-sub">Ventas acumuladas por período · Top clientes · Variaciones de tendencia</div>
+      </div>
+    </div>
+
+    <!-- 1. KPI CARDS — últimos 3 períodos -->
+    <div class="kpi-grid" id="ventas-kpi-grid" style="margin-bottom:20px;">
+      <div class="kpi-card" style="--accent-color:#7c5cfc">
+        <div class="kpi-label" id="vkpi-m2-label">M-2</div>
+        <div class="kpi-value" id="vkpi-m2-val" style="font-size:20px;">—</div>
+        <div class="kpi-sub" id="vkpi-m2-sub">Ventas totales</div>
+        <div class="kpi-trend" id="vkpi-m2-trend">Período M-2</div>
+      </div>
+      <div class="kpi-card" style="--accent-color:#4f7fff">
+        <div class="kpi-label" id="vkpi-m1-label">M-1</div>
+        <div class="kpi-value" id="vkpi-m1-val" style="font-size:20px;">—</div>
+        <div class="kpi-sub" id="vkpi-m1-sub">Ventas totales</div>
+        <div class="kpi-trend" id="vkpi-m1-trend">Período M-1</div>
+      </div>
+      <div class="kpi-card" style="--accent-color:#22c55e">
+        <div class="kpi-label" id="vkpi-m0-label">Mes actual</div>
+        <div class="kpi-value" id="vkpi-m0-val" style="font-size:20px;">—</div>
+        <div class="kpi-sub" id="vkpi-m0-sub">Ventas totales</div>
+        <div class="kpi-trend" id="vkpi-m0-trend">En curso</div>
+      </div>
+    </div>
+
+    <!-- 2. VENTAS TOTALES POR MES -->
+    <div class="card" style="margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
         <div class="card-title" style="margin-bottom:0;">📈 Ventas Totales por Mes <span class="badge">Clientes AZ · Últimos 12 meses</span></div>
         <div style="text-align:right;">
@@ -814,8 +853,8 @@ function gateSubmit() {
       </div>
     </div>
 
-    <!-- TOP 10 CLIENTES POR VENTAS -->
-    <div class="card" id="top10ClientesCard">
+    <!-- 3. TOP 10 CLIENTES POR VENTAS -->
+    <div class="card" id="top10ClientesCard" style="margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
         <div class="card-title" style="margin-bottom:0;">🏆 Top 10 Clientes por Ventas <span class="badge">Clientes AZ · Acumulado histórico</span></div>
         <div style="font-size:11px;color:var(--muted);" id="top10PeriodNote">Cargando…</div>
@@ -837,6 +876,23 @@ function gateSubmit() {
             <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Cargando datos…</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- 4. CLIENTES QUE HAN BAJADO SUS VENTAS -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:0;">📉 Clientes que han bajado sus ventas <span class="badge" id="decliningBadge">vs últimos 3 meses</span></div>
+        <div style="font-size:11px;color:var(--muted);" id="decliningNote">Cargando…</div>
+      </div>
+      <!-- Segment legend -->
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--bg3);border-radius:8px;">
+        <span style="font-size:12px;">🟢 <b>Baja pequeña</b> <span style="color:var(--muted);">&lt; 30%</span></span>
+        <span style="font-size:12px;">🟡 <b>Baja notoria</b> <span style="color:var(--muted);">30%–60%</span></span>
+        <span style="font-size:12px;">🔴 <b>Crítico</b> <span style="color:var(--muted);">&gt; 60%</span></span>
+      </div>
+      <div id="decliningClientsBody">
+        <div style="text-align:center;padding:24px;color:var(--muted);">Cargando datos…</div>
       </div>
     </div>
   </div>
@@ -2226,7 +2282,10 @@ async function refreshData() {
     // Load declarations + anuales after clientOwnerMap is ready (depends on loadClientsLoad)
     await Promise.all([loadDeclaracionesData(), loadAnualesData(), loadOpiMap()]);
     await loadClientDB(); // rebuild CLIENT_DB with fresh anualesDeclaradoSet
-    // Re-render equipo charts if that section is currently visible
+    // Re-render section-specific content if visible
+    if (document.getElementById('section-ventas')?.classList.contains('active')) {
+      renderVentasSection();
+    }
     if (document.getElementById('section-equipo')?.style.display !== 'none') {
       initEquipoCharts();
     }
@@ -2360,7 +2419,14 @@ function showTab(id) {
   var el = document.querySelector('.sidebar-item[data-tab="' + id + '"]');
   if (el) el.classList.add('active');
   // Redraw charts when tab becomes visible
-  if (id === 'overview') { initOverviewCharts(); if (Object.keys(monthlySalesData).length) initOverviewSalesChart(); }
+  if (id === 'overview') { initOverviewCharts(); }
+  if (id === 'ventas') {
+    if (Object.keys(timelineRawData).length === 0) {
+      loadTimelineData().then(renderVentasSection);
+    } else {
+      renderVentasSection();
+    }
+  }
   if (id === 'clientes') {
     initClientesCharts();
     if (Object.keys(timelineRawData).length === 0) loadTimelineData();
@@ -4284,6 +4350,159 @@ function initOverviewSalesChart() {
   });
   // Also refresh top 10 table whenever chart data is ready
   buildTop10ClientsTable();
+}
+
+// ── Ventas tab: orchestrator ──────────────────────────────────────────────────
+function renderVentasSection() {
+  initOverviewSalesChart();
+  buildTop10ClientsTable();
+  renderVentasKPIs();
+  buildDecliningClients();
+}
+
+// ── Ventas KPI cards — totales por período (M-2, M-1, M) ─────────────────────
+function renderVentasKPIs() {
+  const fmt   = v => new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(v);
+  const fmtK  = v => { if (!v) return '$0'; return v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : v >= 1000 ? '$' + Math.round(v/1000) + 'k' : fmt(v); };
+  const mn    = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const mfull = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const now   = new Date();
+  const mkPK  = off => {
+    const d = new Date(now.getFullYear(), now.getMonth() - off, 1);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  };
+  const labelOf = pk => { const [y,m] = pk.split('-'); return mfull[parseInt(m,10)-1] + ' ' + y; };
+  const trendOf = (pk0, pk1) => {
+    const v0 = monthlySalesData[pk0] || 0;
+    const v1 = monthlySalesData[pk1] || 0;
+    if (!v1) return '';
+    const pct = ((v0 - v1) / v1 * 100).toFixed(1);
+    return (v0 >= v1 ? '↑ +' : '↓ ') + pct + '% vs ' + mn[parseInt(pk1.split('-')[1],10)-1];
+  };
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  [0, 1, 2].forEach(function(off) {
+    const pk   = mkPK(off);
+    const sfx  = ['m0','m1','m2'][off];
+    const v    = monthlySalesData[pk] || 0;
+    const hcls = v > 0 ? (off === 0 ? 'heat-yellow' : 'heat-green') : '';
+    const el   = document.getElementById('vkpi-' + sfx + '-val');
+    if (el) { el.textContent = fmtK(v); el.className = 'kpi-value ' + hcls; }
+    set('vkpi-' + sfx + '-label', labelOf(pk));
+    set('vkpi-' + sfx + '-sub',   v > 0 ? fmt(v) + ' total' : 'Sin datos');
+    if (off > 0) set('vkpi-' + sfx + '-trend', trendOf(pk, mkPK(off+1)));
+    else set('vkpi-m0-trend', 'Período en curso');
+  });
+}
+
+// ── 📉 Clientes que han bajado sus ventas ────────────────────────────────────
+function buildDecliningClients() {
+  const el = document.getElementById('decliningClientsBody');
+  const noteEl = document.getElementById('decliningNote');
+  if (!el) return;
+
+  const fmt = v => new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(v);
+  const mn  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const now = new Date();
+  const mkPK = off => {
+    const d = new Date(now.getFullYear(), now.getMonth() - off, 1);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  };
+  const pk0 = mkPK(0);  // mes actual
+  const pk1 = mkPK(1);  // M-1
+  const pk2 = mkPK(2);  // M-2 (línea base)
+  const pk3 = mkPK(3);  // M-3 (línea base alt si M-2 vacío)
+
+  if (!Object.keys(timelineRawData).length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);">Sin datos disponibles</div>';
+    return;
+  }
+
+  const results = [];
+  Object.keys(timelineRawData).forEach(function(cid) {
+    const entries = timelineRawData[cid];
+    const getSales = pk => { const e = entries.find(e => e.periodKey === pk); return e ? e.sales : 0; };
+
+    const s0 = getSales(pk0);
+    const s1 = getSales(pk1);
+    const s2 = getSales(pk2);
+    const s3 = getSales(pk3);
+
+    // Línea base: promedio de M-2 y M-3 (o solo el que tenga dato), debe ser > 0
+    const baseVals = [s2, s3].filter(v => v > 0);
+    if (!baseVals.length) return; // cliente sin historial suficiente
+
+    const base    = baseVals.reduce((a,b) => a+b, 0) / baseVals.length;
+    // Ventas recientes: tomar M-1 o M (el que tenga dato; si no hay M, usar M-1)
+    const recent  = s0 > 0 ? s0 : s1;
+    if (!recent || recent >= base) return; // no está bajando
+
+    const pct = (recent - base) / base * 100; // negativo = caída
+
+    const name = (CLIENT_DB[cid] && CLIENT_DB[cid].name) ? CLIENT_DB[cid].name : cid;
+    results.push({ cid, name, base, recent, pct, s0, s1, s2, s3,
+      recentPK: s0 > 0 ? pk0 : pk1 });
+  });
+
+  // Sort: más crítico primero
+  results.sort((a, b) => a.pct - b.pct);
+
+  const critical = results.filter(r => r.pct <= -60);
+  const notable  = results.filter(r => r.pct > -60 && r.pct <= -30);
+  const small    = results.filter(r => r.pct > -30);
+
+  if (noteEl) noteEl.textContent = results.length + ' clientes con tendencia a la baja · Base: ' +
+    mn[parseInt(pk2.split('-')[1],10)-1] + '/' + mn[parseInt(pk3.split('-')[1],10)-1] + ' → actual';
+
+  const renderRow = r => {
+    const pctStr = r.pct.toFixed(1) + '%';
+    const pctCol = r.pct <= -60 ? '#ef4444' : r.pct <= -30 ? '#f59e0b' : '#22c55e';
+    const barW   = Math.min(Math.abs(r.pct), 100);
+    return '<tr style="border-bottom:1px solid var(--border);transition:background 0.15s;" ' +
+      'onmouseover="this.style.background=\'var(--hover)\'" onmouseout="this.style.background=\'\'">' +
+      '<td style="padding:8px 10px;max-width:200px;">' +
+        '<div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + r.name + '">' + r.name + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);">' + r.cid + '</div>' +
+      '</td>' +
+      '<td style="padding:8px 10px;text-align:right;color:var(--muted);white-space:nowrap;">' + fmt(r.base) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;">' + fmt(r.recent) + '</td>' +
+      '<td style="padding:8px 10px;min-width:120px;">' +
+        '<div style="display:flex;align-items:center;gap:6px;">' +
+          '<div style="flex:1;height:5px;border-radius:3px;background:var(--border);">' +
+            '<div style="height:5px;border-radius:3px;background:' + pctCol + ';width:' + barW + '%;transition:width 0.4s;"></div>' +
+          '</div>' +
+          '<span style="font-weight:700;color:' + pctCol + ';white-space:nowrap;font-size:12px;">' + pctStr + '</span>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  };
+
+  const renderGroup = (emoji, label, color, items) => {
+    if (!items.length) return '';
+    return '<div style="margin-bottom:16px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--bg3);margin-bottom:8px;">' +
+        '<span style="font-size:16px;">' + emoji + '</span>' +
+        '<span style="font-weight:700;color:' + color + ';">' + label + '</span>' +
+        '<span style="margin-left:auto;font-size:12px;color:var(--muted);">' + items.length + ' clientes</span>' +
+      '</div>' +
+      '<div style="overflow-x:auto;">' +
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+      '<thead><tr style="border-bottom:1px solid var(--border);">' +
+        '<th style="text-align:left;padding:6px 10px;color:var(--muted);font-weight:600;">Cliente</th>' +
+        '<th style="text-align:right;padding:6px 10px;color:var(--muted);font-weight:600;">Base (M-2/M-3)</th>' +
+        '<th style="text-align:right;padding:6px 10px;color:var(--muted);font-weight:600;">Reciente</th>' +
+        '<th style="padding:6px 10px;color:var(--muted);font-weight:600;min-width:140px;">Variación</th>' +
+      '</tr></thead>' +
+      '<tbody>' + items.map(renderRow).join('') + '</tbody>' +
+      '</table></div></div>';
+  };
+
+  el.innerHTML = results.length === 0
+    ? '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">✅ Ningún cliente con tendencia a la baja en los últimos 3 períodos</div>'
+    : renderGroup('🔴', 'Clientes Críticos (caída ≥ 60%)',  '#ef4444', critical) +
+      renderGroup('🟡', 'Baja Notoria (30%–60%)',           '#f59e0b', notable)  +
+      renderGroup('🟢', 'Baja Pequeña (< 30%)',             '#22c55e', small);
 }
 
 // ── Top 10 Clientes por ventas ────────────────────────────────────────────────
