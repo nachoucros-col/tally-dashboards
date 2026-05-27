@@ -2313,18 +2313,31 @@ async function loadTimelineData() {
   monthlySalesData = {};
   const rows = data.table?.rows || [];
   const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  // SalesLastPeriod (G=c[6]) almacena ventas con formato "$26,034.54" → parsear eliminando $ y comas
+  // VentasList (col N física) — ventas reales por período, formato "$26,034.54"
   const parseCurrency = v => {
     if (v == null) return 0;
     if (typeof v === 'number') return v;
     return parseFloat(String(v).replace(/[$,\s]/g, '')) || 0;
   };
+  // Detectar dinámicamente el índice de VentasList en GViz (GViz puede omitir columnas)
+  let ventasColIdx = -1;
+  (data.table.cols || []).forEach(function(col, i) {
+    const lbl = (col.label || '').trim().toLowerCase().replace(/\s+/g, '');
+    if (lbl === 'ventaslist') ventasColIdx = i;
+  });
+  if (ventasColIdx < 0) {
+    console.warn('[timeline] VentasList no encontrada en GViz — cols:', (data.table.cols||[]).map(c=>c.label));
+    // GViz omite VentasList (col N); cargar desde Ventas_Map auxiliar
+    await loadVentasMapIntoTimeline(rows, parseCurrency, monthNames);
+    return;
+  }
+  console.log('[timeline] VentasList detectada en GViz col idx:', ventasColIdx);
   rows.forEach(row => {
     const c = row.c || [];
     const get = i => (c[i] && c[i].v != null) ? c[i].v : null;
     const periodId  = String(get(0) || '');   // "2025-07_AZ005337"
     const companyId = String(get(1) || '');   // "AZ005337"
-    const sales     = parseCurrency(get(6));  // SalesLastPeriod (col G) — ventas reales del período
+    const sales     = parseCurrency(get(ventasColIdx)); // VentasList (col N) — ventas reales del período
     const retention = parseCurrency(get(11)); // PeriodoRetencion (col L) — monto de retención
     if (!companyId || !periodId) return;
     // Extract YYYY-MM from PeriodID (handles "2025-7" and "2025-07" and "2026-3")
@@ -2354,6 +2367,74 @@ async function loadTimelineData() {
   // Render overview monthly sales chart if canvas is present
   if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
   // Update timeline selector in declaraciones tab
+  const sel = document.getElementById('timelineClientSelect');
+  if (sel) {
+    const ids = Object.keys(timelineRawData).sort();
+    sel.innerHTML = ids.length
+      ? ids.map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('')
+      : '<option value="">Sin datos disponibles</option>';
+    if (ids.length) renderTimelineChart();
+  }
+}
+
+// Fallback: GViz omite VentasList. Carga las filas base (sin ventas) desde GViz y las ventas desde Ventas_Map.
+async function loadVentasMapIntoTimeline(gvizRows, parseCurrency, monthNames) {
+  // 1) Construir timelineRawData con sales=0 desde las filas GViz (para tener los entries base)
+  const retColIdx = 11; // PeriodoRetencion = col L = GViz c[11]
+  gvizRows.forEach(row => {
+    const c = row.c || [];
+    const get = i => (c[i] && c[i].v != null) ? c[i].v : null;
+    const periodId  = String(get(0) || '');
+    const companyId = String(get(1) || '');
+    const retention = parseCurrency(get(retColIdx));
+    if (!companyId || !periodId) return;
+    const pm = periodId.match(/^(\d{4})-(\d{1,2})/);
+    if (!pm) return;
+    const year = pm[1];
+    const mon  = pm[2].padStart(2, '0');
+    const periodKey = year + '-' + mon;
+    const period = monthNames[parseInt(mon, 10) - 1] + ' ' + year.slice(2);
+    if (!timelineRawData[companyId]) timelineRawData[companyId] = [];
+    timelineRawData[companyId].push({ period, periodKey, sales: 0, retention });
+  });
+  // Sort + deduplicate
+  Object.keys(timelineRawData).forEach(cid => {
+    timelineRawData[cid].sort((a, b) => a.periodKey < b.periodKey ? -1 : 1);
+    const seen = {};
+    timelineRawData[cid] = timelineRawData[cid].filter(e => {
+      if (seen[e.periodKey]) return false;
+      seen[e.periodKey] = true;
+      return true;
+    });
+  });
+
+  // 2) Cargar Ventas_Map (hoja auxiliar: PeriodID, Company_id, VentasList)
+  const vm = await fetchSheet('Ventas_Map');
+  if (vm && vm.table) {
+    (vm.table.rows || []).forEach(row => {
+      const c = row.c || [];
+      const periodId  = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+      const companyId = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
+      const salesRaw  = c[2] && c[2].v != null ? c[2].v : null;
+      const sales = parseCurrency(salesRaw);
+      if (!companyId || !periodId || !sales) return;
+      const pm = periodId.match(/^(\d{4})-(\d{1,2})/);
+      if (!pm) return;
+      const periodKey = pm[1] + '-' + pm[2].padStart(2, '0');
+      if (timelineRawData[companyId]) {
+        const entry = timelineRawData[companyId].find(e => e.periodKey === periodKey);
+        if (entry) {
+          entry.sales = sales;
+          if (sales > 0) monthlySalesData[periodKey] = (monthlySalesData[periodKey] || 0) + sales;
+        }
+      }
+    });
+  } else {
+    console.warn('[timeline] Ventas_Map no encontrada — créala en Google Sheets con la fórmula QUERY de Clientes_por_periodo col N');
+  }
+
+  // 3) Render
+  if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
   const sel = document.getElementById('timelineClientSelect');
   if (sel) {
     const ids = Object.keys(timelineRawData).sort();
