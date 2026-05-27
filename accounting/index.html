@@ -2313,13 +2313,19 @@ async function loadTimelineData() {
   monthlySalesData = {};
   const rows = data.table?.rows || [];
   const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  // SalesLastPeriod (G=c[6]) almacena ventas con formato "$26,034.54" → parsear eliminando $ y comas
+  const parseCurrency = v => {
+    if (v == null) return 0;
+    if (typeof v === 'number') return v;
+    return parseFloat(String(v).replace(/[$,\s]/g, '')) || 0;
+  };
   rows.forEach(row => {
     const c = row.c || [];
     const get = i => (c[i] && c[i].v != null) ? c[i].v : null;
     const periodId  = String(get(0) || '');   // "2025-07_AZ005337"
     const companyId = String(get(1) || '');   // "AZ005337"
-    const sales     = parseFloat(get(11)) || 0;  // VentasList (col L)
-    const retention = parseFloat(get(9))  || 0;  // PeriodoRetencion (col J)
+    const sales     = parseCurrency(get(6));  // SalesLastPeriod (col G) — ventas reales del período
+    const retention = parseCurrency(get(11)); // PeriodoRetencion (col L) — monto de retención
     if (!companyId || !periodId) return;
     // Extract YYYY-MM from PeriodID (handles "2025-7" and "2025-07" and "2026-3")
     const pm = periodId.match(/^(\d{4})-(\d{1,2})/);
