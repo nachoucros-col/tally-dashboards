@@ -900,22 +900,39 @@ function gateSubmit() {
         <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;"></span> <b>Rojo ⚠️</b> — Bajó más de 50%</span>
       </div>
       <div style="overflow-x:auto;">
-        <table id="ventasListaTable" style="width:100%;border-collapse:collapse;font-size:12px;min-width:780px;">
+        <table id="ventasListaTable" style="width:100%;border-collapse:collapse;font-size:12px;min-width:1000px;">
           <thead>
             <tr style="border-bottom:2px solid var(--border);background:var(--bg3);">
               <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;">ID</th>
               <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600;">Empresa</th>
               <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;" id="vl-th-m1">M-3</th>
               <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;" id="vl-th-m2">M-2</th>
-              <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;" id="vl-th-m3">M-1</th>
+              <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;" id="vl-th-m3">Ventas</th>
+              <th style="text-align:center;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;">Variación</th>
+              <th style="text-align:center;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;">Fecha FS</th>
               <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;">IVA a pagar <span id="vl-iva-label" style="font-weight:400;font-size:10px;"></span></th>
               <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;">ISR a pagar <span id="vl-isr-label" style="font-weight:400;font-size:10px;"></span></th>
             </tr>
           </thead>
           <tbody id="ventasListaBody">
-            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Cargando datos…</td></tr>
+            <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);">Cargando datos…</td></tr>
           </tbody>
         </table>
+      </div>
+      <!-- Nota explicativa de la tabla -->
+      <div style="margin-top:20px;padding:16px 20px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.8;">
+        <div style="font-weight:700;color:var(--text);margin-bottom:10px;font-size:13px;">ℹ️ Cómo se construye esta tabla</div>
+        <p style="margin:0 0 8px 0;"><b>¿Quiénes aparecen?</b> Solo los clientes que tienen ventas registradas mayores a $1 en al menos uno de los tres meses mostrados, y que estén asignados a los responsables activos del equipo de Marketplace (actualmente Eduardo, Cristina y Edgar).</p>
+        <p style="margin:0 0 8px 0;"><b>Columnas de ventas.</b> Cada columna de ventas refleja el total de ventas facturadas por ese cliente en ese mes calendario. Los tres meses mostrados son siempre los tres meses cerrados más recientes — el sistema ajusta automáticamente si los datos del mes anterior aún no están completos (espera al día 20 de cada mes para mostrar el período más reciente).</p>
+        <p style="margin:0 0 8px 0;"><b>Variación %.</b> Compara las ventas del mes más reciente contra las del mes más antiguo de la tabla (o contra el mes intermedio si no hay datos en el más antiguo). Un ▲ indica crecimiento, un ▼ indica caída.</p>
+        <p style="margin:0 0 8px 0;"><b>Color de cada fila.</b>
+          <span style="color:#22c55e;font-weight:600;">Verde</span> = sin caída relevante (&lt;15%) o en crecimiento ·
+          <span style="color:#eab308;font-weight:600;">Amarillo</span> = cayó entre 15% y 30% ·
+          <span style="color:#f97316;font-weight:600;">Naranja</span> = cayó entre 30% y 50% ·
+          <span style="color:#ef4444;font-weight:600;">Rojo ⚠️</span> = cayó más del 50%.
+        </p>
+        <p style="margin:0 0 8px 0;"><b>Etiquetas especiales.</b> <span style="color:#22c55e;font-weight:600;">nuevo</span> = el cliente inició operaciones hace menos de 2 meses (medido desde su fecha de primer envío). <span style="color:#22c55e;font-weight:600;">1ª venta</span> = es la primera vez que registra ventas en el período visible, independientemente de cuánto tiempo lleve como cliente. Ambos casos se muestran siempre en verde porque no es posible establecer una tendencia de baja aún.</p>
+        <p style="margin:0 0 0 0;"><b>Fecha FS</b> = fecha en que el cliente realizó su primer envío real de mercancía a través de Tally. <b>IVA / ISR a pagar</b> = montos calculados por el contador para el mes más reciente de la tabla, según la información fiscal del período.</p>
       </div>
     </div>
   </div>
@@ -3323,12 +3340,14 @@ async function loadClientDB() {
   if (folderData && folderData.table) {
     (folderData.table.rows || []).forEach(function(row) {
       var c = row.c || [];
-      // Folder_Clientes columns: [5]friendly_id [3]drive_folder_link [7]Fiel [8]First_Shipment
+      // Folder_Clientes columns: [5]friendly_id [3]drive_folder_link [7]Fiel [8]First_Shipment [9]Fecha First Shipment
       var fid       = c[5] && c[5].v != null ? String(c[5].v).trim() : '';
       var url       = c[3] && c[3].v != null ? String(c[3].v) : '';
       var fiel      = c[7] && c[7].v != null ? String(c[7].v).trim() : '';
       var firstShip = c[8] && c[8].v != null ? String(c[8].v).trim() : '';
-      if (fid) driveMap[fid] = { drive: url, fiel: fiel, firstShipment: firstShip };
+      // Fecha First Shipment: GViz devuelve fechas como "Date(yyyy,m,d)" (m=0-indexed) o string formateado
+      var fechaFSRaw = c[9] ? (c[9].f ? String(c[9].f).trim() : (c[9].v != null ? String(c[9].v).trim() : '')) : '';
+      if (fid) driveMap[fid] = { drive: url, fiel: fiel, firstShipment: firstShip, fechaFS: fechaFSRaw };
     });
   }
 
@@ -3364,6 +3383,7 @@ async function loadClientDB() {
       drive:         (driveMap[id] && driveMap[id].drive)         || '',
       fiel:          (driveMap[id] && driveMap[id].fiel)          || '',
       firstShipment: (driveMap[id] && driveMap[id].firstShipment) || '',
+      fechaFS:       (driveMap[id] && driveMap[id].fechaFS)       || '',
       sem:             'green',
       semReason:       '',
       declStatus:      suspended ? 'bloqueada' : (declared ? 'completa' : 'pendiente'),
@@ -4474,13 +4494,15 @@ function renderVentasSection() {
   buildVentasClientesList();
 }
 
-// ── Ventas KPI cards — totales por período (M-2, M-1, M) ─────────────────────
+// ── Ventas KPI cards — totales por período (3 meses cerrados más recientes) ───
 function renderVentasKPIs() {
   const fmt   = v => new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(v);
   const fmtK  = v => { if (!v) return '$0'; return v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : v >= 1000 ? '$' + Math.round(v/1000) + 'k' : fmt(v); };
   const mn    = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const mfull = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const now   = new Date();
+  // Antes del día 20: el mes anterior aún no está cerrado, mostrar M-2/M-3/M-4
+  const dayOffset = now.getDate() < 20 ? 1 : 0;
   const mkPK  = off => {
     const d = new Date(now.getFullYear(), now.getMonth() - off, 1);
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
@@ -4496,17 +4518,18 @@ function renderVentasKPIs() {
 
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
-  [0, 1, 2].forEach(function(off) {
+  // KPI cards: m0 = más reciente (M-1 o M-2 según día 20), m1 = M-2 o M-3, m2 = M-3 o M-4
+  [0, 1, 2].forEach(function(idx) {
+    const off  = idx + 1 + dayOffset; // siempre meses cerrados
     const pk   = mkPK(off);
-    const sfx  = ['m0','m1','m2'][off];
+    const sfx  = ['m0','m1','m2'][idx];
     const v    = monthlySalesData[pk] || 0;
-    const hcls = v > 0 ? (off === 0 ? 'heat-yellow' : 'heat-green') : '';
+    const hcls = v > 0 ? (idx === 0 ? 'heat-green' : 'heat-green') : '';
     const el   = document.getElementById('vkpi-' + sfx + '-val');
     if (el) { el.textContent = fmtK(v); el.className = 'kpi-value ' + hcls; }
     set('vkpi-' + sfx + '-label', labelOf(pk));
     set('vkpi-' + sfx + '-sub',   v > 0 ? fmt(v) + ' total' : 'Sin datos');
-    if (off > 0) set('vkpi-' + sfx + '-trend', trendOf(pk, mkPK(off+1)));
-    else set('vkpi-m0-trend', 'Período en curso');
+    set('vkpi-' + sfx + '-trend', idx > 0 ? trendOf(pk, mkPK(off+1)) : '← Más reciente');
   });
 }
 
@@ -4629,18 +4652,41 @@ const VENTAS_OWNERS = ['Eduardo', 'Cristina', 'Edgar'];
 
 var _ventasListaRows = [];  // cache para el filtro en vivo
 
+// Parsear fechas de GViz (formato "Date(yyyy,m,d)" con mes 0-indexed) o strings MM/DD/YYYY
+function parseVLDate(s) {
+  if (!s || typeof s !== 'string') return null;
+  s = s.trim();
+  // GViz: "Date(2025,4,12)" → mes es 0-indexed
+  var gm = s.match(/^Date\((\d+),(\d+),(\d+)\)/);
+  if (gm) return new Date(parseInt(gm[1]), parseInt(gm[2]), parseInt(gm[3]));
+  // ISO: "2025-05-12"
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s + 'T00:00:00');
+  // M/D/YYYY o MM/DD/YYYY
+  var pm = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (pm) return new Date(parseInt(pm[3]), parseInt(pm[1])-1, parseInt(pm[2]));
+  return null;
+}
+
 function buildVentasClientesList() {
   const tbody  = document.getElementById('ventasListaBody');
   const badge  = document.getElementById('ventasListaBadge');
   if (!tbody) return;
 
+  // Guard: esperar a que CLIENT_DB esté cargado
+  if (!Object.keys(CLIENT_DB).length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);">Cargando directorio de clientes…</td></tr>';
+    setTimeout(buildVentasClientesList, 800);
+    return;
+  }
+
   if (!Object.keys(timelineRawData).length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Sin datos disponibles</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);">Sin datos disponibles</td></tr>';
     return;
   }
 
   const now   = new Date();
-  // MES 1 = month(today)-3, MES 2 = month(today)-2, MES 3 = month(today)-1
+  // Lógica de período: antes del día 20 del mes en curso, MES 3 = mes -2 (datos aún incompletos)
+  const dayOffset = now.getDate() < 20 ? 1 : 0;
   const mkPK  = off => {
     const d = new Date(now.getFullYear(), now.getMonth() - off, 1);
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
@@ -4649,21 +4695,31 @@ function buildVentasClientesList() {
   const labelOf = pk => { const [y,m] = pk.split('-'); return mfull[parseInt(m,10)-1] + ' ' + y; };
   const fmt   = v => v > 0 ? new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(v) : '—';
 
-  const pk1 = mkPK(3);  // MES 1 (más antiguo, 3 meses atrás)
-  const pk2 = mkPK(2);  // MES 2
-  const pk3 = mkPK(1);  // MES 3 (más reciente, mes anterior)
+  const pk1 = mkPK(3 + dayOffset);  // MES 1 (más antiguo)
+  const pk2 = mkPK(2 + dayOffset);  // MES 2
+  const pk3 = mkPK(1 + dayOffset);  // MES 3 (más reciente — bloqueado antes del día 20)
 
   // Actualizar headers de la tabla
   const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   setTxt('vl-th-m1',    labelOf(pk1));
   setTxt('vl-th-m2',    labelOf(pk2));
-  setTxt('vl-th-m3',    labelOf(pk3));
+  setTxt('vl-th-m3',    'Ventas ' + labelOf(pk3));
   setTxt('vl-iva-label', '(' + labelOf(pk3) + ')');
   setTxt('vl-isr-label', '(' + labelOf(pk3) + ')');
+
+  // Hace 2 meses (para evaluar si Fecha FS es "reciente")
+  const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, now.getDate());
 
   // Construir filas
   const rows = [];
   Object.keys(timelineRawData).forEach(function(cid) {
+    // Solo clientes en CLIENT_DB (filtra a quienes no tienen owner registrado)
+    if (!CLIENT_DB[cid]) return;
+
+    // Filtrar por responsable activo
+    const owner = CLIENT_DB[cid].owner || '';
+    if (!VENTAS_OWNERS.includes(owner)) return;
+
     const entries = timelineRawData[cid];
     const getEntry = pk => entries.find(e => e.periodKey === pk) || null;
 
@@ -4678,53 +4734,65 @@ function buildVentasClientesList() {
     // Incluir solo si tiene ventas > $1 en al menos uno de los 3 períodos
     if (s1 <= 1 && s2 <= 1 && s3 <= 1) return;
 
-    // Filtrar por responsable activo
-    const owner = (CLIENT_DB[cid] && CLIENT_DB[cid].owner) ? CLIENT_DB[cid].owner : '';
-    if (!VENTAS_OWNERS.includes(owner)) return;
-
     // IVA / ISR del período MES 3 (más reciente)
     const iva = e3 ? (e3.iva || 0) : 0;
     const isr = e3 ? (e3.isr || 0) : 0;
 
-    // Calcular variación: MES 3 vs MES 1 (o MES 2 si MES 1 = 0)
+    // Fecha FS
+    const fechaFSStr = CLIENT_DB[cid].fechaFS || '';
+    const fechaFSDate = parseVLDate(fechaFSStr);
+    const isRecentFS  = fechaFSDate && fechaFSDate >= twoMonthsAgo; // FS hace ≤ 2 meses
+    const isFirstSale = s1 <= 1; // primera venta en nuestros 3 períodos (no hay historial en M-3)
+
+    // Calcular variación: MES 3 vs MES 1 como base (o MES 2 si MES 1 = 0)
     const base   = s1 > 1 ? s1 : (s2 > 1 ? s2 : 0);
     const recent = s3;
-    let pct = 0; // 0 = verde por defecto (sin baseline)
+    let pct = 0;
     if (base > 1 && recent >= 0) {
       pct = (recent - base) / base * 100; // negativo = caída
     }
 
-    // Color row: basado en pct
-    let rowColor, rowBg, flag;
-    if (base <= 1) {
-      // Sin baseline → cliente nuevo o sin historial previo → verde
-      rowColor = '#22c55e'; rowBg = 'rgba(34,197,94,0.06)'; flag = '';
+    // ── Semáforo ────────────────────────────────────────────────────────────
+    // Clientes nuevos (FS reciente) o primera venta siempre en verde
+    let rowColor, rowBg, tags = [];
+    if (isRecentFS) {
+      // Fecha FS dentro de los últimos 2 meses → cliente nuevo
+      rowColor = '#22c55e'; rowBg = 'rgba(34,197,94,0.06)'; tags.push('nuevo');
+    } else if (isFirstSale) {
+      // Primera aparición con ventas, sin importar antigüedad del FS
+      rowColor = '#22c55e'; rowBg = 'rgba(34,197,94,0.06)'; tags.push('1ª venta');
     } else if (pct >= -15) {
-      // Sin baja significativa o aumento
-      rowColor = '#22c55e'; rowBg = 'rgba(34,197,94,0.06)'; flag = '';
+      // Sin baja significativa o en aumento
+      rowColor = '#22c55e'; rowBg = 'rgba(34,197,94,0.06)';
     } else if (pct >= -30) {
       // Bajó 15%–30%
-      rowColor = '#eab308'; rowBg = 'rgba(234,179,8,0.08)'; flag = '';
+      rowColor = '#eab308'; rowBg = 'rgba(234,179,8,0.08)';
     } else if (pct >= -50) {
       // Bajó 30%–50%
-      rowColor = '#f97316'; rowBg = 'rgba(249,115,22,0.08)'; flag = '';
+      rowColor = '#f97316'; rowBg = 'rgba(249,115,22,0.08)';
     } else {
       // Bajó más de 50%
-      rowColor = '#ef4444'; rowBg = 'rgba(239,68,68,0.09)'; flag = '⚠️ ';
+      rowColor = '#ef4444'; rowBg = 'rgba(239,68,68,0.09)'; tags.push('⚠️');
     }
 
-    const name = (CLIENT_DB[cid] && CLIENT_DB[cid].name) ? CLIENT_DB[cid].name : cid;
-    rows.push({ cid, name, owner, s1, s2, s3, iva, isr, pct, rowColor, rowBg, flag, base });
+    // Formatear fecha FS para mostrar
+    const fechaFSDisplay = fechaFSDate
+      ? fechaFSDate.getDate() + '/' + (fechaFSDate.getMonth()+1) + '/' + fechaFSDate.getFullYear()
+      : (fechaFSStr || '—');
+
+    const name = CLIENT_DB[cid].name || cid;
+    rows.push({ cid, name, owner, s1, s2, s3, iva, isr, pct, rowColor, rowBg, tags,
+                base, fechaFSDisplay, isRecentFS, isFirstSale });
   });
 
-  // Ordenar: más críticos primero, luego por nombre
+  // Ordenar: más críticos primero; dentro de mismo color, alfabético
   rows.sort((a, b) => {
     if (a.pct !== b.pct) return a.pct - b.pct;
     return a.name.localeCompare(b.name, 'es');
   });
 
   _ventasListaRows = rows;
-  if (badge) badge.textContent = rows.length + ' clientes con ventas en los últimos 3 períodos';
+  if (badge) badge.textContent = rows.length + ' clientes activos · ' + labelOf(pk1) + ' → ' + labelOf(pk3);
 
   renderVentasListaTable(rows);
 }
@@ -4732,31 +4800,46 @@ function buildVentasClientesList() {
 function renderVentasListaTable(rows) {
   const tbody = document.getElementById('ventasListaTable')?.querySelector('tbody');
   if (!tbody) return;
-  const fmt = v => v > 0 ? new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(v) : '—';
-  const fmtPct = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+  const fmt    = v => v > 0 ? new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(v) : '—';
+  const fmtPct = v => (v >= 0 ? '▲ +' : '▼ ') + Math.abs(v).toFixed(1) + '%';
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Sin clientes con ventas en los últimos 3 períodos</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);">Sin clientes con ventas en los períodos seleccionados</td></tr>';
     return;
   }
 
   tbody.innerHTML = rows.map(r => {
-    const pctLabel = r.base > 1
-      ? '<span style="font-size:10px;font-weight:700;color:' + r.rowColor + ';margin-left:4px;">' + fmtPct(r.pct) + '</span>'
-      : '<span style="font-size:10px;color:var(--muted);margin-left:4px;">nuevo</span>';
+    // Columna variación
+    let pctCell;
+    if (!r.tags.length && r.base > 1) {
+      pctCell = '<span style="font-weight:700;color:' + r.rowColor + ';">' + fmtPct(r.pct) + '</span>';
+    } else if (r.tags.includes('nuevo') || r.tags.includes('1ª venta')) {
+      pctCell = '<span style="font-size:11px;font-weight:600;color:#22c55e;">—</span>';
+    } else {
+      pctCell = '<span style="font-weight:700;color:' + r.rowColor + ';">' + fmtPct(r.pct) + '</span>';
+    }
+
+    // Tags de empresa
+    const tagHtml = r.tags.filter(t => t !== '⚠️').map(t =>
+      '<span style="font-size:9px;font-weight:700;background:' + r.rowColor + '22;color:' + r.rowColor + ';border:1px solid ' + r.rowColor + '44;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;">' + t + '</span>'
+    ).join('');
+    const warnFlag = r.tags.includes('⚠️') ? '<span style="margin-right:4px;">⚠️</span>' : '';
+
     return '<tr style="border-bottom:1px solid var(--border);background:' + r.rowBg + ';transition:filter 0.15s;" ' +
-      'onmouseover="this.style.filter=\'brightness(1.07)\'" onmouseout="this.style.filter=\'\'" ' +
-      'data-search="' + (r.cid + ' ' + r.name).toLowerCase().replace(/"/g,'') + '">' +
+      'onmouseover="this.style.filter=\'brightness(1.07)\'" onmouseout="this.style.filter=\'\'">' +
       '<td style="padding:8px 10px;font-size:11px;color:var(--muted);white-space:nowrap;border-left:3px solid ' + r.rowColor + ';">' + r.cid + '</td>' +
-      '<td style="padding:8px 10px;max-width:220px;">' +
-        '<span style="font-weight:500;color:' + r.rowColor + ';">' + r.flag + '</span>' +
-        '<span title="' + r.name + '" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;max-width:210px;vertical-align:middle;">' + r.name + '</span>' +
+      '<td style="padding:8px 10px;max-width:240px;">' +
+        warnFlag +
+        '<span title="' + r.name.replace(/"/g,'&quot;') + '" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;max-width:195px;vertical-align:middle;">' + r.name + '</span>' +
+        tagHtml +
       '</td>' +
-      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;color:var(--muted);">' + fmt(r.s1) + '</td>' +
-      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;color:var(--muted);">' + fmt(r.s2) + '</td>' +
-      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;font-weight:600;">' + fmt(r.s3) + pctLabel + '</td>' +
-      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;">' + fmt(r.iva) + '</td>' +
-      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;">' + fmt(r.isr) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;color:var(--muted);font-size:12px;">' + fmt(r.s1) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;color:var(--muted);font-size:12px;">' + fmt(r.s2) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;font-weight:700;font-size:13px;">' + fmt(r.s3) + '</td>' +
+      '<td style="padding:8px 10px;text-align:center;white-space:nowrap;">' + pctCell + '</td>' +
+      '<td style="padding:8px 10px;text-align:center;white-space:nowrap;font-size:11px;color:var(--muted);">' + r.fechaFSDisplay + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;font-size:12px;">' + fmt(r.iva) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;font-size:12px;">' + fmt(r.isr) + '</td>' +
     '</tr>';
   }).join('');
 }
@@ -4768,7 +4851,7 @@ function filterVentasLista() {
     return;
   }
   renderVentasListaTable(_ventasListaRows.filter(r =>
-    (r.cid + ' ' + r.name).toLowerCase().includes(q)
+    (r.cid + ' ' + r.name + ' ' + r.owner).toLowerCase().includes(q)
   ));
 }
 
