@@ -895,6 +895,46 @@ function gateSubmit() {
         <div style="text-align:center;padding:24px;color:var(--muted);">Cargando datos…</div>
       </div>
     </div>
+
+    <!-- 5. TABLA COMPLETA DE CLIENTES CON VENTAS (últimos 3 períodos) -->
+    <div class="card" style="margin-top:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+        <div>
+          <div class="card-title" style="margin-bottom:2px;">📋 Clientes con Ventas — Últimos 3 Períodos</div>
+          <div style="font-size:11px;color:var(--muted);">Solo clientes con VentasList &gt; $1 en al menos un período · IVA/ISR del período más reciente</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <span id="ventasListaBadge" style="font-size:11px;color:var(--muted);">Cargando…</span>
+          <input type="text" id="ventasListaSearch" placeholder="🔍 Buscar cliente o ID…" oninput="filterVentasLista()"
+            style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;width:190px;outline:none;">
+        </div>
+      </div>
+      <!-- Leyenda de colores -->
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;padding:8px 12px;background:var(--bg3);border-radius:8px;font-size:11px;">
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span> <b>Verde</b> — Sin baja o en aumento</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#eab308;display:inline-block;"></span> <b>Amarillo</b> — Bajó 15%–30%</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#f97316;display:inline-block;"></span> <b>Naranja</b> — Bajó 30%–50%</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;"></span> <b>Rojo ⚠️</b> — Bajó más de 50%</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="ventasListaTable" style="width:100%;border-collapse:collapse;font-size:12px;min-width:780px;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border);background:var(--bg3);">
+              <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;">ID</th>
+              <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600;">Empresa</th>
+              <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;" id="vl-th-m1">M-3</th>
+              <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;" id="vl-th-m2">M-2</th>
+              <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;" id="vl-th-m3">M-1</th>
+              <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;">IVA a pagar <span id="vl-iva-label" style="font-weight:400;font-size:10px;"></span></th>
+              <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600;white-space:nowrap;">ISR a pagar <span id="vl-isr-label" style="font-weight:400;font-size:10px;"></span></th>
+            </tr>
+          </thead>
+          <tbody id="ventasListaBody">
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Cargando datos…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- ============================================================ -->
@@ -2339,6 +2379,8 @@ async function loadTimelineData() {
     const companyId = String(get(1) || '');   // "AZ005337"
     const sales     = parseCurrency(get(ventasColIdx)); // VentasList (col N) — ventas reales del período
     const retention = parseCurrency(get(11)); // PeriodoRetencion (col L) — monto de retención
+    const iva       = parseCurrency(get(8));  // IVA_pagar (col I) — c[8]
+    const isr       = parseCurrency(get(9));  // ISR_pagar (col J) — c[9]
     if (!companyId || !periodId) return;
     // Extract YYYY-MM from PeriodID (handles "2025-7" and "2025-07" and "2026-3")
     const pm = periodId.match(/^(\d{4})-(\d{1,2})/);
@@ -2348,7 +2390,7 @@ async function loadTimelineData() {
     const periodKey = year + '-' + mon;
     const period = monthNames[parseInt(mon, 10) - 1] + ' ' + year.slice(2);
     if (!timelineRawData[companyId]) timelineRawData[companyId] = [];
-    timelineRawData[companyId].push({ period, periodKey, sales, retention });
+    timelineRawData[companyId].push({ period, periodKey, sales, retention, iva, isr });
     // Global monthly aggregate
     if (sales > 0) {
       monthlySalesData[periodKey] = (monthlySalesData[periodKey] || 0) + sales;
@@ -2387,6 +2429,8 @@ async function loadVentasMapIntoTimeline(gvizRows, parseCurrency, monthNames) {
     const periodId  = String(get(0) || '');
     const companyId = String(get(1) || '');
     const retention = parseCurrency(get(retColIdx));
+    const iva       = parseCurrency(get(8));
+    const isr       = parseCurrency(get(9));
     if (!companyId || !periodId) return;
     const pm = periodId.match(/^(\d{4})-(\d{1,2})/);
     if (!pm) return;
@@ -2395,7 +2439,7 @@ async function loadVentasMapIntoTimeline(gvizRows, parseCurrency, monthNames) {
     const periodKey = year + '-' + mon;
     const period = monthNames[parseInt(mon, 10) - 1] + ' ' + year.slice(2);
     if (!timelineRawData[companyId]) timelineRawData[companyId] = [];
-    timelineRawData[companyId].push({ period, periodKey, sales: 0, retention });
+    timelineRawData[companyId].push({ period, periodKey, sales: 0, retention, iva, isr });
   });
   // Sort + deduplicate
   Object.keys(timelineRawData).forEach(cid => {
@@ -4445,6 +4489,7 @@ function renderVentasSection() {
   buildTop10ClientsTable();
   renderVentasKPIs();
   buildDecliningClients();
+  buildVentasClientesList();
 }
 
 // ── Ventas KPI cards — totales por período (M-2, M-1, M) ─────────────────────
@@ -4590,6 +4635,148 @@ function buildDecliningClients() {
     : renderGroup('🔴', 'Clientes Críticos (caída ≥ 60%)',  '#ef4444', critical) +
       renderGroup('🟡', 'Baja Notoria (30%–60%)',           '#f59e0b', notable)  +
       renderGroup('🟢', 'Baja Pequeña (< 30%)',             '#22c55e', small);
+}
+
+// ── 📋 Tabla completa clientes con ventas — últimos 3 períodos ─────────────────
+var _ventasListaRows = [];  // cache para el filtro en vivo
+
+function buildVentasClientesList() {
+  const tbody  = document.getElementById('ventasListaBody');
+  const badge  = document.getElementById('ventasListaBadge');
+  if (!tbody) return;
+
+  if (!Object.keys(timelineRawData).length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Sin datos disponibles</td></tr>';
+    return;
+  }
+
+  const now   = new Date();
+  // MES 1 = month(today)-3, MES 2 = month(today)-2, MES 3 = month(today)-1
+  const mkPK  = off => {
+    const d = new Date(now.getFullYear(), now.getMonth() - off, 1);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  };
+  const mfull = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const labelOf = pk => { const [y,m] = pk.split('-'); return mfull[parseInt(m,10)-1] + ' ' + y; };
+  const fmt   = v => v > 0 ? new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(v) : '—';
+
+  const pk1 = mkPK(3);  // MES 1 (más antiguo, 3 meses atrás)
+  const pk2 = mkPK(2);  // MES 2
+  const pk3 = mkPK(1);  // MES 3 (más reciente, mes anterior)
+
+  // Actualizar headers de la tabla
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('vl-th-m1',    labelOf(pk1));
+  setTxt('vl-th-m2',    labelOf(pk2));
+  setTxt('vl-th-m3',    labelOf(pk3));
+  setTxt('vl-iva-label', '(' + labelOf(pk3) + ')');
+  setTxt('vl-isr-label', '(' + labelOf(pk3) + ')');
+
+  // Construir filas
+  const rows = [];
+  Object.keys(timelineRawData).forEach(function(cid) {
+    const entries = timelineRawData[cid];
+    const getEntry = pk => entries.find(e => e.periodKey === pk) || null;
+
+    const e1 = getEntry(pk1);
+    const e2 = getEntry(pk2);
+    const e3 = getEntry(pk3);
+
+    const s1 = e1 ? e1.sales : 0;
+    const s2 = e2 ? e2.sales : 0;
+    const s3 = e3 ? e3.sales : 0;
+
+    // Incluir solo si tiene ventas > $1 en al menos uno de los 3 períodos
+    if (s1 <= 1 && s2 <= 1 && s3 <= 1) return;
+
+    // IVA / ISR del período MES 3 (más reciente)
+    const iva = e3 ? (e3.iva || 0) : 0;
+    const isr = e3 ? (e3.isr || 0) : 0;
+
+    // Calcular variación: MES 3 vs MES 1 (o MES 2 si MES 1 = 0)
+    const base   = s1 > 1 ? s1 : (s2 > 1 ? s2 : 0);
+    const recent = s3;
+    let pct = 0; // 0 = verde por defecto (sin baseline)
+    if (base > 1 && recent >= 0) {
+      pct = (recent - base) / base * 100; // negativo = caída
+    }
+
+    // Color row: basado en pct
+    let rowColor, rowBg, flag;
+    if (base <= 1) {
+      // Sin baseline → cliente nuevo o sin historial previo → verde
+      rowColor = '#22c55e'; rowBg = 'rgba(34,197,94,0.06)'; flag = '';
+    } else if (pct >= -15) {
+      // Sin baja significativa o aumento
+      rowColor = '#22c55e'; rowBg = 'rgba(34,197,94,0.06)'; flag = '';
+    } else if (pct >= -30) {
+      // Bajó 15%–30%
+      rowColor = '#eab308'; rowBg = 'rgba(234,179,8,0.08)'; flag = '';
+    } else if (pct >= -50) {
+      // Bajó 30%–50%
+      rowColor = '#f97316'; rowBg = 'rgba(249,115,22,0.08)'; flag = '';
+    } else {
+      // Bajó más de 50%
+      rowColor = '#ef4444'; rowBg = 'rgba(239,68,68,0.09)'; flag = '⚠️ ';
+    }
+
+    const name = (CLIENT_DB[cid] && CLIENT_DB[cid].name) ? CLIENT_DB[cid].name : cid;
+    rows.push({ cid, name, s1, s2, s3, iva, isr, pct, rowColor, rowBg, flag, base });
+  });
+
+  // Ordenar: más críticos primero, luego por nombre
+  rows.sort((a, b) => {
+    if (a.pct !== b.pct) return a.pct - b.pct;
+    return a.name.localeCompare(b.name, 'es');
+  });
+
+  _ventasListaRows = rows;
+  if (badge) badge.textContent = rows.length + ' clientes con ventas en los últimos 3 períodos';
+
+  renderVentasListaTable(rows);
+}
+
+function renderVentasListaTable(rows) {
+  const tbody = document.getElementById('ventasListaTable')?.querySelector('tbody');
+  if (!tbody) return;
+  const fmt = v => v > 0 ? new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(v) : '—';
+  const fmtPct = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Sin clientes con ventas en los últimos 3 períodos</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const pctLabel = r.base > 1
+      ? '<span style="font-size:10px;font-weight:700;color:' + r.rowColor + ';margin-left:4px;">' + fmtPct(r.pct) + '</span>'
+      : '<span style="font-size:10px;color:var(--muted);margin-left:4px;">nuevo</span>';
+    return '<tr style="border-bottom:1px solid var(--border);background:' + r.rowBg + ';transition:filter 0.15s;" ' +
+      'onmouseover="this.style.filter=\'brightness(1.07)\'" onmouseout="this.style.filter=\'\'" ' +
+      'data-search="' + (r.cid + ' ' + r.name).toLowerCase().replace(/"/g,'') + '">' +
+      '<td style="padding:8px 10px;font-size:11px;color:var(--muted);white-space:nowrap;border-left:3px solid ' + r.rowColor + ';">' + r.cid + '</td>' +
+      '<td style="padding:8px 10px;max-width:220px;">' +
+        '<span style="font-weight:500;color:' + r.rowColor + ';">' + r.flag + '</span>' +
+        '<span title="' + r.name + '" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;max-width:210px;vertical-align:middle;">' + r.name + '</span>' +
+      '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;color:var(--muted);">' + fmt(r.s1) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;color:var(--muted);">' + fmt(r.s2) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;font-weight:600;">' + fmt(r.s3) + pctLabel + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;">' + fmt(r.iva) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;white-space:nowrap;">' + fmt(r.isr) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function filterVentasLista() {
+  const q = (document.getElementById('ventasListaSearch')?.value || '').toLowerCase().trim();
+  if (!q) {
+    renderVentasListaTable(_ventasListaRows);
+    return;
+  }
+  renderVentasListaTable(_ventasListaRows.filter(r =>
+    (r.cid + ' ' + r.name).toLowerCase().includes(q)
+  ));
 }
 
 // ── Top 10 Clientes por ventas ────────────────────────────────────────────────
