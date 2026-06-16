@@ -4776,8 +4776,9 @@ function buildVentasClientesList() {
     }
 
     // Formatear fecha FS para mostrar
+    const _mesesFS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     const fechaFSDisplay = fechaFSDate
-      ? fechaFSDate.getDate() + '/' + (fechaFSDate.getMonth()+1) + '/' + fechaFSDate.getFullYear()
+      ? String(fechaFSDate.getDate()).padStart(2,'0') + ' ' + _mesesFS[fechaFSDate.getMonth()] + ' ' + fechaFSDate.getFullYear()
       : (fechaFSStr || '—');
 
     const name = CLIENT_DB[cid].name || cid;
