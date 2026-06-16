@@ -879,24 +879,7 @@ function gateSubmit() {
       </div>
     </div>
 
-    <!-- 4. CLIENTES QUE HAN BAJADO SUS VENTAS -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:0;">📉 Clientes que han bajado sus ventas <span class="badge" id="decliningBadge">vs últimos 3 meses</span></div>
-        <div style="font-size:11px;color:var(--muted);" id="decliningNote">Cargando…</div>
-      </div>
-      <!-- Segment legend -->
-      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--bg3);border-radius:8px;">
-        <span style="font-size:12px;">🟢 <b>Baja pequeña</b> <span style="color:var(--muted);">&lt; 30%</span></span>
-        <span style="font-size:12px;">🟡 <b>Baja notoria</b> <span style="color:var(--muted);">30%–60%</span></span>
-        <span style="font-size:12px;">🔴 <b>Crítico</b> <span style="color:var(--muted);">&gt; 60%</span></span>
-      </div>
-      <div id="decliningClientsBody">
-        <div style="text-align:center;padding:24px;color:var(--muted);">Cargando datos…</div>
-      </div>
-    </div>
-
-    <!-- 5. TABLA COMPLETA DE CLIENTES CON VENTAS (últimos 3 períodos) -->
+    <!-- 4. TABLA COMPLETA DE CLIENTES CON VENTAS (últimos 3 períodos) -->
     <div class="card" style="margin-top:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
         <div>
@@ -4488,7 +4471,6 @@ function renderVentasSection() {
   initOverviewSalesChart();
   buildTop10ClientsTable();
   renderVentasKPIs();
-  buildDecliningClients();
   buildVentasClientesList();
 }
 
@@ -4638,6 +4620,13 @@ function buildDecliningClients() {
 }
 
 // ── 📋 Tabla completa clientes con ventas — últimos 3 períodos ─────────────────
+
+// ▼ OWNERS ACTIVOS EN SECCIÓN VENTAS ─────────────────────────────────────────
+// Para reactivar a Arturo, agrégalo a este array:
+//   const VENTAS_OWNERS = ['Eduardo', 'Cristina', 'Edgar', 'Arturo'];
+const VENTAS_OWNERS = ['Eduardo', 'Cristina', 'Edgar'];
+// ─────────────────────────────────────────────────────────────────────────────
+
 var _ventasListaRows = [];  // cache para el filtro en vivo
 
 function buildVentasClientesList() {
@@ -4689,6 +4678,10 @@ function buildVentasClientesList() {
     // Incluir solo si tiene ventas > $1 en al menos uno de los 3 períodos
     if (s1 <= 1 && s2 <= 1 && s3 <= 1) return;
 
+    // Filtrar por responsable activo
+    const owner = (CLIENT_DB[cid] && CLIENT_DB[cid].owner) ? CLIENT_DB[cid].owner : '';
+    if (!VENTAS_OWNERS.includes(owner)) return;
+
     // IVA / ISR del período MES 3 (más reciente)
     const iva = e3 ? (e3.iva || 0) : 0;
     const isr = e3 ? (e3.isr || 0) : 0;
@@ -4721,7 +4714,7 @@ function buildVentasClientesList() {
     }
 
     const name = (CLIENT_DB[cid] && CLIENT_DB[cid].name) ? CLIENT_DB[cid].name : cid;
-    rows.push({ cid, name, s1, s2, s3, iva, isr, pct, rowColor, rowBg, flag, base });
+    rows.push({ cid, name, owner, s1, s2, s3, iva, isr, pct, rowColor, rowBg, flag, base });
   });
 
   // Ordenar: más críticos primero, luego por nombre
