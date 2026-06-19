@@ -493,7 +493,7 @@ footer {
     <div class="section-row" style="margin-bottom:16px;">
       <div>
         <div class="section-title">Histórico de Revenue por Cliente</div>
-        <div class="section-sub">Revenue mensual acumulado desde fecha de alta hasta hoy</div>
+        <div class="section-sub">Suscripción: fija mensual desde alta · Regulatorio: fechas reales de pago (Ventas regulatorio)</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <select id="hist-metric" onchange="rebuildHistorical()" style="font-size:12px;padding:5px 10px;">
@@ -565,9 +565,11 @@ footer {
 /* ══════════════════════════════════════════════════════════════
    CONFIGURACIÓN
    ══════════════════════════════════════════════════════════════ */
-const SHEET_ID   = '1jF9fBBX2lRv4P_of1CNuSgSs79Djs7dkzijR0DfPzB0';
-const SHEET_NAME = 'Relación por cliente';
-const GVZ_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&headers=1`;
+const SHEET_ID    = '1jF9fBBX2lRv4P_of1CNuSgSs79Djs7dkzijR0DfPzB0';
+const SHEET_NAME  = 'Relación por cliente';
+const SHEET_REG   = 'Ventas regulatorio';
+const GVZ_URL     = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&headers=1`;
+const GVZ_URL_REG = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_REG)}&headers=1`;
 
 /* ── COLUMN INDICES (0-based, as returned by gviz) ─────────── */
 const COL = {
@@ -589,8 +591,9 @@ const COL = {
 /* ══════════════════════════════════════════════════════════════
    STATE
    ══════════════════════════════════════════════════════════════ */
-let ALL_CLIENTS = [];
-let FILTERED    = [];
+let ALL_CLIENTS  = [];
+let FILTERED     = [];
+let REG_PAYMENTS = {}; // { companyId: { "YYYY-MM": totalMonto } }
 let SORT_COL    = 'total';
 let SORT_DIR    = -1; // -1 = desc
 let chartTop20  = null;
@@ -620,19 +623,25 @@ async function refreshData() {
 /* ══════════════════════════════════════════════════════════════
    FETCH FROM GOOGLE SHEETS (gviz endpoint)
    ══════════════════════════════════════════════════════════════ */
+const stripGviz = text => JSON.parse(text.replace(/^[^{]*/, '').replace(/\);?\s*$/, ''));
+
 async function fetchData() {
   try {
-    const res  = await fetch(GVZ_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
+    // Fetch both sheets in parallel
+    const [res1, res2] = await Promise.all([
+      fetch(GVZ_URL,     { cache: 'no-store' }),
+      fetch(GVZ_URL_REG, { cache: 'no-store' }),
+    ]);
+    if (!res1.ok) throw new Error(`HTTP ${res1.status}`);
+    const [text1, text2] = await Promise.all([res1.text(), res2.text()]);
 
-    // Strip JSONP wrapper: /*O_o*/ google.visualization.Query.setResponse({...});
-    const jsonStr = text.replace(/^[^{]*/, '').replace(/\);?\s*$/, '');
-    const data    = JSON.parse(jsonStr);
+    const data1 = stripGviz(text1);
+    if (data1.status === 'error') throw new Error(data1.errors?.[0]?.message || 'Error en gviz');
 
-    if (data.status === 'error') throw new Error(data.errors?.[0]?.message || 'Error en gviz');
+    // Parse reg sheet (non-fatal if it fails)
+    try { parseRegData(stripGviz(text2).table); } catch(e) { console.warn('Reg sheet parse error:', e); }
 
-    parseAndRender(data.table);
+    parseAndRender(data1.table);
     document.getElementById('loading-overlay').style.display = 'none';
     document.getElementById('error-banner').style.display = 'none';
 
@@ -646,6 +655,66 @@ async function fetchData() {
     document.getElementById('error-banner').style.display    = 'block';
     document.getElementById('error-detail').textContent      = err.message;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PARSE VENTAS REGULATORIO SHEET
+   Columns: A=CompanyID, B=Nombre, C=Monto, D=Monto+IVA, E=Fecha de pago, F=Concepto
+   ══════════════════════════════════════════════════════════════ */
+function parseRegData(table) {
+  REG_PAYMENTS = {};
+  const rows = table?.rows || [];
+
+  rows.forEach(r => {
+    const c = r.c || [];
+
+    const companyId = String(c[0]?.v || '').trim();
+    if (!companyId) return;
+
+    // Monto (pre-IVA): .v is numeric if cell is currency-formatted, else parse from .f
+    let monto = 0;
+    const mv = c[2]?.v, mf = c[2]?.f;
+    if (typeof mv === 'number') monto = mv;
+    else monto = parseFloat(String(mf || mv || '').replace(/[$,\s]/g,'')) || 0;
+    if (!monto) return;
+
+    // Fecha de pago: gviz may give Date(y,m,d) string in .v or formatted M/D/YYYY in .f
+    const fv = c[4]?.v, ff = c[4]?.f;
+    let fecha = null;
+
+    if (fv) {
+      const gviz = String(fv).match(/^Date\((\d+),(\d+),(\d+)\)/);
+      if (gviz) {
+        fecha = new Date(+gviz[1], +gviz[2], +gviz[3]);
+      } else {
+        // try parsing as string M/D/YYYY
+        const parts = String(fv).split('/');
+        if (parts.length === 3) {
+          let [m2, d2, y2] = parts.map(Number);
+          if (y2 < 100) y2 += 2000;
+          fecha = new Date(y2, m2 - 1, d2);
+        }
+      }
+    }
+    if (!fecha && ff) {
+      const parts = String(ff).split('/');
+      if (parts.length === 3) {
+        let [m2, d2, y2] = parts.map(Number);
+        if (y2 < 100) y2 += 2000;
+        fecha = new Date(y2, m2 - 1, d2);
+      }
+    }
+
+    if (!fecha || isNaN(fecha.getTime())) return;
+    // Excel null date 12/30/1899 or any pre-2000 date = empty → skip
+    if (fecha.getFullYear() < 2000) return;
+
+    const monthKey = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}`;
+    if (!REG_PAYMENTS[companyId]) REG_PAYMENTS[companyId] = {};
+    REG_PAYMENTS[companyId][monthKey] = (REG_PAYMENTS[companyId][monthKey] || 0) + monto;
+  });
+
+  console.log(`[reg] Parsed payments for ${Object.keys(REG_PAYMENTS).length} companies`);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1229,16 +1298,32 @@ function rebuildHistorical() {
   const labels = months.map(m => m.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }));
 
   const datasets = clients.map((c, i) => {
-    const startDate = parseDesde(c.desde);
-    const monthlyVal = getHistVal(c, metric);
+    const startDate  = parseDesde(c.desde);
+    const startMonth = startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), 1) : null;
     let cumulative = 0;
 
     const data = months.map(m => {
-      if (startDate && m >= new Date(startDate.getFullYear(), startDate.getMonth(), 1)) {
-        cumulative += monthlyVal;
-        return mode === 'cumulative' ? cumulative : monthlyVal;
+      const monthKey = `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}`;
+      let val = 0;
+
+      if (metric === 'sub' || metric === 'total') {
+        // Suscripción: fija mensual desde fecha de alta
+        if (startMonth && m >= startMonth) val += c.val_sub;
       }
-      return mode === 'cumulative' ? cumulative : 0;
+
+      if (metric === 'reg') {
+        // Regulatorio: pagos reales por fecha de pago
+        val += (REG_PAYMENTS[c.id]?.[monthKey] || 0);
+      }
+
+      if (metric === 'total') {
+        // Total = sub (mensual) + reg real + fee_fx + fee_imp (mensuales desde alta)
+        val += (REG_PAYMENTS[c.id]?.[monthKey] || 0);
+        if (startMonth && m >= startMonth) val += c.fee_fx + c.fee_imp;
+      }
+
+      if (mode === 'cumulative') { cumulative += val; return cumulative; }
+      return val;
     });
 
     const color = HIST_COLORS[i % HIST_COLORS.length];
