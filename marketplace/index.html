@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tally · Revenue Amazon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+/* ── PASSWORD GATE ─────────────────────────────────────────── */
+const TALLY_PWD = 'Tally2026!';
+const AUTH_KEY  = 'tally_dashboard_auth';
+(function() {
+  if (sessionStorage.getItem(AUTH_KEY) !== 'ok') {
+    document.documentElement.style.visibility = 'hidden';
+    document.addEventListener('DOMContentLoaded', function() {
+      document.documentElement.style.visibility = '';
+      showGate();
+    });
+  }
+  function showGate() {
+    var g = document.createElement('div');
+    g.id = 'auth-gate';
+    g.innerHTML = [
+      '<div class="gate-card">',
+        '<div class="gate-logo"><span>T</span></div>',
+        '<div class="gate-title">Tally · Revenue Amazon</div>',
+        '<div class="gate-sub">Dashboard Ejecutivo — Acceso Restringido</div>',
+        '<input id="gate-pwd" class="gate-input" type="password" placeholder="Contraseña de acceso" autofocus>',
+        '<div id="gate-err" class="gate-err" style="display:none;">Contraseña incorrecta.</div>',
+        '<button class="gate-btn" onclick="gateSubmit()">Entrar →</button>',
+        '<div class="gate-footer">Solo personal autorizado Tally Legal</div>',
+      '</div>'
+    ].join('');
+    document.body.prepend(g);
+    document.getElementById('gate-pwd').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') gateSubmit();
+    });
+  }
+})();
+function gateSubmit() {
+  var val = document.getElementById('gate-pwd').value;
+  if (val === TALLY_PWD) {
+    sessionStorage.setItem(AUTH_KEY, 'ok');
+    document.getElementById('auth-gate').remove();
+    initDashboard();
+  } else {
+    document.getElementById('gate-err').style.display = 'block';
+    document.getElementById('gate-pwd').value = '';
+    document.getElementById('gate-pwd').focus();
+  }
+}
+</script>
+
+<style>
+/* ── GATE ───────────────────────────────────────────────────── */
+#auth-gate {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #0a0c12;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+.gate-card {
+  background: #161b27; border: 1px solid #1e2d45;
+  border-radius: 18px; padding: 44px 40px; width: 380px; max-width: 92vw;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+}
+.gate-logo {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  border-radius: 16px; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 4px;
+}
+.gate-title { font-size: 19px; font-weight: 700; color: #f0f4ff; }
+.gate-sub   { font-size: 12px; color: #6b7fa3; text-align: center; }
+.gate-input {
+  width: 100%; background: #0d111a; border: 1px solid #1e2d45;
+  border-radius: 10px; padding: 13px 16px; color: #f0f4ff;
+  font-size: 15px; outline: none; transition: border-color .2s; font-family: inherit;
+}
+.gate-input:focus { border-color: #f97316; }
+.gate-err   { font-size: 12px; color: #ef4444; }
+.gate-btn   {
+  width: 100%; background: #f97316; border: none;
+  border-radius: 10px; padding: 13px; color: #fff;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background .2s; font-family: inherit;
+}
+.gate-btn:hover { background: #ea6c0a; }
+.gate-footer { font-size: 11px; color: #4a5568; }
+
+/* ── ROOT VARS ──────────────────────────────────────────────── */
+:root {
+  --bg:      #0a0c12;
+  --bg2:     #0d111a;
+  --card:    #161b27;
+  --card2:   #1a2030;
+  --border:  #1e2d45;
+  --accent:  #f97316;
+  --accent2: #fb923c;
+  --blue:    #3b82f6;
+  --green:   #22c55e;
+  --yellow:  #f59e0b;
+  --red:     #ef4444;
+  --purple:  #a855f7;
+  --text:    #f0f4ff;
+  --muted:   #6b7fa3;
+  --muted2:  #3d4f6e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+header {
+  background: linear-gradient(135deg, #0d111a 0%, #161b27 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 40px; display: flex; align-items: center; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo-box {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.logo-info h1 { font-size: 18px; font-weight: 700; }
+.logo-info p  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.header-right {
+  margin-left: auto; display: flex; align-items: center; gap: 12px;
+}
+.sync-info { font-size: 11px; color: var(--muted); text-align: right; }
+.sync-info strong { color: var(--green); }
+.btn-refresh {
+  background: var(--accent); border: none; color: #fff;
+  padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background .2s; font-family: inherit;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-refresh:hover { background: #ea6c0a; }
+.btn-refresh:disabled { background: var(--muted2); cursor: not-allowed; }
+.btn-back {
+  background: var(--card2); border: 1px solid var(--border); color: var(--muted);
+  padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all .2s; font-family: inherit; text-decoration: none;
+  display: flex; align-items: center; gap: 5px;
+}
+.btn-back:hover { color: var(--text); border-color: var(--accent); }
+
+/* ── LOADING STATE ──────────────────────────────────────────── */
+#loading-overlay {
+  position: fixed; inset: 0; z-index: 9998;
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+}
+.spinner {
+  width: 44px; height: 44px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#loading-overlay p { color: var(--muted); font-size: 14px; }
+
+/* ── MAIN CONTENT ───────────────────────────────────────────── */
+main { flex: 1; padding: 32px 40px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+/* ── KPI CARDS ──────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 28px;
+}
+.kpi-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px 24px;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: border-color .2s;
+}
+.kpi-card:hover { border-color: var(--accent); }
+.kpi-label {
+  font-size: 11px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .8px; font-weight: 600;
+}
+.kpi-value { font-size: 28px; font-weight: 700; letter-spacing: -.5px; }
+.kpi-sub   { font-size: 12px; color: var(--muted); }
+.kpi-delta {
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; display: inline-block; width: fit-content;
+}
+.delta-green { background: rgba(34,197,94,.12); color: var(--green); }
+.delta-red   { background: rgba(239,68,68,.12); color: var(--red); }
+.delta-yellow{ background: rgba(245,158,11,.12); color: var(--yellow); }
+
+/* ── SECTION TITLES ─────────────────────────────────────────── */
+.section-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title { font-size: 14px; font-weight: 700; }
+.section-sub   { font-size: 11px; color: var(--muted); }
+
+/* ── CHARTS ROW ─────────────────────────────────────────────── */
+.charts-row {
+  display: grid; grid-template-columns: 1fr 340px;
+  gap: 20px; margin-bottom: 28px;
+}
+.chart-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px 24px;
+}
+.chart-wrap { position: relative; }
+
+/* ── FILTERS BAR ────────────────────────────────────────────── */
+.filters-bar {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 20px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+select, input[type="text"] {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 8px; padding: 7px 12px;
+  font-size: 13px; font-family: inherit; outline: none;
+  transition: border-color .2s; cursor: pointer;
+}
+select:hover, select:focus, input[type="text"]:hover, input[type="text"]:focus {
+  border-color: var(--accent);
+}
+.filter-search {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+}
+input[type="text"] { width: 220px; }
+.results-count { font-size: 12px; color: var(--muted); }
+
+/* ── CLIENT TABLE ───────────────────────────────────────────── */
+.table-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; margin-bottom: 28px;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: var(--card2); }
+th {
+  padding: 13px 16px; text-align: left; font-size: 11px;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .6px;
+  font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none;
+  border-bottom: 1px solid var(--border);
+}
+th:hover { color: var(--text); }
+th .sort-icon { margin-left: 4px; opacity: .4; font-style: normal; }
+th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+td { padding: 12px 16px; border-bottom: 1px solid rgba(30,45,69,.6); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: rgba(249,115,22,.04); }
+.client-name { font-weight: 600; }
+.client-id   { font-size: 11px; color: var(--muted); }
+.revenue-main { font-weight: 700; color: var(--text); }
+.revenue-reg  { font-size: 11px; color: var(--muted); }
+
+/* ── STATUS BADGES ──────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  white-space: nowrap;
+}
+.badge-active   { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+.badge-pastdue  { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.25); }
+.badge-none     { background: rgba(107,127,163,.1); color: var(--muted); border: 1px solid rgba(107,127,163,.2); }
+.badge-nomatch  { background: rgba(245,158,11,.1); color: var(--yellow); border: 1px solid rgba(245,158,11,.2); }
+.badge-sub      { background: rgba(168,85,247,.1); color: var(--purple); border: 1px solid rgba(168,85,247,.2); }
+.badge-nosub    { background: rgba(30,45,69,.5); color: var(--muted); border: 1px solid var(--border); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ── MINI BAR ───────────────────────────────────────────────── */
+.mini-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.mini-bar-bg   { flex: 1; height: 4px; background: var(--border); border-radius: 2px; min-width: 60px; }
+.mini-bar-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width .4s; }
+
+/* ── SUBSIDY INFO ───────────────────────────────────────────── */
+.sub-date { font-size: 11px; color: var(--muted); }
+.sub-expired { color: var(--red); }
+.sub-active  { color: var(--purple); }
+
+/* ── BOTTOM CHARTS ──────────────────────────────────────────── */
+.bottom-charts {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 20px; margin-bottom: 28px;
+}
+
+/* ── FOOTER ─────────────────────────────────────────────────── */
+footer {
+  padding: 20px 40px; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--muted);
+  display: flex; justify-content: space-between;
+}
+
+/* ── ERROR STATE ────────────────────────────────────────────── */
+.error-banner {
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+  border-radius: 12px; padding: 20px 24px; color: var(--red);
+  font-size: 14px; display: none;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  main { padding: 20px; }
+  header { padding: 16px 20px; }
+  .charts-row { grid-template-columns: 1fr; }
+  .bottom-charts { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <p>Conectando con Google Sheets…</p>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo-box">📦</div>
+  <div class="logo-info">
+    <h1>Revenue Amazon · C-Level View</h1>
+    <p>Clientes Amazon MX · Conectado en tiempo real con Google Sheets</p>
+  </div>
+  <div class="header-right">
+    <a class="btn-back" href="/">← Dashboards</a>
+    <div class="sync-info">
+      <div>Última sync: <strong id="sync-time">—</strong></div>
+      <div id="row-count" style="font-size:10px;">—</div>
+    </div>
+    <button class="btn-refresh" onclick="refreshData()" id="btn-refresh">
+      ↻ Actualizar
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- Error banner -->
+  <div class="error-banner" id="error-banner">
+    ⚠️ No se pudo conectar con Google Sheets. Verifica que el archivo esté compartido o recarga la página.
+    <br><small id="error-detail"></small>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Revenue Total Mensual</div>
+      <div class="kpi-value" id="kpi-total">—</div>
+      <div class="kpi-sub">Suscripciones Amazon activas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Clientes Activos</div>
+      <div class="kpi-value" id="kpi-active">—</div>
+      <div class="kpi-sub" id="kpi-active-sub">de — clientes totales Amazon</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Revenue Promedio / Cliente</div>
+      <div class="kpi-value" id="kpi-avg">—</div>
+      <div class="kpi-sub">Clientes con valor registrado</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Cliente Top Revenue</div>
+      <div class="kpi-value" id="kpi-top-val" style="font-size:18px;margin-top:2px;">—</div>
+      <div class="kpi-sub" id="kpi-top-name">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Clientes en Subsidio</div>
+      <div class="kpi-value" id="kpi-sub-count">—</div>
+      <div class="kpi-sub" id="kpi-sub-exp">— subsidios vencidos sin actualizar</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Past Due (riesgo)</div>
+      <div class="kpi-value" id="kpi-pastdue" style="color:var(--red)">—</div>
+      <div class="kpi-sub" id="kpi-pastdue-rev">Revenue en riesgo: —</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="charts-row">
+    <!-- Top 20 Bar Chart -->
+    <div class="chart-card">
+      <div class="section-row">
+        <div>
+          <div class="section-title">Top 20 Clientes por Revenue</div>
+          <div class="section-sub">Valor suscripción mensual en MXN</div>
+        </div>
+        <select id="chart-metric" onchange="updateBarChart()" style="font-size:12px;padding:5px 10px;">
+          <option value="sub">Suscripción</option>
+          <option value="reg">Regulatorio</option>
+          <option value="total">Total Revenue</option>
+        </select>
+      </div>
+      <div class="chart-wrap" style="height:380px;">
+        <canvas id="chart-top20"></canvas>
+      </div>
+    </div>
+
+    <!-- Status Donut -->
+    <div class="chart-card">
+      <div class="section-row">
+        <div>
+          <div class="section-title">Distribución por Status</div>
+          <div class="section-sub">Clientes Amazon</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:200px; margin-bottom:12px;">
+        <canvas id="chart-status"></canvas>
+      </div>
+      <div id="status-legend" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- FILTERS BAR -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <span class="filter-label">Status</span>
+      <select id="filter-status" onchange="applyFilters()">
+        <option value="">Todos</option>
+        <option value="active">Active</option>
+        <option value="past_due">Past Due</option>
+        <option value="no_stripe_match">No Match</option>
+        <option value="none">None</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Subsidio</span>
+      <select id="filter-sub" onchange="applyFilters()">
+        <option value="">Todos</option>
+        <option value="yes">Con subsidio</option>
+        <option value="no">Sin subsidio</option>
+        <option value="expired">Subsidio vencido</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Revenue</span>
+      <select id="filter-rev" onchange="applyFilters()">
+        <option value="">Todos</option>
+        <option value="0">Sin valor ($0)</option>
+        <option value="1">Con valor (>$0)</option>
+        <option value="premium">Premium (>$15k)</option>
+      </select>
+    </div>
+    <div class="filter-search">
+      <input type="text" id="search-input" placeholder="🔍  Buscar cliente..." oninput="applyFilters()">
+      <span class="results-count" id="results-count">— clientes</span>
+    </div>
+  </div>
+
+  <!-- CLIENT TABLE -->
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('id')">ID <i class="sort-icon">↕</i></th>
+            <th onclick="sortBy('name')">Cliente <i class="sort-icon">↕</i></th>
+            <th onclick="sortBy('status')">Status <i class="sort-icon">↕</i></th>
+            <th onclick="sortBy('sub')">Subsidio <i class="sort-icon">↕</i></th>
+            <th onclick="sortBy('val_sub')">Suscripción MXN <i class="sort-icon">↕</i></th>
+            <th onclick="sortBy('val_reg')">Regulatorio MXN <i class="sort-icon">↕</i></th>
+            <th onclick="sortBy('total')">Total Revenue <i class="sort-icon">↕</i></th>
+            <th onclick="sortBy('since')">Activo desde <i class="sort-icon">↕</i></th>
+          </tr>
+        </thead>
+        <tbody id="client-tbody">
+          <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px;">Cargando datos…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOTTOM CHARTS -->
+  <div class="bottom-charts">
+    <!-- Revenue by subsidy status -->
+    <div class="chart-card">
+      <div class="section-row">
+        <div>
+          <div class="section-title">Revenue: Subsidiados vs No subsidiados</div>
+          <div class="section-sub">Distribución de revenue mensual</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="chart-subsidy"></canvas>
+      </div>
+    </div>
+    <!-- Subsidy expiry timeline -->
+    <div class="chart-card">
+      <div class="section-row">
+        <div>
+          <div class="section-title">Subsidios que Vencen</div>
+          <div class="section-sub">Clientes que pasan a facturación completa ($9,500 MXN)</div>
+        </div>
+      </div>
+      <div id="sub-expiry-list" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:240px;">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>Tally Legal S.A.P.I. de C.V. · Revenue Amazon Dashboard · Uso interno C-Level</span>
+  <span id="footer-sync">—</span>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   CONFIGURACIÓN
+   ══════════════════════════════════════════════════════════════ */
+const SHEET_ID   = '1jF9fBBX2lRv4P_of1CNuSgSs79Djs7dkzijR0DfPzB0';
+const SHEET_NAME = 'Relación por cliente';
+const GVZ_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&headers=1`;
+
+/* ── COLUMN INDICES (0-based, as returned by gviz) ─────────── */
+const COL = {
+  id:       0,   // A - Company_id
+  tipo:     1,   // B - Tipo
+  nombre:   2,   // C - Nombre Cliente
+  desde:    3,   // D - Activo desde
+  status:   4,   // E - Status_Stripe
+  sub_yn:   5,   // F - Subsidio (Y/N)
+  sub_m:    6,   // G - Subsidio (m)
+  sub_fin:  7,   // H - Finaliza subsidio
+  val_sub:  9,   // J - Valor suscripción
+  val_reg:  10,  // K - Ventas Regulatorio
+  fee_fx:   11,  // L - Fee FX
+  fee_imp:  12,  // M - Fee Import
+  total_rev: 20, // U - Total Revenue
+};
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════════ */
+let ALL_CLIENTS = [];
+let FILTERED    = [];
+let SORT_COL    = 'total';
+let SORT_DIR    = -1; // -1 = desc
+let chartTop20  = null;
+let chartStatus = null;
+let chartSub    = null;
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════════ */
+if (sessionStorage.getItem(AUTH_KEY) === 'ok') {
+  document.addEventListener('DOMContentLoaded', initDashboard);
+}
+
+async function initDashboard() {
+  await fetchData();
+}
+
+async function refreshData() {
+  const btn = document.getElementById('btn-refresh');
+  btn.disabled = true;
+  btn.textContent = '↻ Actualizando…';
+  await fetchData();
+  btn.disabled = false;
+  btn.innerHTML = '↻ Actualizar';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FETCH FROM GOOGLE SHEETS (gviz endpoint)
+   ══════════════════════════════════════════════════════════════ */
+async function fetchData() {
+  try {
+    const res  = await fetch(GVZ_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+
+    // Strip JSONP wrapper: /*O_o*/ google.visualization.Query.setResponse({...});
+    const jsonStr = text.replace(/^[^{]*/, '').replace(/\);?\s*$/, '');
+    const data    = JSON.parse(jsonStr);
+
+    if (data.status === 'error') throw new Error(data.errors?.[0]?.message || 'Error en gviz');
+
+    parseAndRender(data.table);
+    document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('error-banner').style.display = 'none';
+
+    const now = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('sync-time').textContent  = now;
+    document.getElementById('footer-sync').textContent = `Última sincronización: ${new Date().toLocaleString('es-MX')}`;
+
+  } catch (err) {
+    console.error('Fetch error:', err);
+    document.getElementById('loading-overlay').style.display = 'none';
+    document.getElementById('error-banner').style.display    = 'block';
+    document.getElementById('error-detail').textContent      = err.message;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PARSE GViz TABLE
+   ══════════════════════════════════════════════════════════════ */
+function parseAndRender(table) {
+  const rows = table.rows || [];
+  const today = new Date();
+
+  ALL_CLIENTS = rows
+    .map(r => {
+      const c = r.c || [];
+      const get = (i) => c[i]?.v ?? '';
+
+      const tipo = String(get(COL.tipo) || '').trim();
+      if (tipo !== 'Amazon') return null;
+
+      const sub_fin_raw = String(get(COL.sub_fin) || '').trim();
+      let   sub_fin_date = null;
+      if (sub_fin_raw) {
+        const [m, d, y] = sub_fin_raw.split('/');
+        if (y) sub_fin_date = new Date(+y, +m - 1, +d);
+      }
+
+      const sub_yn    = String(get(COL.sub_yn)  || '').trim().toLowerCase();
+      const hasSubsidy = (sub_yn === 'yes' || sub_yn === 'y');
+      const subExpired = hasSubsidy && sub_fin_date && sub_fin_date < today;
+
+      const val_sub = parseFloat(String(get(COL.val_sub)).replace(/[^0-9.-]/g,'')) || 0;
+      const val_reg = parseFloat(String(get(COL.val_reg)).replace(/[^0-9.-]/g,'')) || 0;
+      const total_rev_raw = parseFloat(String(get(COL.total_rev)).replace(/[^0-9.-]/g,'')) || 0;
+      const total_rev = total_rev_raw > 0 ? total_rev_raw : (val_sub + val_reg);
+
+      return {
+        id:          String(get(COL.id)     || '').trim(),
+        nombre:      String(get(COL.nombre) || '').trim(),
+        status:      String(get(COL.status) || '').trim(),
+        desde:       String(get(COL.desde)  || '').trim(),
+        sub_yn,
+        hasSubsidy,
+        sub_fin_raw,
+        sub_fin_date,
+        subExpired,
+        val_sub,
+        val_reg,
+        total_rev,
+      };
+    })
+    .filter(Boolean);
+
+  document.getElementById('row-count').textContent = `${ALL_CLIENTS.length} clientes Amazon`;
+  applyFilters();
+  buildCharts();
+  buildSubsidyList();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FILTERS
+   ══════════════════════════════════════════════════════════════ */
+function applyFilters() {
+  const fStatus = document.getElementById('filter-status').value;
+  const fSub    = document.getElementById('filter-sub').value;
+  const fRev    = document.getElementById('filter-rev').value;
+  const search  = document.getElementById('search-input').value.toLowerCase().trim();
+
+  FILTERED = ALL_CLIENTS.filter(c => {
+    if (fStatus && c.status !== fStatus) return false;
+    if (fSub === 'yes'     && !c.hasSubsidy) return false;
+    if (fSub === 'no'      && c.hasSubsidy)  return false;
+    if (fSub === 'expired' && !c.subExpired) return false;
+    if (fRev === '0'       && c.val_sub > 0) return false;
+    if (fRev === '1'       && c.val_sub === 0) return false;
+    if (fRev === 'premium' && c.val_sub < 15000) return false;
+    if (search && !c.nombre.toLowerCase().includes(search) && !c.id.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  sortFiltered();
+  renderKPIs();
+  renderTable();
+  document.getElementById('results-count').textContent = `${FILTERED.length} clientes`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SORT
+   ══════════════════════════════════════════════════════════════ */
+function sortBy(col) {
+  if (SORT_COL === col) { SORT_DIR *= -1; }
+  else { SORT_COL = col; SORT_DIR = -1; }
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  document.querySelectorAll('th').forEach(th => {
+    if (th.getAttribute('onclick') === `sortBy('${col}')`) th.classList.add('sorted');
+  });
+  sortFiltered();
+  renderTable();
+}
+
+function sortFiltered() {
+  const key = {
+    id: 'id', name: 'nombre', status: 'status',
+    sub: 'hasSubsidy', val_sub: 'val_sub', val_reg: 'val_reg',
+    total: 'total_rev', since: 'desde'
+  }[SORT_COL] || 'total_rev';
+
+  FILTERED.sort((a, b) => {
+    let va = a[key], vb = b[key];
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va < vb) return -SORT_DIR;
+    if (va > vb) return  SORT_DIR;
+    return 0;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   KPIs
+   ══════════════════════════════════════════════════════════════ */
+function renderKPIs() {
+  const active = ALL_CLIENTS.filter(c => c.status === 'active');
+  const withVal = active.filter(c => c.val_sub > 0);
+  const totalRev = withVal.reduce((s, c) => s + c.val_sub, 0);
+  const avgRev   = withVal.length ? totalRev / withVal.length : 0;
+  const topClient = [...ALL_CLIENTS].sort((a,b) => b.total_rev - a.total_rev)[0];
+  const subActive = ALL_CLIENTS.filter(c => c.hasSubsidy && !c.subExpired);
+  const subExp    = ALL_CLIENTS.filter(c => c.subExpired);
+  const pastdue   = ALL_CLIENTS.filter(c => c.status === 'past_due');
+  const pastdueRev = pastdue.reduce((s,c) => s + c.val_sub, 0);
+
+  document.getElementById('kpi-total').textContent     = fmtMXN(totalRev);
+  document.getElementById('kpi-active').textContent    = active.length;
+  document.getElementById('kpi-active-sub').textContent= `de ${ALL_CLIENTS.length} clientes Amazon totales`;
+  document.getElementById('kpi-avg').textContent       = fmtMXN(avgRev);
+  document.getElementById('kpi-top-val').textContent   = topClient ? fmtMXN(topClient.total_rev) : '—';
+  document.getElementById('kpi-top-name').textContent  = topClient ? topClient.nombre : '—';
+  document.getElementById('kpi-sub-count').textContent = subActive.length;
+  document.getElementById('kpi-sub-exp').textContent   = `${subExp.length} subsidios ya vencidos (pendiente precio full)`;
+  document.getElementById('kpi-pastdue').textContent   = pastdue.length;
+  document.getElementById('kpi-pastdue-rev').textContent = `Revenue en riesgo: ${fmtMXN(pastdueRev)}`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TABLE
+   ══════════════════════════════════════════════════════════════ */
+function renderTable() {
+  const tbody = document.getElementById('client-tbody');
+  if (!FILTERED.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px;">Sin resultados para los filtros seleccionados</td></tr>';
+    return;
+  }
+
+  const maxRev = Math.max(...FILTERED.map(c => c.val_sub), 1);
+
+  tbody.innerHTML = FILTERED.map(c => {
+    const pct = Math.round((c.val_sub / maxRev) * 100);
+    return `
+    <tr>
+      <td>
+        <div class="client-id">${esc(c.id)}</div>
+      </td>
+      <td>
+        <div class="client-name">${esc(c.nombre)}</div>
+      </td>
+      <td>${statusBadge(c.status)}</td>
+      <td>${subsidyBadge(c)}</td>
+      <td>
+        <div class="mini-bar-wrap">
+          <div class="mini-bar-bg">
+            <div class="mini-bar-fill" style="width:${pct}%"></div>
+          </div>
+          <span class="revenue-main">${c.val_sub > 0 ? fmtMXN(c.val_sub) : '<span style="color:var(--muted)">—</span>'}</span>
+        </div>
+      </td>
+      <td class="revenue-reg">${c.val_reg > 0 ? fmtMXN(c.val_reg) : '—'}</td>
+      <td class="revenue-main">${c.total_rev > 0 ? fmtMXN(c.total_rev) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-size:12px;color:var(--muted);">${c.desde || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CHARTS
+   ══════════════════════════════════════════════════════════════ */
+function buildCharts() {
+  buildBarChart();
+  buildStatusChart();
+  buildSubsidyChart();
+}
+
+function getBarData(metric) {
+  const sorted = [...ALL_CLIENTS]
+    .filter(c => {
+      if (metric === 'sub')   return c.val_sub  > 0;
+      if (metric === 'reg')   return c.val_reg  > 0;
+      if (metric === 'total') return c.total_rev > 0;
+      return true;
+    })
+    .sort((a, b) => {
+      const va = metric === 'sub' ? a.val_sub : metric === 'reg' ? a.val_reg : a.total_rev;
+      const vb = metric === 'sub' ? b.val_sub : metric === 'reg' ? b.val_reg : b.total_rev;
+      return vb - va;
+    })
+    .slice(0, 20);
+
+  return {
+    labels: sorted.map(c => c.nombre.length > 28 ? c.nombre.slice(0,26)+'…' : c.nombre),
+    values: sorted.map(c => metric === 'sub' ? c.val_sub : metric === 'reg' ? c.val_reg : c.total_rev),
+    statuses: sorted.map(c => c.status),
+  };
+}
+
+function updateBarChart() {
+  const metric = document.getElementById('chart-metric').value;
+  const d = getBarData(metric);
+
+  const colors = d.statuses.map(s =>
+    s === 'active'   ? 'rgba(249,115,22,0.85)' :
+    s === 'past_due' ? 'rgba(239,68,68,0.7)'   :
+    'rgba(107,127,163,0.4)'
+  );
+
+  chartTop20.data.labels   = d.labels;
+  chartTop20.data.datasets[0].data             = d.values;
+  chartTop20.data.datasets[0].backgroundColor  = colors;
+  chartTop20.update();
+}
+
+function buildBarChart() {
+  const ctx = document.getElementById('chart-top20').getContext('2d');
+  const d   = getBarData('sub');
+  const colors = d.statuses.map(s =>
+    s === 'active'   ? 'rgba(249,115,22,0.85)' :
+    s === 'past_due' ? 'rgba(239,68,68,0.7)'   :
+    'rgba(107,127,163,0.4)'
+  );
+
+  if (chartTop20) chartTop20.destroy();
+  chartTop20 = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [{
+        data: d.values,
+        backgroundColor: colors,
+        borderRadius: 6,
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${fmtMXN(ctx.raw)}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,45,69,0.7)' },
+          ticks: {
+            color: '#6b7fa3', font: { size: 11 },
+            callback: v => `$${(v/1000).toFixed(0)}k`
+          }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#c0cce4', font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function buildStatusChart() {
+  const ctx = document.getElementById('chart-status').getContext('2d');
+  const byStatus = {};
+  ALL_CLIENTS.forEach(c => {
+    byStatus[c.status] = (byStatus[c.status] || 0) + 1;
+  });
+
+  const labels = Object.keys(byStatus);
+  const values = labels.map(k => byStatus[k]);
+  const colMap = {
+    'active':          '#22c55e',
+    'past_due':        '#ef4444',
+    'no_stripe_match': '#f59e0b',
+    'none':            '#3d4f6e',
+  };
+  const colors = labels.map(l => colMap[l] || '#6b7fa3');
+
+  if (chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#161b27', hoverOffset: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw} clientes` } }
+      }
+    }
+  });
+
+  // Legend
+  const legend = document.getElementById('status-legend');
+  const labelMap = {
+    'active': 'Activo', 'past_due': 'Past Due',
+    'no_stripe_match': 'Sin match Stripe', 'none': 'Sin Stripe'
+  };
+  legend.innerHTML = labels.map((l, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+      <div style="width:10px;height:10px;border-radius:3px;background:${colors[i]};flex-shrink:0;"></div>
+      <span style="color:#c0cce4;">${labelMap[l]||l}</span>
+      <span style="margin-left:auto;font-weight:600;">${values[i]}</span>
+    </div>`
+  ).join('');
+}
+
+function buildSubsidyChart() {
+  const ctx = document.getElementById('chart-subsidy').getContext('2d');
+  const today = new Date();
+
+  const groups = {
+    'Activo (sin subsidio)':      { sub: 0, color: '#f97316' },
+    'Activo (subsidio vigente)':  { sub: 0, color: '#a855f7' },
+    'Activo (subsidio vencido)':  { sub: 0, color: '#f59e0b' },
+    'Past Due':                   { sub: 0, color: '#ef4444' },
+    'Sin Stripe':                 { sub: 0, color: '#3d4f6e' },
+  };
+
+  ALL_CLIENTS.forEach(c => {
+    const rev = c.val_sub + c.val_reg;
+    if (c.status === 'past_due') {
+      groups['Past Due'].sub += rev;
+    } else if (c.status === 'active') {
+      if (!c.hasSubsidy)  groups['Activo (sin subsidio)'].sub      += rev;
+      else if (!c.subExpired) groups['Activo (subsidio vigente)'].sub += rev;
+      else                groups['Activo (subsidio vencido)'].sub   += rev;
+    } else {
+      groups['Sin Stripe'].sub += rev;
+    }
+  });
+
+  if (chartSub) chartSub.destroy();
+  chartSub = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(groups),
+      datasets: [{
+        data:            Object.values(groups).map(g => g.sub),
+        backgroundColor: Object.values(groups).map(g => g.color),
+        borderRadius: 8, borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${fmtMXN(c.raw)}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#6b7fa3', font: { size: 10 } } },
+        y: {
+          grid: { color: 'rgba(30,45,69,0.7)' },
+          ticks: { color: '#6b7fa3', font: { size: 11 }, callback: v => `$${(v/1000).toFixed(0)}k` }
+        }
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SUBSIDY EXPIRY LIST
+   ══════════════════════════════════════════════════════════════ */
+function buildSubsidyList() {
+  const today = new Date();
+  const upcoming = ALL_CLIENTS
+    .filter(c => c.hasSubsidy && c.sub_fin_date)
+    .sort((a, b) => a.sub_fin_date - b.sub_fin_date);
+
+  const list = document.getElementById('sub-expiry-list');
+  if (!upcoming.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;">Sin datos de vencimiento</div>';
+    return;
+  }
+
+  list.innerHTML = upcoming.slice(0, 20).map(c => {
+    const expired = c.sub_fin_date < today;
+    const daysLeft = Math.ceil((c.sub_fin_date - today) / 86400000);
+    const cls = expired ? 'sub-expired' : (daysLeft < 60 ? 'sub-active' : '');
+    const label = expired
+      ? `Venció hace ${Math.abs(daysLeft)}d`
+      : `Vence en ${daysLeft}d`;
+
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--card2);font-size:12px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.nombre)}</div>
+        <div style="color:var(--muted);font-size:11px;">${c.id}</div>
+      </div>
+      <div style="text-align:right;white-space:nowrap;">
+        <div class="${cls}" style="font-weight:600;">${label}</div>
+        <div style="color:var(--muted);font-size:11px;">${c.sub_fin_raw}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+   ══════════════════════════════════════════════════════════════ */
+function fmtMXN(v) {
+  if (!v && v !== 0) return '—';
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency', currency: 'MXN', maximumFractionDigits: 0
+  }).format(v);
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function statusBadge(s) {
+  const m = {
+    'active':          ['badge-active',  '● Activo'],
+    'past_due':        ['badge-pastdue', '● Past Due'],
+    'no_stripe_match': ['badge-nomatch', '◌ Sin match'],
+    'none':            ['badge-none',    '· Sin Stripe'],
+  };
+  const [cls, label] = m[s] || ['badge-none', s || '—'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function subsidyBadge(c) {
+  if (!c.hasSubsidy) return `<span class="badge badge-nosub">Sin subsidio</span>`;
+  if (c.subExpired)  return `<span class="badge badge-nomatch">✓ Venció ${c.sub_fin_raw}</span>`;
+  return `<span class="badge badge-sub">● ${c.sub_fin_raw}</span>`;
+}
+</script>
+</body>
+</html>
