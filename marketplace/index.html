@@ -654,17 +654,17 @@ function parseAndRender(table) {
   ALL_CLIENTS = rows
     .map(r => {
       const c = r.c || [];
-      const get = (i) => c[i]?.v ?? '';
+      // gviz: .v for value, .f for formatted string. Dates return .v as "Date(y,m,d)" string.
+      const get  = (i) => c[i]?.v ?? '';
+      const getf = (i) => c[i]?.f ?? c[i]?.v ?? ''; // formatted (human-readable)
 
       const tipo = String(get(COL.tipo) || '').trim();
       if (tipo !== 'Amazon') return null;
 
-      const sub_fin_raw = String(get(COL.sub_fin) || '').trim();
-      let   sub_fin_date = null;
-      if (sub_fin_raw) {
-        const [m, d, y] = sub_fin_raw.split('/');
-        if (y) sub_fin_date = new Date(+y, +m - 1, +d);
-      }
+      // dates: use .v (raw gviz "Date(y,m,d)") for parsing, .f for display
+      const sub_fin_raw = String(getf(COL.sub_fin) || '').trim();
+      let sub_fin_date = null;
+      if (sub_fin_raw) sub_fin_date = parseDesde(get(COL.sub_fin));
 
       const sub_yn    = String(get(COL.sub_yn)  || '').trim().toLowerCase();
       const hasSubsidy = (sub_yn === 'yes' || sub_yn === 'y');
@@ -680,7 +680,8 @@ function parseAndRender(table) {
         id:          String(get(COL.id)     || '').trim(),
         nombre:      String(get(COL.nombre) || '').trim(),
         status:      String(get(COL.status) || '').trim(),
-        desde:       String(get(COL.desde)  || '').trim(),
+        desde:       get(COL.desde),           // raw gviz value (may be "Date(y,m,d)")
+        desdeStr:    String(getf(COL.desde) || '').trim(), // formatted for display
         sub_yn,
         hasSubsidy,
         sub_fin_raw,
@@ -700,6 +701,13 @@ function parseAndRender(table) {
   applyFilters();
   buildCharts();
   buildSubsidyList();
+
+  // debug: log first client's desde to verify gviz date format
+  if (ALL_CLIENTS.length) {
+    const sample = ALL_CLIENTS.find(c => c.desde);
+    if (sample) console.log('[hist debug] desde raw:', sample.desde, '→ parsed:', parseDesde(sample.desde));
+  }
+
   buildHistoricalSelector();
 }
 
@@ -748,7 +756,7 @@ function sortFiltered() {
   const key = {
     id: 'id', name: 'nombre', status: 'status',
     sub: 'hasSubsidy', val_sub: 'val_sub', val_reg: 'val_reg',
-    total: 'total_rev', since: 'desde'
+    total: 'total_rev', since: 'desdeStr'
   }[SORT_COL] || 'total_rev';
 
   FILTERED.sort((a, b) => {
@@ -821,7 +829,7 @@ function renderTable() {
       </td>
       <td class="revenue-reg">${c.val_reg > 0 ? fmtMXN(c.val_reg) : '—'}</td>
       <td class="revenue-main">${c.total_rev > 0 ? fmtMXN(c.total_rev) : '<span style="color:var(--muted)">—</span>'}</td>
-      <td style="font-size:12px;color:var(--muted);">${c.desde || '—'}</td>
+      <td style="font-size:12px;color:var(--muted);">${c.desdeStr || '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -1117,16 +1125,22 @@ const HIST_COLORS = [
   '#c084fc','#fbbf24','#22d3ee','#f472b6','#a3e635',
 ];
 
-function parseDesde(str) {
-  if (!str) return null;
-  // handles M/D/YY, M/D/YYYY, DD/MM/YYYY, YYYY-MM-DD
-  str = String(str).trim();
+function parseDesde(val) {
+  if (val == null || val === '') return null;
+  const str = String(val).trim();
+
+  // gviz native Date object: Date(year, month0, day)
+  const gviz = str.match(/^Date\((\d+),(\d+),(\d+)\)/);
+  if (gviz) return new Date(+gviz[1], +gviz[2], +gviz[3]);
+
+  // ISO YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) return new Date(str);
+
+  // Slash M/D/YY or M/D/YYYY or DD/MM/YYYY
   const parts = str.split('/');
   if (parts.length === 3) {
     let [a, b, c] = parts.map(Number);
     if (c < 100) c += 2000;
-    // assume M/D/Y
     return new Date(c, a - 1, b);
   }
   return null;
