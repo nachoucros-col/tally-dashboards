@@ -309,6 +309,10 @@ footer {
   font-size: 14px; display: none;
 }
 
+/* ── HISTORICAL SELECTOR ────────────────────────────────────── */
+#hist-selector { display: none; }
+#hist-selector.visible { display: flex !important; }
+
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 900px) {
   main { padding: 20px; }
@@ -480,6 +484,44 @@ footer {
     </div>
   </div>
 
+  <!-- HISTÓRICO DE REVENUE POR CLIENTE -->
+  <div class="chart-card" style="margin-bottom:28px;">
+    <div class="section-row" style="margin-bottom:16px;">
+      <div>
+        <div class="section-title">Histórico de Revenue por Cliente</div>
+        <div class="section-sub">Revenue mensual acumulado desde fecha de alta hasta hoy</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <select id="hist-metric" onchange="rebuildHistorical()" style="font-size:12px;padding:5px 10px;">
+          <option value="total">Total Revenue</option>
+          <option value="sub">Suscripción</option>
+          <option value="reg">Regulatorio</option>
+        </select>
+        <select id="hist-mode" onchange="rebuildHistorical()" style="font-size:12px;padding:5px 10px;">
+          <option value="monthly">Mensual</option>
+          <option value="cumulative">Acumulado</option>
+        </select>
+        <select id="hist-top-n" onchange="buildHistoricalSelector()" style="font-size:12px;padding:5px 10px;">
+          <option value="5">Top 5</option>
+          <option value="10" selected>Top 10</option>
+          <option value="20">Top 20</option>
+          <option value="custom">Selección manual</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Multi-select clients (visible only in custom mode) -->
+    <div id="hist-selector" style="display:none;margin-bottom:14px;max-height:120px;overflow-y:auto;
+      background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;
+      display:flex;flex-wrap:wrap;gap:8px;">
+    </div>
+
+    <div class="chart-wrap" style="height:340px;">
+      <canvas id="chart-historical"></canvas>
+    </div>
+    <div id="hist-legend" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;"></div>
+  </div>
+
   <!-- BOTTOM CHARTS -->
   <div class="bottom-charts">
     <!-- Revenue by subsidy status -->
@@ -628,10 +670,11 @@ function parseAndRender(table) {
       const hasSubsidy = (sub_yn === 'yes' || sub_yn === 'y');
       const subExpired = hasSubsidy && sub_fin_date && sub_fin_date < today;
 
-      const val_sub = parseFloat(String(get(COL.val_sub)).replace(/[^0-9.-]/g,'')) || 0;
-      const val_reg = parseFloat(String(get(COL.val_reg)).replace(/[^0-9.-]/g,'')) || 0;
-      const total_rev_raw = parseFloat(String(get(COL.total_rev)).replace(/[^0-9.-]/g,'')) || 0;
-      const total_rev = total_rev_raw > 0 ? total_rev_raw : (val_sub + val_reg);
+      const val_sub  = parseFloat(String(get(COL.val_sub) ).replace(/[^0-9.-]/g,'')) || 0;
+      const val_reg  = parseFloat(String(get(COL.val_reg) ).replace(/[^0-9.-]/g,'')) || 0;
+      const fee_fx   = parseFloat(String(get(COL.fee_fx)  ).replace(/[^0-9.-]/g,'')) || 0;
+      const fee_imp  = parseFloat(String(get(COL.fee_imp) ).replace(/[^0-9.-]/g,'')) || 0;
+      const total_rev = val_sub + val_reg + fee_fx + fee_imp;
 
       return {
         id:          String(get(COL.id)     || '').trim(),
@@ -645,15 +688,19 @@ function parseAndRender(table) {
         subExpired,
         val_sub,
         val_reg,
+        fee_fx,
+        fee_imp,
         total_rev,
       };
     })
     .filter(Boolean);
 
   document.getElementById('row-count').textContent = `${ALL_CLIENTS.length} clientes Amazon`;
+  SELECTED_HIST_IDS = new Set();
   applyFilters();
   buildCharts();
   buildSubsidyList();
+  buildHistoricalSelector();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -789,23 +836,20 @@ function buildCharts() {
 }
 
 function getBarData(metric) {
+  const getVal = (c) =>
+    metric === 'sub'   ? c.val_sub  :
+    metric === 'reg'   ? c.val_reg  :
+    c.total_rev; // sub + reg + fee_fx + fee_imp
+
   const sorted = [...ALL_CLIENTS]
-    .filter(c => {
-      if (metric === 'sub')   return c.val_sub  > 0;
-      if (metric === 'reg')   return c.val_reg  > 0;
-      if (metric === 'total') return c.total_rev > 0;
-      return true;
-    })
-    .sort((a, b) => {
-      const va = metric === 'sub' ? a.val_sub : metric === 'reg' ? a.val_reg : a.total_rev;
-      const vb = metric === 'sub' ? b.val_sub : metric === 'reg' ? b.val_reg : b.total_rev;
-      return vb - va;
-    })
+    .filter(c => getVal(c) > 0)
+    .sort((a, b) => getVal(b) - getVal(a))
     .slice(0, 20);
 
   return {
-    labels: sorted.map(c => c.nombre.length > 28 ? c.nombre.slice(0,26)+'…' : c.nombre),
-    values: sorted.map(c => metric === 'sub' ? c.val_sub : metric === 'reg' ? c.val_reg : c.total_rev),
+    labels:   sorted.map(c => c.nombre.length > 28 ? c.nombre.slice(0,26)+'…' : c.nombre),
+    values:   sorted.map(c => getVal(c)),
+    clients:  sorted,
     statuses: sorted.map(c => c.status),
   };
 }
@@ -820,6 +864,7 @@ function updateBarChart() {
     'rgba(107,127,163,0.4)'
   );
 
+  chartTop20._barData = d.clients;
   chartTop20.data.labels   = d.labels;
   chartTop20.data.datasets[0].data             = d.values;
   chartTop20.data.datasets[0].backgroundColor  = colors;
@@ -827,8 +872,9 @@ function updateBarChart() {
 }
 
 function buildBarChart() {
-  const ctx = document.getElementById('chart-top20').getContext('2d');
-  const d   = getBarData('sub');
+  const ctx    = document.getElementById('chart-top20').getContext('2d');
+  const metric = document.getElementById('chart-metric').value || 'sub';
+  const d      = getBarData(metric);
   const colors = d.statuses.map(s =>
     s === 'active'   ? 'rgba(249,115,22,0.85)' :
     s === 'past_due' ? 'rgba(239,68,68,0.7)'   :
@@ -847,6 +893,7 @@ function buildBarChart() {
         borderWidth: 0,
       }]
     },
+
     options: {
       indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
@@ -854,7 +901,20 @@ function buildBarChart() {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => ` ${fmtMXN(ctx.raw)}`,
+            label: ctx => {
+              const metric = document.getElementById('chart-metric').value;
+              const c = (chartTop20._barData || [])[ctx.dataIndex];
+              if (metric === 'total' && c) {
+                return [
+                  ` Total: ${fmtMXN(ctx.raw)}`,
+                  `  · Suscripción: ${fmtMXN(c.val_sub)}`,
+                  `  · Regulatorio: ${fmtMXN(c.val_reg)}`,
+                  `  · Fee FX: ${fmtMXN(c.fee_fx)}`,
+                  `  · Fee Import: ${fmtMXN(c.fee_imp)}`,
+                ];
+              }
+              return ` ${fmtMXN(ctx.raw)}`;
+            },
           }
         }
       },
@@ -873,6 +933,7 @@ function buildBarChart() {
       }
     }
   });
+  chartTop20._barData = d.clients;
 }
 
 function buildStatusChart() {
@@ -1041,6 +1102,184 @@ function subsidyBadge(c) {
   if (!c.hasSubsidy) return `<span class="badge badge-nosub">Sin subsidio</span>`;
   if (c.subExpired)  return `<span class="badge badge-nomatch">✓ Venció ${c.sub_fin_raw}</span>`;
   return `<span class="badge badge-sub">● ${c.sub_fin_raw}</span>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HISTÓRICO DE REVENUE
+   ══════════════════════════════════════════════════════════════ */
+let chartHistorical = null;
+let SELECTED_HIST_IDS = new Set();
+
+const HIST_COLORS = [
+  '#f97316','#3b82f6','#22c55e','#a855f7','#f59e0b',
+  '#06b6d4','#ec4899','#84cc16','#14b8a6','#f43f5e',
+  '#8b5cf6','#10b981','#fb923c','#60a5fa','#4ade80',
+  '#c084fc','#fbbf24','#22d3ee','#f472b6','#a3e635',
+];
+
+function parseDesde(str) {
+  if (!str) return null;
+  // handles M/D/YY, M/D/YYYY, DD/MM/YYYY, YYYY-MM-DD
+  str = String(str).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return new Date(str);
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    let [a, b, c] = parts.map(Number);
+    if (c < 100) c += 2000;
+    // assume M/D/Y
+    return new Date(c, a - 1, b);
+  }
+  return null;
+}
+
+function buildMonthRange(startDate, endDate) {
+  const months = [];
+  const d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  while (d <= endDate) {
+    months.push(new Date(d));
+    d.setMonth(d.getMonth() + 1);
+  }
+  return months;
+}
+
+function getHistVal(c, metric) {
+  if (metric === 'sub')   return c.val_sub;
+  if (metric === 'reg')   return c.val_reg;
+  return c.total_rev; // sub + reg + fee_fx + fee_imp
+}
+
+function buildHistoricalSelector() {
+  const n = document.getElementById('hist-top-n').value;
+  const selector = document.getElementById('hist-selector');
+  selector.style.display = 'none';
+
+  if (n === 'custom') {
+    selector.style.display = 'flex';
+    selector.classList.add('visible');
+    // rebuild checkboxes
+    const sorted = [...ALL_CLIENTS]
+      .filter(c => c.total_rev > 0 && parseDesde(c.desde))
+      .sort((a, b) => b.total_rev - a.total_rev);
+
+    selector.innerHTML = sorted.map((c, i) => {
+      const checked = i < 10 ? 'checked' : '';
+      if (i < 10) SELECTED_HIST_IDS.add(c.id);
+      return `<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;white-space:nowrap;">
+        <input type="checkbox" value="${esc(c.id)}" ${checked}
+          onchange="toggleHistClient('${esc(c.id)}', this.checked)"
+          style="accent-color:var(--accent);">
+        <span style="color:${HIST_COLORS[i % HIST_COLORS.length]};font-weight:600;">■</span>
+        ${esc(c.nombre)}
+      </label>`;
+    }).join('');
+  }
+
+  rebuildHistorical();
+}
+
+function toggleHistClient(id, checked) {
+  if (checked) SELECTED_HIST_IDS.add(id);
+  else         SELECTED_HIST_IDS.delete(id);
+  rebuildHistorical();
+}
+
+function rebuildHistorical() {
+  const n      = document.getElementById('hist-top-n').value;
+  const metric = document.getElementById('hist-metric').value;
+  const mode   = document.getElementById('hist-mode').value;
+
+  let clients;
+  if (n === 'custom') {
+    clients = ALL_CLIENTS.filter(c => SELECTED_HIST_IDS.has(c.id));
+  } else {
+    clients = [...ALL_CLIENTS]
+      .filter(c => getHistVal(c, metric) > 0 && parseDesde(c.desde))
+      .sort((a, b) => getHistVal(b, metric) - getHistVal(a, metric))
+      .slice(0, parseInt(n));
+  }
+
+  clients = clients.filter(c => parseDesde(c.desde));
+  if (!clients.length) return;
+
+  const today = new Date();
+  const earliest = clients.reduce((min, c) => {
+    const d = parseDesde(c.desde);
+    return d && d < min ? d : min;
+  }, today);
+
+  const months = buildMonthRange(earliest, today);
+  const labels = months.map(m => m.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }));
+
+  const datasets = clients.map((c, i) => {
+    const startDate = parseDesde(c.desde);
+    const monthlyVal = getHistVal(c, metric);
+    let cumulative = 0;
+
+    const data = months.map(m => {
+      if (startDate && m >= new Date(startDate.getFullYear(), startDate.getMonth(), 1)) {
+        cumulative += monthlyVal;
+        return mode === 'cumulative' ? cumulative : monthlyVal;
+      }
+      return mode === 'cumulative' ? cumulative : 0;
+    });
+
+    const color = HIST_COLORS[i % HIST_COLORS.length];
+    return {
+      label: c.nombre,
+      data,
+      borderColor: color,
+      backgroundColor: color + '22',
+      borderWidth: 2,
+      pointRadius: months.length > 24 ? 0 : 3,
+      pointHoverRadius: 5,
+      fill: mode === 'cumulative',
+      tension: 0.3,
+    };
+  });
+
+  const ctx = document.getElementById('chart-historical').getContext('2d');
+  if (chartHistorical) chartHistorical.destroy();
+  chartHistorical = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${fmtMXN(ctx.raw)}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,45,69,0.5)' },
+          ticks: { color: '#6b7fa3', font: { size: 10 },
+            maxTicksLimit: 18, maxRotation: 0 }
+        },
+        y: {
+          grid: { color: 'rgba(30,45,69,0.7)' },
+          ticks: {
+            color: '#6b7fa3', font: { size: 11 },
+            callback: v => `$${(v/1000).toFixed(0)}k`
+          }
+        }
+      }
+    }
+  });
+
+  // Legend
+  const legend = document.getElementById('hist-legend');
+  legend.innerHTML = clients.map((c, i) => {
+    const color = HIST_COLORS[i % HIST_COLORS.length];
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+      <div style="width:12px;height:3px;background:${color};border-radius:2px;flex-shrink:0;"></div>
+      <span style="color:#c0cce4;">${esc(c.nombre)}</span>
+      <span style="color:var(--muted);margin-left:2px;">${fmtMXN(getHistVal(c, metric))}/mes</span>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>
