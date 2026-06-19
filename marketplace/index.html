@@ -245,7 +245,11 @@ input[type="text"] { width: 220px; }
   background: var(--card); border: 1px solid var(--border);
   border-radius: 14px; overflow: hidden; margin-bottom: 28px;
 }
-.table-scroll { overflow-x: auto; }
+.table-scroll { overflow-x: auto; overflow-y: auto; max-height: 480px; }
+.table-scroll thead th {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--card2);
+}
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead tr { background: var(--card2); }
 th {
