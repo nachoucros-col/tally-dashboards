@@ -313,6 +313,19 @@ footer {
   font-size: 14px; display: none;
 }
 
+/* ── NRR DIVIDER ────────────────────────────────────────────── */
+.nrr-divider {
+  display: flex; align-items: center; gap: 14px;
+  margin: 32px 0 14px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px; color: var(--accent);
+}
+.nrr-divider::before, .nrr-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(to right, var(--border), transparent);
+}
+.nrr-divider::before { background: linear-gradient(to right, transparent, var(--accent)); opacity: .3; }
+.nrr-divider::after  { background: linear-gradient(to left, transparent, var(--border)); }
+
 /* ── HISTORICAL SELECTOR ────────────────────────────────────── */
 #hist-selector { display: none; }
 #hist-selector.visible { display: flex !important; }
@@ -391,6 +404,81 @@ footer {
       <div class="kpi-label">Past Due (riesgo)</div>
       <div class="kpi-value" id="kpi-pastdue" style="color:var(--red)">—</div>
       <div class="kpi-sub" id="kpi-pastdue-rev">Revenue en riesgo: —</div>
+    </div>
+  </div>
+
+  <!-- ══ NRR SECTION ══════════════════════════════════════════ -->
+  <div class="nrr-divider">
+    <span>NRR · Net Revenue Retention</span>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6;">
+    <strong style="color:var(--text);">Base 100%</strong> = suscripción mensual recurrente (lo que el cliente se compromete a pagar).
+    Todo lo adicional — Fee FX, Fee Import y Ventas Regulatorio — constituye <strong style="color:var(--accent);">expansión por encima del NRR</strong>.
+  </div>
+
+  <!-- NRR KPIs -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+    <div class="kpi-card" style="border-color:rgba(249,115,22,.3);">
+      <div class="kpi-label">NRR Portfolio</div>
+      <div class="kpi-value" id="nrr-portfolio" style="color:var(--accent);">—</div>
+      <div class="kpi-sub">Revenue total ÷ Revenue suscripción</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Clientes con Expansión</div>
+      <div class="kpi-value" id="nrr-expanded-count">—</div>
+      <div class="kpi-sub" id="nrr-expanded-sub">— con suscripción activa</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Revenue de Expansión Total</div>
+      <div class="kpi-value" id="nrr-expansion-rev" style="color:var(--green);">—</div>
+      <div class="kpi-sub">Fee FX + Fee Import + Regulatorio</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">NRR Máximo (cliente)</div>
+      <div class="kpi-value" id="nrr-max-pct" style="color:var(--purple);">—</div>
+      <div class="kpi-sub" id="nrr-max-name">—</div>
+    </div>
+  </div>
+
+  <!-- NRR Charts: bar + line -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;">
+
+    <div class="chart-card">
+      <div class="section-row" style="margin-bottom:14px;">
+        <div>
+          <div class="section-title">Top 10 · Expansión sobre NRR</div>
+          <div class="section-sub">Gris = suscripción (100%) · Naranja = expansión acumulada</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:340px;"><canvas id="chart-nrr-bar"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="section-row" style="margin-bottom:14px;">
+        <div>
+          <div class="section-title">Trayectoria NRR% Acumulado</div>
+          <div class="section-sub">Línea punteada = 100% · Por encima = expansión activa</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:340px;"><canvas id="chart-nrr-line"></canvas></div>
+      <div id="nrr-line-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- WHALE CURVE -->
+  <div class="chart-card" style="margin-bottom:28px;">
+    <div class="section-row" style="margin-bottom:6px;">
+      <div>
+        <div class="section-title">🐋 Whale Curve · Concentración de Revenue</div>
+        <div class="section-sub">% de revenue acumulado vs % de clientes (ordenados de mayor a menor aportación)</div>
+      </div>
+      <div id="whale-headline" style="font-size:13px;color:var(--muted);text-align:right;max-width:260px;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;margin-top:16px;">
+      <div class="chart-wrap" style="height:300px;"><canvas id="chart-whale"></canvas></div>
+      <div id="whale-summary" style="font-size:13px;line-height:1.9;color:var(--muted);
+        background:var(--bg2);border-radius:12px;padding:18px 20px;border:1px solid var(--border);">
+      </div>
     </div>
   </div>
 
@@ -772,6 +860,7 @@ function parseAndRender(table) {
   document.getElementById('row-count').textContent = `${ALL_CLIENTS.length} clientes Amazon`;
   SELECTED_HIST_IDS = new Set();
   applyFilters();
+  buildNRRSection();
   buildCharts();
   buildSubsidyList();
 
@@ -1183,6 +1272,343 @@ function subsidyBadge(c) {
   if (!c.hasSubsidy) return `<span class="badge badge-nosub">Sin subsidio</span>`;
   if (c.subExpired)  return `<span class="badge badge-nomatch">✓ Venció ${c.sub_fin_raw}</span>`;
   return `<span class="badge badge-sub">● ${c.sub_fin_raw}</span>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NRR · NET REVENUE RETENTION
+   ══════════════════════════════════════════════════════════════ */
+let chartNrrBar  = null;
+let chartNrrLine = null;
+let chartWhale   = null;
+
+function buildNRRSection() {
+  // Enrich each client with expansion data
+  const enriched = ALL_CLIENTS
+    .filter(c => c.val_sub > 0)
+    .map(c => {
+      const totalReg = Object.values(REG_PAYMENTS[c.id] || {}).reduce((s,v)=>s+v, 0);
+      const expansion = totalReg + c.fee_fx + c.fee_imp;
+      const totalPaid = c.val_sub + expansion;
+      const nrrPct    = totalPaid / c.val_sub * 100;
+      return { ...c, totalReg, expansion, totalPaid, nrrPct };
+    });
+
+  // Portfolio NRR
+  const totalSub = enriched.reduce((s,c) => s + c.val_sub, 0);
+  const totalAll = enriched.reduce((s,c) => s + c.totalPaid, 0);
+  const portNRR  = totalSub > 0 ? (totalAll / totalSub * 100) : 100;
+
+  const expanded   = enriched.filter(c => c.nrrPct > 100);
+  const topByNRR   = [...enriched].sort((a,b) => b.nrrPct - a.nrrPct)[0];
+  const totalExp   = enriched.reduce((s,c) => s + c.expansion, 0);
+
+  // KPIs
+  document.getElementById('nrr-portfolio').textContent       = portNRR.toFixed(1) + '%';
+  document.getElementById('nrr-expanded-count').textContent  = expanded.length;
+  document.getElementById('nrr-expanded-sub').textContent    = `de ${enriched.length} con suscripción activa`;
+  document.getElementById('nrr-expansion-rev').textContent   = fmtMXN(totalExp);
+  document.getElementById('nrr-max-pct').textContent         = topByNRR ? topByNRR.nrrPct.toFixed(1)+'%' : '—';
+  document.getElementById('nrr-max-name').textContent        = topByNRR?.nombre || '—';
+
+  // Charts
+  const top10exp = [...enriched]
+    .filter(c => c.expansion > 0)
+    .sort((a,b) => b.expansion - a.expansion)
+    .slice(0, 10);
+
+  buildNRRBarChart(top10exp);
+  buildNRRLineChart(top10exp);
+  buildWhaleCurve(enriched);
+}
+
+function buildNRRBarChart(clients) {
+  const ctx = document.getElementById('chart-nrr-bar').getContext('2d');
+  if (chartNrrBar) chartNrrBar.destroy();
+
+  const labels    = clients.map(c => c.nombre.length > 26 ? c.nombre.slice(0,24)+'…' : c.nombre);
+  const baseSub   = clients.map(c => c.val_sub);
+  const expansion = clients.map(c => c.expansion);
+  const nrrPcts   = clients.map(c => c.nrrPct.toFixed(1)+'%');
+
+  chartNrrBar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Suscripción (100% NRR)',
+          data: baseSub,
+          backgroundColor: 'rgba(107,127,163,0.35)',
+          borderRadius: { topLeft:0, bottomLeft:4, topRight:0, bottomRight:4 },
+          borderWidth: 0,
+        },
+        {
+          label: 'Expansión',
+          data: expansion,
+          backgroundColor: 'rgba(249,115,22,0.85)',
+          borderRadius: { topLeft:0, bottomLeft:0, topRight:6, bottomRight:6 },
+          borderWidth: 0,
+        },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'top',
+          labels: { color: '#6b7fa3', font: { size: 11 }, boxWidth: 12, padding: 16 }
+        },
+        tooltip: {
+          callbacks: {
+            afterTitle: (items) => {
+              const i = items[0].dataIndex;
+              return `NRR: ${nrrPcts[i]}`;
+            },
+            label: ctx => ` ${ctx.dataset.label}: ${fmtMXN(ctx.raw)}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          grid: { color: 'rgba(30,45,69,0.6)' },
+          ticks: { color: '#6b7fa3', font:{size:11}, callback: v => `$${(v/1000).toFixed(0)}k` }
+        },
+        y: {
+          stacked: true,
+          grid: { display: false },
+          ticks: { color: '#c0cce4', font:{size:11} }
+        }
+      }
+    }
+  });
+}
+
+function buildNRRLineChart(clients) {
+  const ctx = document.getElementById('chart-nrr-line').getContext('2d');
+  if (chartNrrLine) chartNrrLine.destroy();
+
+  const today   = new Date();
+  const earliest = clients.reduce((min, c) => {
+    const d = parseDesde(c.desde);
+    return d && d < min ? d : min;
+  }, today);
+  const months  = buildMonthRange(earliest, today);
+  const labels  = months.map(m => m.toLocaleDateString('es-MX',{month:'short',year:'2-digit'}));
+
+  const datasets = clients.map((c, i) => {
+    const startMonth = parseDesde(c.desde)
+      ? new Date(parseDesde(c.desde).getFullYear(), parseDesde(c.desde).getMonth(), 1)
+      : null;
+
+    let cumSub = 0, cumExp = 0;
+
+    const data = months.map(m => {
+      const mk = `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}`;
+      const afterStart = startMonth && m >= startMonth;
+      if (afterStart) cumSub += c.val_sub;
+      cumExp += (REG_PAYMENTS[c.id]?.[mk] || 0);
+      // fee_fx and fee_imp: spread evenly across active months
+      if (afterStart) cumExp += (c.fee_fx + c.fee_imp);
+      if (cumSub === 0) return null;
+      return parseFloat(((cumSub + cumExp) / cumSub * 100).toFixed(1));
+    });
+
+    const color = HIST_COLORS[i % HIST_COLORS.length];
+    return {
+      label: c.nombre,
+      data,
+      borderColor: color,
+      backgroundColor: color + '15',
+      borderWidth: 2,
+      pointRadius: months.length > 18 ? 0 : 3,
+      pointHoverRadius: 5,
+      tension: 0.3,
+      spanGaps: false,
+    };
+  });
+
+  // Reference line at 100%
+  datasets.push({
+    label: '100% NRR',
+    data: months.map(() => 100),
+    borderColor: 'rgba(107,127,163,0.5)',
+    borderWidth: 1,
+    borderDash: [6, 4],
+    pointRadius: 0,
+    fill: false,
+    tension: 0,
+  });
+
+  chartNrrLine = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          filter: item => item.dataset.label !== '100% NRR',
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.raw !== null ? ctx.raw+'%' : '—'}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,45,69,0.5)' },
+          ticks: { color: '#6b7fa3', font:{size:10}, maxTicksLimit:12, maxRotation:0 }
+        },
+        y: {
+          grid: { color: 'rgba(30,45,69,0.7)' },
+          ticks: { color: '#6b7fa3', font:{size:11}, callback: v => v+'%' },
+          min: 90,
+        }
+      }
+    }
+  });
+
+  // Legend
+  const legend = document.getElementById('nrr-line-legend');
+  legend.innerHTML = clients.map((c,i) => {
+    const color = HIST_COLORS[i % HIST_COLORS.length];
+    return `<div style="display:flex;align-items:center;gap:5px;font-size:11px;">
+      <div style="width:12px;height:2px;background:${color};border-radius:1px;"></div>
+      <span style="color:#c0cce4;">${esc(c.nombre.length>22?c.nombre.slice(0,20)+'…':c.nombre)}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   WHALE CURVE
+   ══════════════════════════════════════════════════════════════ */
+function buildWhaleCurve(enriched) {
+  const ctx = document.getElementById('chart-whale').getContext('2d');
+  if (chartWhale) chartWhale.destroy();
+
+  // Sort all clients by totalPaid desc
+  const sorted = [...enriched].sort((a,b) => b.totalPaid - a.totalPaid);
+  const totalRevAll = sorted.reduce((s,c) => s + c.totalPaid, 0);
+  const n = sorted.length;
+
+  // Build curve points
+  let cumRev = 0;
+  const points = sorted.map((c, i) => {
+    cumRev += c.totalPaid;
+    return {
+      x: parseFloat(((i+1)/n*100).toFixed(2)),
+      y: parseFloat((cumRev/totalRevAll*100).toFixed(2)),
+      client: c,
+    };
+  });
+
+  // Key insight points
+  const p20 = points.find(p => p.x >= 20) || points[Math.floor(n*0.2)];
+  const p10 = points.find(p => p.x >= 10) || points[Math.floor(n*0.1)];
+  const p50 = points.find(p => p.x >= 50) || points[Math.floor(n*0.5)];
+
+  // Update headline
+  document.getElementById('whale-headline').innerHTML =
+    `Top <strong style="color:var(--accent);">10%</strong> de clientes genera
+     <strong style="color:var(--accent);">${p10?.y?.toFixed(1)}%</strong> del revenue`;
+
+  chartWhale = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'Whale Curve',
+          data: points.map(p => ({x: p.x, y: p.y})),
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249,115,22,0.08)',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          fill: true,
+          tension: 0.2,
+        },
+        {
+          label: 'Distribución equitativa (referencia)',
+          data: [{x:0,y:0},{x:100,y:100}],
+          borderColor: 'rgba(107,127,163,0.35)',
+          borderWidth: 1,
+          borderDash: [6,4],
+          pointRadius: 0,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => {
+              const i = Math.round(items[0].parsed.x / 100 * (n-1));
+              return sorted[i]?.nombre || '';
+            },
+            label: ctx => [
+              ` % clientes acumulado: ${ctx.parsed.x.toFixed(1)}%`,
+              ` % revenue acumulado: ${ctx.parsed.y.toFixed(1)}%`,
+            ]
+          }
+        },
+        annotation: {}
+      },
+      scales: {
+        x: {
+          type: 'linear', min: 0, max: 100,
+          title: { display: true, text: '% de clientes (acumulado)', color: '#6b7fa3', font:{size:11} },
+          grid: { color: 'rgba(30,45,69,0.6)' },
+          ticks: { color: '#6b7fa3', font:{size:11}, callback: v => v+'%' }
+        },
+        y: {
+          min: 0, max: 100,
+          title: { display: true, text: '% de revenue (acumulado)', color: '#6b7fa3', font:{size:11} },
+          grid: { color: 'rgba(30,45,69,0.7)' },
+          ticks: { color: '#6b7fa3', font:{size:11}, callback: v => v+'%' }
+        }
+      }
+    }
+  });
+
+  // Summary text
+  const gini = calcGini(sorted.map(c=>c.totalPaid));
+  const top3names = sorted.slice(0,3).map(c=>c.nombre).join(', ');
+  document.getElementById('whale-summary').innerHTML = `
+    <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.6px;">Análisis de concentración</div>
+    <div>📌 El <strong style="color:var(--accent);">10%</strong> de clientes (${Math.ceil(n*0.1)} clientes) genera el
+      <strong style="color:var(--accent);">${p10?.y?.toFixed(1)}%</strong> del revenue total.</div>
+    <div>📌 El <strong style="color:var(--blue);">20%</strong> de clientes genera el
+      <strong style="color:var(--blue);">${p20?.y?.toFixed(1)}%</strong> del revenue total.</div>
+    <div>📌 El <strong>50%</strong> de clientes concentra el
+      <strong>${p50?.y?.toFixed(1)}%</strong> del revenue total.</div>
+    <div style="margin-top:8px;">🏆 <strong>Top 3 clientes:</strong> ${esc(top3names)}</div>
+    <div style="margin-top:4px;">📊 <strong>Coeficiente Gini:</strong>
+      <strong style="color:${gini>0.6?'var(--red)':gini>0.4?'var(--yellow)':'var(--green)'};">${gini.toFixed(2)}</strong>
+      — ${gini>0.6?'Alta concentración (riesgo de dependencia)':gini>0.4?'Concentración moderada':'Distribución saludable'}</div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+      Un Gini cercano a 1.0 significa que pocos clientes concentran casi todo el revenue.
+      Un Gini cercano a 0 indica distribución equitativa entre todos los clientes.
+    </div>
+  `;
+}
+
+function calcGini(values) {
+  const n = values.length;
+  if (!n) return 0;
+  const sorted = [...values].sort((a,b)=>a-b);
+  const sum = sorted.reduce((s,v)=>s+v,0);
+  if (!sum) return 0;
+  let cumSum = 0;
+  let giniNum = 0;
+  sorted.forEach((v,i) => {
+    cumSum += v;
+    giniNum += (2*(i+1) - n - 1) * v;
+  });
+  return giniNum / (n * sum);
 }
 
 /* ══════════════════════════════════════════════════════════════
