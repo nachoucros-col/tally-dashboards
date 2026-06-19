@@ -313,6 +313,44 @@ footer {
   font-size: 14px; display: none;
 }
 
+/* ── WHALE SEGMENTS ─────────────────────────────────────────── */
+.whale-seg {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px;
+}
+.whale-seg-header {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .7px; display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+.whale-seg-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: currentColor; color: var(--bg2);
+  font-size: 11px; font-weight: 900; flex-shrink: 0;
+}
+.whale-seg-meta {
+  font-size: 20px; font-weight: 700; color: var(--text);
+  margin-bottom: 4px;
+}
+.whale-seg-sub {
+  font-size: 11px; color: var(--muted); margin-bottom: 12px;
+}
+.whale-seg-list {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 220px; overflow-y: auto;
+}
+.whale-client-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 7px 10px; border-radius: 7px;
+  background: var(--card); font-size: 12px;
+}
+.whale-client-name { color: var(--text); font-weight: 500; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.whale-client-val  { color: var(--muted); white-space: nowrap; font-size: 11px; }
+.whale-client-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px;
+  font-weight: 600; white-space: nowrap; }
+
 /* ── NRR DIVIDER ────────────────────────────────────────────── */
 .nrr-divider {
   display: flex; align-items: center; gap: 14px;
@@ -474,11 +512,40 @@ footer {
       </div>
       <div id="whale-headline" style="font-size:13px;color:var(--muted);text-align:right;max-width:260px;"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;margin-top:16px;">
-      <div class="chart-wrap" style="height:300px;"><canvas id="chart-whale"></canvas></div>
-      <div id="whale-summary" style="font-size:13px;line-height:1.9;color:var(--muted);
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start;margin-top:16px;">
+      <div class="chart-wrap" style="height:280px;"><canvas id="chart-whale"></canvas></div>
+      <div id="whale-concentration" style="font-size:13px;line-height:1.9;color:var(--muted);
         background:var(--bg2);border-radius:12px;padding:18px 20px;border:1px solid var(--border);">
       </div>
+    </div>
+
+    <!-- Executive summary: 3 segments -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:20px;">
+
+      <div class="whale-seg" style="border-color:rgba(34,197,94,.3);">
+        <div class="whale-seg-header" style="color:var(--green);">
+          <span class="whale-seg-icon">↑</span> Generan Ganancias
+        </div>
+        <div class="whale-seg-meta" id="whale-profit-meta"></div>
+        <div id="whale-profit-list" class="whale-seg-list"></div>
+      </div>
+
+      <div class="whale-seg" style="border-color:rgba(245,158,11,.3);">
+        <div class="whale-seg-header" style="color:var(--yellow);">
+          <span class="whale-seg-icon">→</span> Cubren Costos
+        </div>
+        <div class="whale-seg-meta" id="whale-break-meta"></div>
+        <div id="whale-break-list" class="whale-seg-list"></div>
+      </div>
+
+      <div class="whale-seg" style="border-color:rgba(239,68,68,.3);">
+        <div class="whale-seg-header" style="color:var(--red);">
+          <span class="whale-seg-icon">↓</span> Destruyen Valor
+        </div>
+        <div class="whale-seg-meta" id="whale-risk-meta"></div>
+        <div id="whale-risk-list" class="whale-seg-list"></div>
+      </div>
+
     </div>
   </div>
 
