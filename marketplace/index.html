@@ -1554,12 +1554,87 @@ function buildWhaleCurve(enriched) {
   const ctx = document.getElementById('chart-whale').getContext('2d');
   if (chartWhale) chartWhale.destroy();
 
-  // Sort all clients by totalPaid desc
-  const sorted = [...enriched].sort((a,b) => b.totalPaid - a.totalPaid);
-  const totalRevAll = sorted.reduce((s,c) => s + c.totalPaid, 0);
+  /* ── SEGMENTACIÓN EJECUTIVA ──────────────────────────────────
+     Todos los clientes Amazon (con o sin suscripción)
+     Generan ganancias : NRR > 100%  (expansion revenue > 0)
+     Cubren costos     : NRR = 100%  (solo suscripción, activo)
+     Destruyen valor   : sin pago    (past_due / no stripe / $0)
+  ─────────────────────────────────────────────────────────────*/
+  const ALL_AMZ = ALL_CLIENTS; // already filtered to Amazon
+
+  // Enrich ALL Amazon clients (not just those with val_sub)
+  const allEnriched = ALL_AMZ.map(c => {
+    const found = enriched.find(e => e.id === c.id);
+    if (found) return found;
+    const totalReg  = Object.values(REG_PAYMENTS[c.id] || {}).reduce((s,v)=>s+v, 0);
+    const expansion = totalReg + c.fee_fx + c.fee_imp;
+    const totalPaid = c.val_sub + expansion;
+    const nrrPct    = c.val_sub > 0 ? (totalPaid / c.val_sub * 100) : 0;
+    return { ...c, totalReg, expansion, totalPaid, nrrPct };
+  });
+
+  // Segment
+  const profitClients = allEnriched
+    .filter(c => c.expansion > 0 && (c.status === 'active' || c.status === 'past_due'))
+    .sort((a,b) => b.expansion - a.expansion);
+
+  const breakEvenClients = allEnriched
+    .filter(c => c.expansion === 0 && c.val_sub > 0 && c.status === 'active')
+    .sort((a,b) => b.val_sub - a.val_sub);
+
+  // "Destruyen valor": past_due (pending payment), no match, none, or $0 sub with no expansion
+  const riskClients = allEnriched
+    .filter(c => {
+      if (c.status === 'past_due' && c.expansion === 0) return true;
+      if (c.status === 'no_stripe_match' || c.status === 'none') return true;
+      if (c.val_sub === 0 && c.expansion === 0) return true;
+      return false;
+    })
+    .sort((a,b) => (b.val_sub + b.expansion) - (a.val_sub + a.expansion));
+
+  const totalAllRevenue = allEnriched.reduce((s,c) => s+c.totalPaid, 0);
+
+  const profitRev  = profitClients.reduce((s,c)=>s+c.totalPaid, 0);
+  const breakRev   = breakEvenClients.reduce((s,c)=>s+c.val_sub, 0);
+  const riskRev    = riskClients.reduce((s,c)=>s+c.totalPaid, 0);
+
+  // ── Render segments ────────────────────────────────────────
+  function renderSegment(metaId, listId, clients, revTotal, color, valueKey) {
+    const pct = totalAllRevenue > 0 ? (revTotal/totalAllRevenue*100).toFixed(1) : '0';
+    document.getElementById(metaId).innerHTML =
+      `${clients.length} clientes · ${fmtMXN(revTotal)}
+       <div class="whale-seg-sub">${pct}% del revenue total</div>`;
+
+    document.getElementById(listId).innerHTML = clients.map(c => {
+      const val = valueKey === 'expansion' ? c.expansion : (c.val_sub || c.totalPaid);
+      const badge = c.status === 'past_due'
+        ? `<span class="whale-client-badge" style="background:rgba(239,68,68,.15);color:var(--red);">Past Due</span>`
+        : c.status === 'no_stripe_match'
+        ? `<span class="whale-client-badge" style="background:rgba(245,158,11,.12);color:var(--yellow);">Sin match</span>`
+        : c.status === 'none'
+        ? `<span class="whale-client-badge" style="background:rgba(107,127,163,.12);color:var(--muted);">Sin Stripe</span>`
+        : valueKey === 'expansion'
+        ? `<span class="whale-client-badge" style="background:rgba(34,197,94,.12);color:var(--green);">+${((c.nrrPct-100).toFixed(0))}% NRR</span>`
+        : `<span class="whale-client-badge" style="background:rgba(245,158,11,.1);color:var(--yellow);">100%</span>`;
+      return `<div class="whale-client-row">
+        <span class="whale-client-name">${esc(c.nombre)}</span>
+        ${val > 0 ? `<span class="whale-client-val">${fmtMXN(val)}</span>` : ''}
+        ${badge}
+      </div>`;
+    }).join('') || `<div style="color:var(--muted);font-size:12px;padding:8px 0;">Sin clientes en este segmento</div>`;
+  }
+
+  renderSegment('whale-profit-meta', 'whale-profit-list', profitClients, profitRev,  'green',  'expansion');
+  renderSegment('whale-break-meta',  'whale-break-list',  breakEvenClients, breakRev, 'yellow', 'sub');
+  renderSegment('whale-risk-meta',   'whale-risk-list',   riskClients, riskRev,       'red',    'sub');
+
+  // ── Whale Curve chart ──────────────────────────────────────
+  const sorted = [...allEnriched]
+    .filter(c => c.totalPaid > 0)
+    .sort((a,b) => b.totalPaid - a.totalPaid);
+  const totalRevAll = sorted.reduce((s,c) => s+c.totalPaid, 0);
   const n = sorted.length;
 
-  // Build curve points
   let cumRev = 0;
   const points = sorted.map((c, i) => {
     cumRev += c.totalPaid;
@@ -1570,15 +1645,19 @@ function buildWhaleCurve(enriched) {
     };
   });
 
-  // Key insight points
-  const p20 = points.find(p => p.x >= 20) || points[Math.floor(n*0.2)];
   const p10 = points.find(p => p.x >= 10) || points[Math.floor(n*0.1)];
+  const p20 = points.find(p => p.x >= 20) || points[Math.floor(n*0.2)];
   const p50 = points.find(p => p.x >= 50) || points[Math.floor(n*0.5)];
 
-  // Update headline
   document.getElementById('whale-headline').innerHTML =
     `Top <strong style="color:var(--accent);">10%</strong> de clientes genera
      <strong style="color:var(--accent);">${p10?.y?.toFixed(1)}%</strong> del revenue`;
+
+  // Color points by segment
+  const pointColors = sorted.map(c =>
+    profitClients.find(x=>x.id===c.id) ? '#22c55e' :
+    breakEvenClients.find(x=>x.id===c.id) ? '#f59e0b' : '#ef4444'
+  );
 
   chartWhale = new Chart(ctx, {
     type: 'line',
@@ -1588,19 +1667,19 @@ function buildWhaleCurve(enriched) {
           label: 'Whale Curve',
           data: points.map(p => ({x: p.x, y: p.y})),
           borderColor: '#f97316',
-          backgroundColor: 'rgba(249,115,22,0.08)',
+          backgroundColor: 'rgba(249,115,22,0.07)',
           borderWidth: 2.5,
           pointRadius: 0,
-          pointHoverRadius: 4,
+          pointHoverRadius: 5,
           fill: true,
-          tension: 0.2,
+          tension: 0.25,
         },
         {
-          label: 'Distribución equitativa (referencia)',
+          label: 'Referencia equitativa',
           data: [{x:0,y:0},{x:100,y:100}],
-          borderColor: 'rgba(107,127,163,0.35)',
+          borderColor: 'rgba(107,127,163,0.3)',
           borderWidth: 1,
-          borderDash: [6,4],
+          borderDash: [5,4],
           pointRadius: 0,
           fill: false,
         }
@@ -1613,52 +1692,63 @@ function buildWhaleCurve(enriched) {
         tooltip: {
           callbacks: {
             title: items => {
-              const i = Math.round(items[0].parsed.x / 100 * (n-1));
-              return sorted[i]?.nombre || '';
+              const idx = Math.min(Math.round(items[0].parsed.x / 100 * n), n-1);
+              return sorted[idx]?.nombre || '';
             },
             label: ctx => [
-              ` % clientes acumulado: ${ctx.parsed.x.toFixed(1)}%`,
-              ` % revenue acumulado: ${ctx.parsed.y.toFixed(1)}%`,
+              ` Clientes acumulados: ${ctx.parsed.x.toFixed(1)}%`,
+              ` Revenue acumulado: ${ctx.parsed.y.toFixed(1)}%`,
             ]
           }
-        },
-        annotation: {}
+        }
       },
       scales: {
         x: {
           type: 'linear', min: 0, max: 100,
-          title: { display: true, text: '% de clientes (acumulado)', color: '#6b7fa3', font:{size:11} },
+          title: { display: true, text: '% de clientes (ordenados mayor → menor)', color:'#6b7fa3', font:{size:11} },
           grid: { color: 'rgba(30,45,69,0.6)' },
-          ticks: { color: '#6b7fa3', font:{size:11}, callback: v => v+'%' }
+          ticks: { color:'#6b7fa3', font:{size:11}, callback: v=>v+'%' }
         },
         y: {
           min: 0, max: 100,
-          title: { display: true, text: '% de revenue (acumulado)', color: '#6b7fa3', font:{size:11} },
+          title: { display: true, text: '% de revenue acumulado', color:'#6b7fa3', font:{size:11} },
           grid: { color: 'rgba(30,45,69,0.7)' },
-          ticks: { color: '#6b7fa3', font:{size:11}, callback: v => v+'%' }
+          ticks: { color:'#6b7fa3', font:{size:11}, callback: v=>v+'%' }
         }
       }
     }
   });
 
-  // Summary text
+  // ── Concentration panel ────────────────────────────────────
   const gini = calcGini(sorted.map(c=>c.totalPaid));
-  const top3names = sorted.slice(0,3).map(c=>c.nombre).join(', ');
-  document.getElementById('whale-summary').innerHTML = `
-    <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.6px;">Análisis de concentración</div>
-    <div>📌 El <strong style="color:var(--accent);">10%</strong> de clientes (${Math.ceil(n*0.1)} clientes) genera el
-      <strong style="color:var(--accent);">${p10?.y?.toFixed(1)}%</strong> del revenue total.</div>
-    <div>📌 El <strong style="color:var(--blue);">20%</strong> de clientes genera el
-      <strong style="color:var(--blue);">${p20?.y?.toFixed(1)}%</strong> del revenue total.</div>
-    <div>📌 El <strong>50%</strong> de clientes concentra el
-      <strong>${p50?.y?.toFixed(1)}%</strong> del revenue total.</div>
-    <div style="margin-top:8px;">🏆 <strong>Top 3 clientes:</strong> ${esc(top3names)}</div>
-    <div style="margin-top:4px;">📊 <strong>Coeficiente Gini:</strong>
-      <strong style="color:${gini>0.6?'var(--red)':gini>0.4?'var(--yellow)':'var(--green)'};">${gini.toFixed(2)}</strong>
-      — ${gini>0.6?'Alta concentración (riesgo de dependencia)':gini>0.4?'Concentración moderada':'Distribución saludable'}</div>
-    <div style="margin-top:8px;font-size:11px;color:var(--muted);">
-      Un Gini cercano a 1.0 significa que pocos clientes concentran casi todo el revenue.
-      Un Gini cercano a 0 indica distribución equitativa entre todos los clientes.
+  document.getElementById('whale-concentration').innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;
+      letter-spacing:.6px;margin-bottom:12px;">Concentración de Revenue</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${[
+        { label:'Top 10% clientes', x: p10?.x, y: p10?.y, color:'var(--accent)' },
+        { label:'Top 20% clientes', x: p20?.x, y: p20?.y, color:'var(--blue)' },
+        { label:'Top 50% clientes', x: p50?.x, y: p50?.y, color:'var(--muted)' },
+      ].map(({label,x,y,color}) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--muted);">${label}</span>
+          <strong style="color:${color};">${y?.toFixed(1)}% revenue</strong>
+        </div>
+        <div style="height:4px;background:var(--border);border-radius:2px;margin-top:-4px;">
+          <div style="height:100%;width:${y?.toFixed(1)}%;background:${color};border-radius:2px;"></div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Coeficiente Gini</div>
+      <div style="font-size:22px;font-weight:700;
+        color:${gini>0.6?'var(--red)':gini>0.4?'var(--yellow)':'var(--green)'};">
+        ${gini.toFixed(2)}
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+        ${gini>0.6?'⚠️ Alta concentración — riesgo de dependencia':
+          gini>0.4?'⚡ Concentración moderada — monitorear':'✅ Distribución saludable'}
+      </div>
     </div>
   `;
 }
