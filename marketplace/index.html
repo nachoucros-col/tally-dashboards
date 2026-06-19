@@ -547,6 +547,11 @@ footer {
       </div>
 
     </div>
+
+    <!-- Executive Interpretation -->
+    <div id="whale-interpretation" style="margin-top:20px;background:var(--bg2);
+      border:1px solid var(--border);border-radius:14px;padding:24px 28px;">
+    </div>
   </div>
 
   <!-- CHARTS ROW -->
@@ -1719,7 +1724,7 @@ function buildWhaleCurve(enriched) {
     }
   });
 
-  // ── Concentration panel ────────────────────────────────────
+  // ── Concentration panel + interpretation ──────────────────
   const gini = calcGini(sorted.map(c=>c.totalPaid));
   document.getElementById('whale-concentration').innerHTML = `
     <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;
@@ -1751,6 +1756,136 @@ function buildWhaleCurve(enriched) {
       </div>
     </div>
   `;
+
+  // Portfolio NRR for interpretation
+  const totalSub2 = allEnriched.filter(c=>c.val_sub>0).reduce((s,c)=>s+c.val_sub,0);
+  const totalAll2 = allEnriched.filter(c=>c.val_sub>0).reduce((s,c)=>s+c.totalPaid,0);
+  const portNRR2  = totalSub2 > 0 ? (totalAll2/totalSub2*100) : 100;
+
+  buildWhaleInterpretation({
+    gini, p10, p20, p50, n,
+    profitClients, breakEvenClients, riskClients,
+    totalRevAll, sorted,
+    portNRR: portNRR2,
+  });
+}
+
+function buildWhaleInterpretation({ gini, p10, p20, p50, n,
+  profitClients, breakEvenClients, riskClients,
+  totalRevAll, sorted, portNRR }) {
+
+  const topClient      = sorted[0];
+  const topClientShare = totalRevAll > 0 ? (topClient?.totalPaid / totalRevAll * 100).toFixed(1) : 0;
+  const top3Rev        = sorted.slice(0,3).reduce((s,c)=>s+c.totalPaid,0);
+  const top3Share      = totalRevAll > 0 ? (top3Rev / totalRevAll * 100).toFixed(1) : 0;
+  const riskRevPct     = totalRevAll > 0
+    ? (riskClients.reduce((s,c)=>s+c.totalPaid,0) / totalRevAll * 100).toFixed(1)
+    : 0;
+  const pastDueCount   = riskClients.filter(c=>c.status==='past_due').length;
+  const noMatchCount   = riskClients.filter(c=>c.status==='no_stripe_match'||c.status==='none').length;
+
+  // Gini interpretation tier
+  const giniTier = gini < 0.3 ? 'low' : gini < 0.55 ? 'medium' : 'high';
+
+  const giniHeadline = {
+    low:    `Un Gini de <strong>${gini.toFixed(2)}</strong> indica ingresos muy equilibrados`,
+    medium: `Un Gini de <strong>${gini.toFixed(2)}</strong> indica concentración moderada`,
+    high:   `Un Gini de <strong>${gini.toFixed(2)}</strong> indica alta concentración de revenue`,
+  }[giniTier];
+
+  const giniExplain = {
+    low: `Tus ${n} clientes Amazon generan revenue muy repartido: ningún cliente domina la cartera.
+          El top 10% (${Math.ceil(n*0.1)} clientes) concentra solo el ${p10?.y?.toFixed(1)}% del total,
+          y el top 20% llega al ${p20?.y?.toFixed(1)}%. Esto es inusualmente saludable para una cartera SaaS.`,
+    medium: `Existe una concentración moderada: el top 10% (${Math.ceil(n*0.1)} clientes) genera el ${p10?.y?.toFixed(1)}%
+             del revenue, y el top 20% alcanza el ${p20?.y?.toFixed(1)}%. Hay dependencia notable pero no crítica.`,
+    high: `El revenue está muy concentrado: el top 10% (${Math.ceil(n*0.1)} clientes) genera el ${p10?.y?.toFixed(1)}%
+           del total. <strong style="color:var(--red);">${topClient?.nombre}</strong> solo representa
+           el ${topClientShare}% del revenue de toda la cartera Amazon.`,
+  }[giniTier];
+
+  // Dynamic risks
+  const risks = [];
+  if (pastDueCount > 0)
+    risks.push(`<strong>${pastDueCount} cliente${pastDueCount>1?'s':''} en past_due</strong> — están recibiendo el servicio sin pagar. Cada mes que pasa sin cobrar es revenue reconocido que podría convertirse en incobrable.`);
+  if (noMatchCount > 0)
+    risks.push(`<strong>${noMatchCount} cliente${noMatchCount>1?'s':''} sin match en Stripe</strong> — no tienen suscripción activa registrada. Tally les presta servicio sin facturación garantizada.`);
+  if (giniTier === 'low')
+    risks.push(`Con un Gini bajo, el modelo de crecimiento requiere incorporar muchos clientes nuevos para mover el needle de revenue. Sumar un cliente "grande" impacta poco si todos pagan montos similares.`);
+  if (giniTier === 'high')
+    risks.push(`Alta concentración: si <strong>${topClient?.nombre}</strong> (${topClientShare}% del revenue) cancela o renegocia, el impacto en el P&L sería inmediato y difícil de absorber con la cartera restante.`);
+  if (breakEvenClients.length > profitClients.length)
+    risks.push(`La mayoría de clientes (${breakEvenClients.length}) paga solo su suscripción sin generar expansión. El ${portNRR.toFixed(1)}% de NRR portfolio depende de que ${profitClients.length} clientes compren servicios adicionales.`);
+  if (p50?.y < 80)
+    risks.push(`El 50% de clientes menos rentables aporta solo el ${(100 - p50?.y).toFixed(1)}% del revenue. Existe una "cola larga" de clientes de bajo valor que consumen capacidad operativa desproporcionada.`);
+
+  // Dynamic advantages
+  const advantages = [];
+  if (giniTier === 'low')
+    advantages.push(`<strong>Resiliencia ante churn:</strong> ningún cliente representa más del ${topClientShare}% del revenue. Perder un cliente, incluso el más valioso, tiene impacto acotado y manejable.`);
+  if (profitClients.length > 0)
+    advantages.push(`<strong>${profitClients.length} clientes generan expansión</strong> — ya tienen el hábito de comprar servicios adicionales (regulatorio, FX, importación). Son los mejores candidatos a upsell sistemático.`);
+  if (portNRR > 105)
+    advantages.push(`<strong>NRR Portfolio del ${portNRR.toFixed(1)}%</strong> — por cada $100 de suscripción que cobras, recolectas $${portNRR.toFixed(0)} en total. Esto indica que el producto base abre la puerta a revenue adicional.`);
+  advantages.push(`<strong>Base de clientes escalable:</strong> con ${n} clientes activos y un modelo de precio fijo ($9,500 MXN/mes), el revenue es altamente predecible. El flujo de caja base es estable y modelable.`);
+  if (giniTier !== 'high')
+    advantages.push(`<strong>Sin dependencia crítica:</strong> los 3 clientes más grandes (${top3Share}% del revenue) no son suficientes para comprometer la operación si se fueran simultáneamente.`);
+
+  // Dynamic disadvantages
+  const disadvantages = [];
+  if (giniTier === 'low')
+    disadvantages.push(`<strong>Techo de crecimiento por cliente bajo:</strong> con revenue muy distribuido y una suscripción estándar de $9,500 MXN, el único camino para hacer crecer el ticket promedio es la expansión (servicios adicionales), que hoy solo ocurre en ${profitClients.length} clientes.`);
+  disadvantages.push(`<strong>${breakEvenClients.length} clientes en modo "solo suscripción"</strong> — están pagando el mínimo. No han cruzado el umbral de comprar regulatorio u otros servicios. Representan ${fmtMXN(breakEvenClients.reduce((s,c)=>s+c.val_sub,0))} de revenue estancado en 100% NRR.`);
+  if (riskClients.length > 0)
+    disadvantages.push(`<strong>${riskClients.length} clientes en zona de riesgo</strong> (${riskRevPct}% del revenue potencial) que no tienen facturación activa confirmada en Stripe. Normalizar esto es prioritario para reportar revenue limpio.`);
+  disadvantages.push(`<strong>El modelo regulatorio es episódico:</strong> las Ventas Regulatorio ocurren en fechas puntuales, no son recurrentes. Esto genera picos de ingreso irregular que dificultan el forecast mensual preciso.`);
+
+  const html = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+      <div style="width:4px;height:32px;background:var(--accent);border-radius:2px;"></div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);">Lectura ejecutiva · Whale Curve</div>
+        <div style="font-size:12px;color:var(--muted);">Interpretación basada en datos actuales de la cartera Amazon</div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:20px;">
+      ${giniHeadline}. ${giniExplain}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+
+      <div style="padding:16px 18px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+          color:var(--red);margin-bottom:12px;">⚠️ Riesgos actuales</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+          ${risks.map(r=>`<li style="font-size:12px;color:var(--muted);line-height:1.6;
+            padding-left:12px;border-left:2px solid rgba(239,68,68,.4);">${r}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div style="padding:16px 18px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:10px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+          color:var(--green);margin-bottom:12px;">✅ Ventajas del modelo actual</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+          ${advantages.map(a=>`<li style="font-size:12px;color:var(--muted);line-height:1.6;
+            padding-left:12px;border-left:2px solid rgba(34,197,94,.4);">${a}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div style="padding:16px 18px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:10px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+          color:var(--yellow);margin-bottom:12px;">⚡ Desventajas estructurales</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+          ${disadvantages.map(d=>`<li style="font-size:12px;color:var(--muted);line-height:1.6;
+            padding-left:12px;border-left:2px solid rgba(245,158,11,.4);">${d}</li>`).join('')}
+        </ul>
+      </div>
+
+    </div>
+  `;
+
+  document.getElementById('whale-interpretation').innerHTML = html;
 }
 
 function calcGini(values) {
