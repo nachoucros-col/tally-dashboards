@@ -416,7 +416,7 @@ footer {
     <div class="kpi-card">
       <div class="kpi-label">Revenue Total Mensual</div>
       <div class="kpi-value" id="kpi-total">—</div>
-      <div class="kpi-sub">Suscripciones Amazon activas</div>
+      <div class="kpi-sub">Suscripción + Regulatorio + Fee FX + Fee Import · Activos</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Clientes Activos</div>
@@ -426,7 +426,7 @@ footer {
     <div class="kpi-card">
       <div class="kpi-label">Revenue Promedio / Cliente</div>
       <div class="kpi-value" id="kpi-avg">—</div>
-      <div class="kpi-sub">Clientes con valor registrado</div>
+      <div class="kpi-sub">Clientes activos con revenue > 0</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Cliente Top Revenue</div>
@@ -1030,14 +1030,15 @@ function sortFiltered() {
    ══════════════════════════════════════════════════════════════ */
 function renderKPIs() {
   const active = ALL_CLIENTS.filter(c => c.status === 'active');
-  const withVal = active.filter(c => c.val_sub > 0);
-  const totalRev = withVal.reduce((s, c) => s + c.val_sub, 0);
+  const withVal = active.filter(c => c.total_rev > 0);
+  // Revenue Total = val_sub + val_reg + fee_fx + fee_imp (total_rev ya lo computa)
+  const totalRev = withVal.reduce((s, c) => s + c.total_rev, 0);
   const avgRev   = withVal.length ? totalRev / withVal.length : 0;
   const topClient = [...ALL_CLIENTS].sort((a,b) => b.total_rev - a.total_rev)[0];
   const subActive = ALL_CLIENTS.filter(c => c.hasSubsidy && !c.subExpired);
   const subExp    = ALL_CLIENTS.filter(c => c.subExpired);
   const pastdue   = ALL_CLIENTS.filter(c => c.status === 'past_due');
-  const pastdueRev = pastdue.reduce((s,c) => s + c.val_sub, 0);
+  const pastdueRev = pastdue.reduce((s,c) => s + c.total_rev, 0);
 
   document.getElementById('kpi-total').textContent     = fmtMXN(totalRev);
   document.getElementById('kpi-active').textContent    = active.length;
@@ -1380,11 +1381,12 @@ function buildNRRSection() {
   const enriched = ALL_CLIENTS
     .filter(c => c.val_sub > 0)
     .map(c => {
-      const totalReg = Object.values(REG_PAYMENTS[c.id] || {}).reduce((s,v)=>s+v, 0);
-      const expansion = totalReg + c.fee_fx + c.fee_imp;
+      // Expansión: val_reg del sheet (snapshot mensual) + fee_fx + fee_imp
+      // REG_PAYMENTS es histórico acumulado; usamos val_reg para coherencia con KPIs y tabla
+      const expansion = c.val_reg + c.fee_fx + c.fee_imp;
       const totalPaid = c.val_sub + expansion;
       const nrrPct    = totalPaid / c.val_sub * 100;
-      return { ...c, totalReg, expansion, totalPaid, nrrPct };
+      return { ...c, totalReg: c.val_reg, expansion, totalPaid, nrrPct };
     });
 
   // Portfolio NRR
