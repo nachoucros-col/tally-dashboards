@@ -911,10 +911,16 @@ function parseAndRender(table) {
       const hasSubsidy = (sub_yn === 'yes' || sub_yn === 'y');
       const subExpired = hasSubsidy && sub_fin_date && sub_fin_date < today;
 
-      const val_sub  = parseFloat(String(get(COL.val_sub) ).replace(/[^0-9.-]/g,'')) || 0;
-      const val_reg  = parseFloat(String(get(COL.val_reg) ).replace(/[^0-9.-]/g,'')) || 0;
-      const fee_fx   = parseFloat(String(get(COL.fee_fx)  ).replace(/[^0-9.-]/g,'')) || 0;
-      const fee_imp  = parseFloat(String(get(COL.fee_imp) ).replace(/[^0-9.-]/g,'')) || 0;
+      // For currency cells gviz may return .v=null and only .f="$9,500" — use dual v/f approach
+      const parseMXN = (i) => {
+        const rv = c[i]?.v, rf = c[i]?.f;
+        if (typeof rv === 'number') return rv;
+        return parseFloat(String(rf ?? rv ?? '').replace(/[$,\s]/g,'')) || 0;
+      };
+      const val_sub  = parseMXN(COL.val_sub);
+      const val_reg  = parseMXN(COL.val_reg);
+      const fee_fx   = parseMXN(COL.fee_fx);
+      const fee_imp  = parseMXN(COL.fee_imp);
       const total_rev = val_sub + val_reg + fee_fx + fee_imp;
 
       return {
@@ -938,6 +944,12 @@ function parseAndRender(table) {
     .filter(Boolean);
 
   document.getElementById('row-count').textContent = `${ALL_CLIENTS.length} clientes Amazon`;
+
+  // Debug: log first client with val_sub > 0 to verify currency parsing
+  const sampleRev = ALL_CLIENTS.find(c => c.val_sub > 0);
+  if (sampleRev) console.log('[rev debug] sample client:', sampleRev.nombre, 'val_sub:', sampleRev.val_sub);
+  else console.warn('[rev debug] NO clients with val_sub > 0 — check column J in sheet');
+
   SELECTED_HIST_IDS = new Set();
   applyFilters();
   buildNRRSection();
