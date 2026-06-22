@@ -741,11 +741,13 @@ const COL = {
   sub_yn:   5,   // F - Subsidio (Y/N)
   sub_m:    6,   // G - Subsidio (m)
   sub_fin:  7,   // H - Finaliza subsidio
-  val_sub:  9,   // J - Valor suscripción
-  val_reg:  10,  // K - Ventas Regulatorio
-  fee_fx:   11,  // L - Fee FX
-  fee_imp:  12,  // M - Fee Import
-  total_rev: 20, // U - Total Revenue
+  // I(8)=Recurr_suscrip, J(9)=Estado Suscripción — two columns added to sheet
+  val_sub:  10,  // K - Valor suscripción
+  val_reg:  11,  // L - Ventas Regulatorio
+  fee_fx:   12,  // M - Fee FX (string col, may be null)
+  fee_imp:  13,  // N - Fee Import
+  // U(20)=Admin now — total_rev is computed, not read from sheet
+  total_rev: -1, // computed: val_sub + val_reg + fee_fx + fee_imp
 };
 
 /* ══════════════════════════════════════════════════════════════
