@@ -801,9 +801,17 @@ async function fetchData() {
     // Parse reg sheet (non-fatal if it fails)
     try { parseRegData(stripGviz(text2).table); } catch(e) { console.warn('Reg sheet parse error:', e); }
 
-    parseAndRender(data1.table);
+    // Hide overlay BEFORE rendering so content shows even if a chart throws
     document.getElementById('loading-overlay').style.display = 'none';
     document.getElementById('error-banner').style.display = 'none';
+
+    try {
+      parseAndRender(data1.table);
+    } catch(renderErr) {
+      console.error('Render error:', renderErr);
+      document.getElementById('error-banner').style.display = 'block';
+      document.getElementById('error-detail').textContent   = 'Render: ' + renderErr.message;
+    }
 
     const now = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
     document.getElementById('sync-time').textContent  = now;
@@ -1382,15 +1390,15 @@ function buildNRRSection() {
   document.getElementById('nrr-max-pct').textContent         = topByNRR ? topByNRR.nrrPct.toFixed(1)+'%' : '—';
   document.getElementById('nrr-max-name').textContent        = topByNRR?.nombre || '—';
 
-  // Charts
+  // Charts — each wrapped so one failure doesn't block the others
   const top10exp = [...enriched]
     .filter(c => c.expansion > 0)
     .sort((a,b) => b.expansion - a.expansion)
     .slice(0, 10);
 
-  buildNRRBarChart(top10exp);
-  buildNRRLineChart(top10exp);
-  buildWhaleCurve(enriched);
+  try { buildNRRBarChart(top10exp);  } catch(e) { console.error('NRR bar chart error:', e); }
+  try { buildNRRLineChart(top10exp); } catch(e) { console.error('NRR line chart error:', e); }
+  try { buildWhaleCurve(enriched);   } catch(e) { console.error('Whale curve error:', e); }
 }
 
 function buildNRRBarChart(clients) {
@@ -1411,14 +1419,14 @@ function buildNRRBarChart(clients) {
           label: 'Suscripción (100% NRR)',
           data: baseSub,
           backgroundColor: 'rgba(107,127,163,0.35)',
-          borderRadius: { topLeft:0, bottomLeft:4, topRight:0, bottomRight:4 },
+          borderRadius: 3,
           borderWidth: 0,
         },
         {
           label: 'Expansión',
           data: expansion,
           backgroundColor: 'rgba(249,115,22,0.85)',
-          borderRadius: { topLeft:0, bottomLeft:0, topRight:6, bottomRight:6 },
+          borderRadius: 3,
           borderWidth: 0,
         },
       ]
@@ -1762,12 +1770,14 @@ function buildWhaleCurve(enriched) {
   const totalAll2 = allEnriched.filter(c=>c.val_sub>0).reduce((s,c)=>s+c.totalPaid,0);
   const portNRR2  = totalSub2 > 0 ? (totalAll2/totalSub2*100) : 100;
 
-  buildWhaleInterpretation({
-    gini, p10, p20, p50, n,
-    profitClients, breakEvenClients, riskClients,
-    totalRevAll, sorted,
-    portNRR: portNRR2,
-  });
+  try {
+    buildWhaleInterpretation({
+      gini, p10, p20, p50, n,
+      profitClients, breakEvenClients, riskClients,
+      totalRevAll, sorted,
+      portNRR: portNRR2,
+    });
+  } catch(e) { console.error('Whale interpretation error:', e); }
 }
 
 function buildWhaleInterpretation({ gini, p10, p20, p50, n,
