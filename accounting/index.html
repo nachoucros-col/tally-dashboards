@@ -1194,6 +1194,7 @@ function gateSubmit() {
           <span class="filter-btn active" onclick="filterKPI5('all')" id="kpi5-filter-all">Todos</span>
           <span class="filter-btn" onclick="filterKPI5('caida')" id="kpi5-filter-caida">Caída &gt;50%</span>
           <span class="filter-btn" onclick="filterKPI5('cero')" id="kpi5-filter-cero">Dejaron de vender</span>
+          <span class="filter-btn" onclick="filterKPI5('subida')" id="kpi5-filter-subida">📈 Aumentaron ventas</span>
         </div>
       </div>
       <div style="overflow-x:auto;">
@@ -5405,6 +5406,17 @@ function filterKPI5(type) {
   if (type === 'all')   rows = kpi5AllRows;
   else if (type === 'caida') rows = kpi5AllRows.filter(r => r.deltaPct !== null && r.deltaPct <= -50);
   else if (type === 'cero')  rows = kpi5AllRows.filter(r => r.salesLast === 0 && r.salesPrev > 0);
+  else if (type === 'subida') {
+    // Crecimiento positivo: MoM > 0, incluyendo quienes arrancaron de $0 (nuevos vendedores)
+    rows = kpi5AllRows
+      .filter(r => (r.deltaPct !== null && r.deltaPct > 0) || (r.salesPrev === 0 && r.salesLast > 0))
+      .slice()
+      .sort((a, b) => {
+        const da = a.deltaPct !== null ? a.deltaPct : Infinity; // de $0 a ventas = crecimiento máximo
+        const db = b.deltaPct !== null ? b.deltaPct : Infinity;
+        return db - da;
+      });
+  }
   else rows = kpi5AllRows;
 
   renderKPI5Rows(rows);
