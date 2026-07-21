@@ -1188,7 +1188,7 @@ function gateSubmit() {
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
         <div>
           <div class="card-title">📉 KPI 5 — Clientes con caída de ventas &gt;50% <span class="badge" id="kpi5-badge">—</span></div>
-          <div style="font-size:11px;color:var(--muted);">Comparativo mes anterior vs mes en curso · Solo clientes con ventas en al menos un período</div>
+          <div style="font-size:11px;color:var(--muted);">Comparativo mes anterior vs mes en curso · Solo clientes ya declarados (EstadoCliente = Declarado en Clientes_por_periodo) — los no registrados aún son ruido y se ocultan</div>
         </div>
         <div style="display:flex;gap:8px;">
           <span class="filter-btn active" onclick="filterKPI5('all')" id="kpi5-filter-all">Todos</span>
@@ -5372,6 +5372,9 @@ function renderKPI5() {
     const deltaPct = salesPrev > 0 ? ((salesLast - salesPrev) / salesPrev * 100) : null;
     const owner = clientOwnerMap[id] || '—';
     const estado = (clientDeclMap[id] && clientDeclMap[id][lastPK]) || '—';
+    // Regla (Juan 21-jul-2026): si el cliente NO está registrado en Clientes_por_periodo con
+    // EstadoCliente=Declarado en el período actual, su $0 es ruido (aún no se declara) → fuera.
+    if (String(estado).trim().toLowerCase() !== 'declarado') return null;
     return { id, salesLast, salesPrev, deltaPct, owner, estado };
   }).filter(Boolean);
 
@@ -6051,6 +6054,12 @@ function renderTop5Hist(){
   if(note) note.textContent='Top 5 por ventas de '+MN[lastMon-1]+' 2026 · Enero 2026 → '+MN[lastMon-1]+' 2026';
   if(!renderTop5Hist._named){ renderTop5Hist._named=1; setTimeout(renderTop5Hist,4000); }
 }
+// Vigilante: reintenta dibujar el histórico hasta que exista, sin depender de la ruta de carga
+var top5HistWatch=setInterval(function(){
+  if(top5HistChart){ clearInterval(top5HistWatch); return; }
+  try{ renderTop5Hist(); }catch(e){ console.warn('[top5hist]', e); }
+},4000);
+setTimeout(function(){ clearInterval(top5HistWatch); },180000);
 
 // ══ Roadmap editable — persistido en la pestaña Roadmap_KPIs del Sheet de Tally Ops ══
 const RK_OPS_URL='https://script.google.com/macros/s/AKfycbylh4xs3Ch09rUd05CnfxOE-wgERMCZIW38V-lGIU13DLIaojdynfZlQm8xqV_KLoRY/exec';
