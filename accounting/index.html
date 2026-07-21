@@ -1259,10 +1259,18 @@ function gateSubmit() {
       <div id="rkBoard" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;color:var(--muted);font-size:13px;">Cargando roadmap…</div>
     </div>
 
-    <!-- Modal crear ítem -->
+    <style id="rkStyles">
+      .rk-card{position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;transition:border-color .15s;}
+      .rk-card:hover{border-color:var(--accent);}
+      .rk-acts{position:absolute;top:8px;right:8px;display:flex;gap:6px;opacity:0;transition:opacity .15s;}
+      .rk-card:hover .rk-acts{opacity:1;}
+      .rk-act{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:3px 7px;cursor:pointer;line-height:1;}
+      .rk-act:hover{border-color:var(--accent);}
+    </style>
+    <!-- Modal crear/editar ítem -->
     <div id="rkModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;padding:20px;">
       <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;max-width:440px;width:100%;">
-        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;">＋ Nuevo ítem del roadmap</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;" id="rkModalTitle">＋ Nuevo ítem del roadmap</div>
         <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;">Ítem</label>
         <textarea id="rkTexto" rows="3" placeholder="Describe el proceso o iniciativa…" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
         <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 6px;">Estado</label>
@@ -6116,25 +6124,62 @@ function rkRender(){
     return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;border-top:3px solid '+color+';">'
       +'<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">'+nombre+' <span style="color:var(--muted);font-weight:400;">('+items.length+')</span></div>'
       +(items.length?items.map(function(x,i){
-        return '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;">'
+        return '<div class="rk-card">'
           +'<div style="min-width:22px;height:22px;border-radius:50%;background:'+color+';color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;">'+(i+1)+'</div>'
-          +'<div style="flex:1;"><div style="font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;">'+String(x.texto).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</div>'
-          +'<select onchange="rkMover(\''+x.item_id+'\',this.value)" style="margin-top:4px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:10.5px;padding:2px 6px;">'
+          +'<div style="flex:1;padding-right:56px;"><div style="font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;">'+String(x.texto).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</div>'
+          +'<select onchange="rkMover(\''+x.item_id+'\',this.value)" style="margin-top:6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:10.5px;padding:2px 6px;">'
           +RK_ESTADOS.map(function(e2){return '<option '+(e2[0]===nombre?'selected':'')+'>'+e2[0]+'</option>';}).join('')
-          +'</select></div></div>';
+          +'</select></div>'
+          +'<div class="rk-acts">'
+          +'<button class="rk-act" title="Editar" onclick="rkEditar(\''+x.item_id+'\')">✏️</button>'
+          +'<button class="rk-act" title="Eliminar" onclick="rkEliminar(\''+x.item_id+'\')">🗑</button>'
+          +'</div></div>';
       }).join(''):'<div style="color:var(--muted);font-size:12px;padding:8px 0;">— vacío —</div>')
       +'</div>';
   }).join('');
 }
-function rkAbrirModal(){ document.getElementById('rkModal').style.display='flex'; document.getElementById('rkTexto').value=''; document.getElementById('rkTexto').focus(); }
+var RK_EDIT=null; // item_id en edición (null = creando)
+function rkAbrirModal(){
+  RK_EDIT=null;
+  document.getElementById('rkModalTitle').textContent='＋ Nuevo ítem del roadmap';
+  document.getElementById('rkCrearBtn').textContent='✅ Crear';
+  document.getElementById('rkModal').style.display='flex';
+  document.getElementById('rkTexto').value='';
+  document.getElementById('rkEstado').value='Next Steps';
+  document.getElementById('rkTexto').focus();
+}
+function rkEditar(id){
+  var x=RK_ITEMS.find(function(y){return y.item_id===id;}); if(!x) return;
+  RK_EDIT=id;
+  document.getElementById('rkModalTitle').textContent='✏️ Editar ítem';
+  document.getElementById('rkCrearBtn').textContent='💾 Guardar cambios';
+  document.getElementById('rkModal').style.display='flex';
+  document.getElementById('rkTexto').value=x.texto||'';
+  document.getElementById('rkEstado').value=x.estado||'Next Steps';
+  document.getElementById('rkTexto').focus();
+}
+async function rkEliminar(id){
+  var x=RK_ITEMS.find(function(y){return y.item_id===id;}); if(!x) return;
+  if(!confirm('¿Eliminar este ítem del roadmap?\n\n"'+x.texto+'"')) return;
+  var r=await rkApi('kpi_item_del',{item_id:id});
+  if(r.ok){ RK_ITEMS=RK_ITEMS.filter(function(y){return y.item_id!==id;}); rkRender(); }
+  else alert('Error al eliminar: '+(r.error||''));
+}
 async function rkCrear(){
   var texto=document.getElementById('rkTexto').value.trim();
   var estado=document.getElementById('rkEstado').value;
   if(!texto){ alert('Escribe el ítem'); return; }
   var btn=document.getElementById('rkCrearBtn'); btn.disabled=true; btn.textContent='Guardando…';
-  var r=await rkApi('kpi_item_add',{texto:texto,estado:estado});
-  btn.disabled=false; btn.textContent='✅ Crear';
-  if(r.ok){ document.getElementById('rkModal').style.display='none'; RK_ITEMS.push({item_id:r.item_id,texto:texto,estado:r.estado}); rkRender(); }
+  var r;
+  if(RK_EDIT){
+    r=await rkApi('kpi_item_edit',{item_id:RK_EDIT,texto:texto,estado:estado});
+    if(r.ok){ var x=RK_ITEMS.find(function(y){return y.item_id===RK_EDIT;}); if(x){ x.texto=texto; x.estado=estado; } }
+  } else {
+    r=await rkApi('kpi_item_add',{texto:texto,estado:estado});
+    if(r.ok) RK_ITEMS.push({item_id:r.item_id,texto:texto,estado:r.estado});
+  }
+  btn.disabled=false; btn.textContent=RK_EDIT?'💾 Guardar cambios':'✅ Crear';
+  if(r.ok){ document.getElementById('rkModal').style.display='none'; RK_EDIT=null; rkRender(); }
   else alert('Error al guardar: '+(r.error||''));
 }
 async function rkMover(id,estado){
