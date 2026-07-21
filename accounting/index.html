@@ -1089,6 +1089,7 @@ function gateSubmit() {
         <div class="kpi-value heat-green" id="kpi-opi-pct">—</div>
         <div class="kpi-sub" id="kpi-opi-sub">Cargando…</div>
         <div class="kpi-trend" id="kpi-opi-trend">Positivos / elegibles FIEL</div>
+        <div class="kpi-sub" id="kpi-opi-ventas" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">Cargando cruce con ventas…</div>
       </div>
 
     </div>
@@ -1143,6 +1144,13 @@ function gateSubmit() {
         </div>
       </div>
       <div class="chart-container" style="height:200px;"><canvas id="chartMonthlySales"></canvas></div>
+    </div>
+
+    <!-- ── HISTÓRICO TOP 5 CLIENTES 2026 ── -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title" style="margin-bottom:2px;">📈 Histórico Top 5 clientes — ventas mensuales 2026</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" id="top5hist-note">Top 5 por ventas del período más reciente · Enero 2026 → período contable actual</div>
+      <div style="height:340px;position:relative;"><canvas id="chartTop5Hist"></canvas></div>
     </div>
 
     <!-- ── FILA 4: Top 10 con ventas + IOR/T1 ── -->
@@ -2103,6 +2111,7 @@ async function loadTimelineData() {
   });
   // Render overview monthly sales chart if canvas is present
   if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
+  renderTop5Hist();
   // Update timeline selector in declaraciones tab
   const sel = document.getElementById('timelineClientSelect');
   if (sel) {
@@ -2174,6 +2183,7 @@ async function loadVentasMapIntoTimeline(gvizRows, parseCurrency, monthNames) {
 
   // 3) Render
   if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
+  renderTop5Hist(); // histórico Top 5 — también en la ruta fallback (Ventas_Map)
   const sel = document.getElementById('timelineClientSelect');
   if (sel) {
     const ids = Object.keys(timelineRawData).sort();
@@ -2878,6 +2888,29 @@ function renderOpiKPI() {
   if (sub) sub.textContent = positivos + ' positivos · ' + negativos + ' negativos · ' + vacios + ' sin dato de ' + total;
   var trend = document.getElementById('kpi-opi-trend');
   if (trend) trend.textContent = total > 0 ? 'Base elegible: ' + total + ' clientes' : 'Sin datos';
+
+  // ── Cruce: opinión de cumplimiento de clientes con Ventas Acumuladas ≥ $1 (Clients_Load) ──
+  var vTotal = 0, vPos = 0, vNeg = 0, vSin = 0;
+  Object.keys(CLIENT_DB).forEach(function(id) {
+    var cl = CLIENT_DB[id];
+    if (!cl || !(cl.ventasAcum >= 1)) return;
+    vTotal++;
+    var opi = clientOpiMap[id] || '';
+    if (opi === 'Positivo')      vPos++;
+    else if (opi === 'Negativo') vNeg++;
+    else                         vSin++;
+  });
+  var vEl = document.getElementById('kpi-opi-ventas');
+  if (vEl) {
+    if (vTotal > 0) {
+      var vPct = (vPos / vTotal * 100).toFixed(1);
+      var vColor = parseFloat(vPct) >= 80 ? 'var(--green)' : parseFloat(vPct) >= 50 ? 'var(--yellow)' : 'var(--red)';
+      vEl.innerHTML = '💰 Con ventas acumuladas ≥ $1: <b style="color:' + vColor + ';font-size:15px;">' + vPct + '%</b><br>'
+        + vPos + ' positivos · ' + vNeg + ' negativos · ' + vSin + ' sin dato de ' + vTotal + ' clientes';
+    } else {
+      vEl.textContent = '💰 Con ventas ≥ $1: sin datos (columna Ventas Acumuladas no disponible)';
+    }
+  }
 }
 
 // ============================================================
@@ -3097,10 +3130,12 @@ async function loadClientDB() {
   // Dynamic column index lookup (positions vary by sheet version)
   var citaFielColIdx = -1;
   var payoneerColIdx = -1;
+  var ventasAcumColIdx = -1;
   (clData.table.cols || []).forEach(function(col, i) {
     var lbl = (col.label || '').trim();
     if (lbl === 'Cita FIEL') citaFielColIdx = i;
     if (lbl === 'Payoneer' || lbl === 'payoneer' || lbl.toLowerCase() === 'payoneer') payoneerColIdx = i;
+    if (lbl === 'Ventas Acumuladas' || lbl.toLowerCase() === 'ventas acumuladas') ventasAcumColIdx = i;
   });
 
   var newDB = {};
@@ -3143,7 +3178,13 @@ async function loadClientDB() {
       stripeContext:   c[13] && c[13].v != null ? String(c[13].v).trim() : '',
       stripeTimestamp: c[14] && c[14].v != null ? String(c[14].v).trim() : '',
       // Payoneer: value from Clients_Load.Payoneer column (detected dynamically)
-      payoneer:        payoneerColIdx >= 0 && c[payoneerColIdx] && c[payoneerColIdx].v != null ? String(c[payoneerColIdx].v).trim() : ''
+      payoneer:        payoneerColIdx >= 0 && c[payoneerColIdx] && c[payoneerColIdx].v != null ? String(c[payoneerColIdx].v).trim() : '',
+      // Ventas Acumuladas (Clients_Load) — para el cruce de Opinión de Cumplimiento
+      ventasAcum:      ventasAcumColIdx >= 0 && c[ventasAcumColIdx]
+                         ? (typeof c[ventasAcumColIdx].v === 'number'
+                             ? c[ventasAcumColIdx].v
+                             : parseFloat(String(c[ventasAcumColIdx].f || c[ventasAcumColIdx].v || '0').replace(/[$,\s]/g,'')) || 0)
+                         : 0
     };
   });
 
@@ -5972,6 +6013,45 @@ async function loadDocumentacionCompleta(force) {
 </div>
 
 <script>
+
+// ══ Histórico Top 5 clientes (ventas mensuales 2026) — se alimenta de timelineRawData ══
+let top5HistChart=null;
+function renderTop5Hist(){
+  const cv=document.getElementById('chartTop5Hist');
+  if(!cv||typeof Chart==='undefined'||!Object.keys(timelineRawData).length) return;
+  let lastKey='';
+  Object.values(timelineRawData).forEach(arr=>arr.forEach(e=>{ if(e.sales>0&&e.periodKey>lastKey&&e.periodKey.indexOf('2026-')===0) lastKey=e.periodKey; }));
+  if(!lastKey){ // ventas aún no llegan (Ventas_Map async) → reintenta hasta 5 veces
+    if((renderTop5Hist._try||0)<5){ renderTop5Hist._try=(renderTop5Hist._try||0)+1; setTimeout(renderTop5Hist,5000); }
+    return;
+  }
+  const lastMon=parseInt(lastKey.split('-')[1],10);
+  const MN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const keys=[],labels=[];
+  for(let m=1;m<=lastMon;m++){ keys.push('2026-'+String(m).padStart(2,'0')); labels.push(MN[m-1].slice(0,3)+' 2026'); }
+  const rank=Object.keys(timelineRawData).map(cid=>{
+    const e=timelineRawData[cid].find(x=>x.periodKey===lastKey);
+    return {cid:cid,v:e?e.sales:0};
+  }).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
+  const colors=['#7c4dff','#22c55e','#f59e0b','#38bdf8','#ef4444'];
+  const datasets=rank.map((r,i)=>({
+    label:((typeof clientNameMap!=='undefined'&&clientNameMap[r.cid])?clientNameMap[r.cid]:r.cid),
+    data:keys.map(k=>{ const e=timelineRawData[r.cid].find(x=>x.periodKey===k); return e&&e.sales>0?e.sales:null; }),
+    borderColor:colors[i],backgroundColor:colors[i]+'33',tension:.3,spanGaps:true,pointRadius:3,borderWidth:2
+  }));
+  if(top5HistChart) top5HistChart.destroy();
+  top5HistChart=new Chart(cv.getContext('2d'),{type:'line',data:{labels:labels,datasets:datasets},options:{
+    responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#e2e8f0',boxWidth:12,font:{size:11}}},
+      tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+(ctx.parsed.y==null?'—':'$'+ctx.parsed.y.toLocaleString('en-US',{maximumFractionDigits:0}));}}}},
+    scales:{x:{ticks:{color:'#9089aa'},grid:{color:'#2d254588'}},
+            y:{ticks:{color:'#9089aa',callback:function(v){return '$'+(v>=1e6?(v/1e6).toFixed(1)+'M':(v/1e3).toFixed(0)+'K');}},grid:{color:'#2d254588'}}}
+  }});
+  const note=document.getElementById('top5hist-note');
+  if(note) note.textContent='Top 5 por ventas de '+MN[lastMon-1]+' 2026 · Enero 2026 → '+MN[lastMon-1]+' 2026';
+  if(!renderTop5Hist._named){ renderTop5Hist._named=1; setTimeout(renderTop5Hist,4000); }
+}
+
 // ══ Roadmap editable — persistido en la pestaña Roadmap_KPIs del Sheet de Tally Ops ══
 const RK_OPS_URL='https://script.google.com/macros/s/AKfycbylh4xs3Ch09rUd05CnfxOE-wgERMCZIW38V-lGIU13DLIaojdynfZlQm8xqV_KLoRY/exec';
 const RK_TOKEN='tly-ops-2026-Jm9xQ4vKp7Rd3TzN8wHs';
