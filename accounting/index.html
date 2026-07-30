@@ -6059,7 +6059,8 @@ async function loadDocumentacionCompleta(force) {
   try {
     if (typeof rkApi === 'function') {
       const rp = await rkApi('docs_presencia', { periodo: activePK });
-      if (rp && rp.ok && rp.presencia) {
+      const rpTiene = rp && rp.ok && rp.presencia && Object.keys(rp.presencia).some(k => (rp.presencia[k] || []).length > 0);
+      if (rpTiene) {
         viaBackend = true;
         console.log('[docs] presencia vía backend:', rp.detalle);
         CR_TABLES.forEach(t => {
