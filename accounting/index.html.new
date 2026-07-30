@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <title>Tally Accounting Team</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 // ── THEME INIT (run before render to avoid flash) ──────────────
@@ -687,13 +686,6 @@ function gateSubmit() {
   <div class="sidebar-item" data-tab="clientes" onclick="showTab('clientes')">
     <span class="sidebar-icon">👥</span><span>Historia del Cliente</span>
   </div>
-  <div class="sidebar-divider"></div>
-  <div class="sidebar-item" data-tab="kpis" onclick="showTab('kpis')">
-    <span class="sidebar-icon">📊</span><span>KPIs Contabilidad</span>
-  </div>
-  <div class="sidebar-item" data-tab="journey" onclick="showTab('journey')">
-    <span class="sidebar-icon">🧭</span><span>Journey Top 10</span>
-  </div>
 </nav>
 
 <!-- MAIN -->
@@ -744,10 +736,33 @@ function gateSubmit() {
         <div class="kpi-sub" id="kpi-anuales-sub">Cargando…</div>
         <div class="kpi-trend trend-warn" id="kpi-anuales-trend">cargando…</div>
       </div>
+      <div class="kpi-card" id="kpi-opi-card" style="--accent-color: #06b6d4">
+        <div class="kpi-label">Opinión de Cumplimiento</div>
+        <div class="kpi-value heat-green" id="kpi-opi-pct">—</div>
+        <div class="kpi-sub" id="kpi-opi-sub">Cargando…</div>
+        <div class="kpi-trend" id="kpi-opi-trend">Positivos / elegibles FIEL</div>
+      </div>
+
     </div>
 
-    <!-- CHARTS ROW — moved above Stripe for quick visual context -->
-    <div class="grid-2" style="margin-bottom:20px;">
+    <!-- STRIPE OVERVIEW SECTION -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div class="card">
+        <div class="card-title">💳 Estado Stripe — Resumen</div>
+        <div id="stripeOverviewTotals" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">Cargando…</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Clientes — Estado Stripe</div>
+        <div id="stripeMoraList" style="overflow-y:auto;height:calc(100vh * 0.55);display:flex;flex-direction:column;gap:5px;padding-right:2px;">
+          <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">Cargando…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="grid-2">
       <div class="card">
         <div class="card-title">📊 Declaraciones por Mes <span class="badge" id="declBadgePeriodRange">—</span></div>
         <div class="chart-container" style="height:260px;">
@@ -759,7 +774,6 @@ function gateSubmit() {
           <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><span style="font-size:11px;">Sin iniciar</span></div>
           <div class="legend-item"><div class="legend-dot" style="background:#7c5cfc"></div><span style="font-size:11px;">Bloqueado</span></div>
           <div class="legend-item"><div class="legend-dot" style="background:#4f7fff88"></div><span style="font-size:11px;">Sin Operación</span></div>
-          <div class="legend-item"><div class="legend-dot" style="background:#64748b"></div><span style="font-size:11px;">Deuda técnica</span></div>
         </div>
       </div>
       <div class="card">
@@ -781,7 +795,6 @@ function gateSubmit() {
       </div>
     </div>
 
-
   </div>
 
   <!-- ============================================================ -->
@@ -794,6 +807,8 @@ function gateSubmit() {
         <div class="section-sub">Retención neta de ingresos · Momentum de expansión · Top 10 clientes 2026</div>
       </div>
     </div>
+
+    <!-- KPI STRIP -->
     <div class="kpi-grid" style="margin-bottom:20px;">
       <div class="kpi-card" style="--accent-color:#22c55e">
         <div class="kpi-label">Clientes activos</div>
@@ -820,6 +835,8 @@ function gateSubmit() {
         <div class="kpi-trend" id="pf-kpi-nrr-trend">Cargando…</div>
       </div>
     </div>
+
+    <!-- TOP 10 MoM 2026 multi-line chart -->
     <div class="card" style="margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
         <div>
@@ -828,24 +845,45 @@ function gateSubmit() {
         </div>
         <div style="font-size:11px;color:var(--muted);" id="top10-mom-note">Cargando…</div>
       </div>
-      <div class="chart-container" style="height:300px;"><canvas id="chartTop10MoM"></canvas></div>
+      <div class="chart-container" style="height:300px;">
+        <canvas id="chartTop10MoM"></canvas>
+      </div>
     </div>
+
+    <!-- Ventas totales portafolio -->
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:0;">📊 Ventas Totales Portafolio <span class="badge">Todos los clientes · Últimos 12 meses</span></div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;" id="overviewSalesPeriodLabel">Acumulado período</div>
+          <div style="font-size:20px;font-weight:700;color:var(--accent);" id="overviewSalesTotal">—</div>
+        </div>
+      </div>
+      <div class="chart-container" style="height:200px;">
+        <canvas id="chartMonthlySales"></canvas>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;">
+        Fuente: Clientes_por_periodo · Solo filas con ventas &gt; 0 · 12 meses hacia atrás desde el mes actual
+      </div>
+    </div>
+
+    <!-- NRR + EXPANSIÓN TABLE -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
         <div>
-          <div class="card-title" style="margin-bottom:2px;">⚡ Tabla de Priorización — NRR + Expansión <span id="pf-lc-badge" style="font-size:11px;font-weight:400;color:var(--muted);margin-left:8px;"></span></div>
-          <div style="font-size:11px;color:var(--muted);">Ranking por impacto esperado · Priority Score = Revenue 2026 × Tasa Expansión · NRR = comparativo vs mismo período año anterior · "N/D" = sin datos históricos 2025</div>
+          <div class="card-title" style="margin-bottom:2px;">⚡ Tabla de Priorización — NRR + Expansión</div>
+          <div style="font-size:11px;color:var(--muted);">Priority Score = Revenue 2026 × (Tasa Expansión / 100) · Solo clientes con ventas en 2026 · Ordenado por prioridad</div>
         </div>
         <input type="text" id="nrrSearch" placeholder="🔍 Buscar…" oninput="filterNRRTable()"
           style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;width:180px;outline:none;">
       </div>
+      <!-- Leyenda cuadrantes -->
       <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;padding:8px 12px;background:var(--bg3);border-radius:8px;font-size:11px;">
-        <span>🚀 <b>Estrella / Creciendo</b> — expansión &gt; 120%</span>
-        <span>🏆 <b>Héroe</b> — NRR ≥ 100% + expansión ≥ 80%</span>
-        <span>📊 <b>Estable</b> — expansión entre 50–80%</span>
-        <span>😴 <b>Dormido / Contrayendo</b> — expansión &lt; 50%</span>
-        <span>⚠️ <b>En riesgo</b> — NRR &lt; 80% + expansión &lt; 80%</span>
-        <span>🆕 <b>Sin datos</b> — sin VentasList en período base</span>
+        <span>🏆 <b>Héroe</b> — NRR ≥ 100% · expansión moderada</span>
+        <span>🚀 <b>Estrella</b> — NRR ≥ 100% · expansión &gt; 120%</span>
+        <span>⚠️ <b>En riesgo</b> — NRR &lt; 80% · expansión baja</span>
+        <span>😴 <b>Dormido</b> — expansión &lt; 50%</span>
+        <span>🆕 <b>Sin historial</b> — &lt; 3 meses datos 2025</span>
       </div>
       <div style="overflow-x:auto;">
         <table id="nrrTable" style="width:100%;border-collapse:collapse;font-size:12px;min-width:800px;">
@@ -878,6 +916,8 @@ function gateSubmit() {
         <div class="section-sub">Ley del 20/80 · Concentración de revenue · Curva acumulada por cliente</div>
       </div>
     </div>
+
+    <!-- KPI STRIP -->
     <div class="kpi-grid" style="margin-bottom:20px;">
       <div class="kpi-card" style="--accent-color:#7c5cfc">
         <div class="kpi-label">Clientes → 80% revenue</div>
@@ -898,18 +938,28 @@ function gateSubmit() {
         <div class="kpi-trend" id="pareto-kpi-top10-sub">Cargando…</div>
       </div>
     </div>
+
+    <!-- WHALE CURVE -->
     <div class="card" style="margin-bottom:20px;">
       <div style="margin-bottom:16px;">
         <div class="card-title" style="margin-bottom:2px;">🐳 Whale Curve — Concentración de Revenue</div>
-        <div style="font-size:11px;color:var(--muted);">Eje X: % de clientes ordenados de mayor a menor · Eje Y: % revenue acumulado · Línea roja = umbral 80%</div>
+        <div style="font-size:11px;color:var(--muted);">
+          Eje X: % de clientes (ordenados de mayor a menor revenue) ·
+          Eje Y: % de revenue acumulado ·
+          Línea roja punteada = umbral 80%
+        </div>
       </div>
-      <div class="chart-container" style="height:320px;"><canvas id="chartWhaleCurve"></canvas></div>
+      <div class="chart-container" style="height:320px;">
+        <canvas id="chartWhaleCurve"></canvas>
+      </div>
     </div>
+
+    <!-- PARETO TABLE -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
         <div>
           <div class="card-title" style="margin-bottom:2px;">📊 Ranking de Clientes por Revenue 2026</div>
-          <div style="font-size:11px;color:var(--muted);">Ordenado de mayor a menor · Zona verde = TOP 80%</div>
+          <div style="font-size:11px;color:var(--muted);">Ordenado de mayor a menor · % acumulado de revenue del portafolio · Zona verde = TOP 80%</div>
         </div>
         <span class="badge" id="pareto-table-badge">— clientes</span>
       </div>
@@ -931,7 +981,6 @@ function gateSubmit() {
         </table>
       </div>
     </div>
-
   </div>
 
   <div class="section" id="section-clientes">
@@ -1021,399 +1070,6 @@ function gateSubmit() {
       </div>
     </div>
   </div>
-  <!-- ============================================================ -->
-  <!-- TAB: KPIs CONTABILIDAD -->
-  <!-- ============================================================ -->
-  <div class="section" id="section-kpis">
-    <div class="section-header" style="margin-bottom:10px;">
-      <div>
-        <div class="section-title">📊 KPIs de Contabilidad</div>
-        <div class="section-sub">Indicadores operativos del equipo · Actualizado en cada corrida</div>
-      </div>
-      <button class="refresh-btn" onclick="loadKPIsSection(true)" style="font-size:12px;padding:6px 14px;">↻ Recalcular</button>
-    </div>
-
-    <!-- ── ALERTA deadline ── -->
-    <div id="kpi-deadline-alert" style="display:none;" class="alert-banner">
-      <div class="alert-icon">⏰</div>
-      <div id="kpi-deadline-msg"></div>
-    </div>
-
-    <!-- ══════════ PULSO SEMANAL — Semana 30 (20–28 jul 2026) ══════════ -->
-    <style>
-      .wk-col{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;}
-      .wk-col-title{font-size:13px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-      .wk-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
-      .wk-card b{font-size:12.5px;color:var(--text);display:block;margin-bottom:3px;}
-      .wk-card p{font-size:11.5px;color:var(--muted);margin:0;line-height:1.45;}
-      .wk-chip{display:inline-block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;padding:2px 8px;margin-bottom:6px;}
-      .wk-card{position:relative;}
-      .wk-acts{position:absolute;top:8px;right:8px;display:flex;gap:5px;opacity:0;transition:opacity .15s;}
-      .wk-card:hover .wk-acts{opacity:1;}
-      .wk-act{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:2px 6px;cursor:pointer;line-height:1;}
-      .wk-act:hover{border-color:var(--accent);}
-      .wk-done{background:rgba(34,197,94,.14);color:#22c55e;}
-      .wk-block{background:rgba(239,68,68,.14);color:#ef4444;}
-      .wk-warn{background:rgba(245,158,11,.16);color:#f59e0b;}
-      .wk-next{background:rgba(79,127,255,.16);color:#4f7fff;}
-    </style>
-    <div class="card" style="margin-bottom:24px;border-left:3px solid #4f7fff;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-        <div class="card-title" style="margin:0;">🗓️ Pulso Semanal · Semana 30 <span style="font-weight:400;color:var(--muted);font-size:12px;">(20–28 jul 2026)</span></div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <div style="font-size:11px;color:var(--muted);">Fuentes: Leadership LineUp 22-jul · Reporte Clientes 20-jul · Coaching 21/22/24-jul · Tally Ops</div>
-          <button onclick="pwAbrir()" style="background:#4f7fff;color:#fff;border:none;border-radius:999px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;">＋ Ítem</button>
-        </div>
-      </div>
-      <div id="pwBoard" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;color:var(--muted);font-size:13px;">Cargando pulso…</div>
-    </div>
-
-    <!-- Modal Pulso Semanal -->
-    <div id="pwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;max-width:480px;width:100%;">
-        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;" id="pwModalTitle">＋ Nuevo ítem del pulso</div>
-        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;">Columna</label>
-        <select id="pwColumna" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:13px;">
-          <option value="movio">✅ Qué se movió</option><option value="atorado">🔴 Atorado</option><option value="foco">🎯 Foco próxima semana</option>
-        </select>
-        <div style="display:flex;gap:10px;margin-top:12px;">
-          <div style="flex:1;"><label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;">Chip</label>
-          <input id="pwChip" placeholder="Ej. Cerrado / Bloqueado / Lun–Mar" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:13px;"></div>
-          <div style="flex:1;"><label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;">Color chip</label>
-          <select id="pwTipo" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:13px;">
-            <option value="done">🟢 Verde</option><option value="block">🔴 Rojo</option><option value="warn">🟡 Ámbar</option><option value="next">🔵 Azul</option>
-          </select></div>
-        </div>
-        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 6px;">Título</label>
-        <input id="pwTitulo" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:13px;">
-        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 6px;">Descripción</label>
-        <textarea id="pwTexto" rows="4" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:13px;resize:vertical;"></textarea>
-        <div style="display:flex;gap:10px;margin-top:18px;">
-          <button onclick="pwGuardar()" id="pwGuardarBtn" style="flex:1;background:#4f7fff;color:#fff;border:none;border-radius:999px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">✅ Crear</button>
-          <button onclick="document.getElementById('pwModal').style.display='none'" style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:999px;padding:10px;font-size:13px;cursor:pointer;">Cancelar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── FILA 1: KPI CARDS ── -->
-    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">
-
-      <!-- KPI 1: % Declaraciones a tiempo -->
-      <div class="kpi-card" style="--accent-color:#22c55e">
-        <div class="kpi-label">% Declaraciones a tiempo <span style="font-size:9px;color:var(--muted);">(antes del día 17)</span></div>
-        <div class="kpi-value" id="kpi1-value">—</div>
-        <div class="kpi-sub" id="kpi1-sub">Cargando…</div>
-        <div class="kpi-trend" id="kpi1-trend"></div>
-        <div style="margin-top:14px;">
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;">
-            <span style="color:var(--green);">✓ A tiempo</span>
-            <span id="kpi1-bar-lbl" style="color:var(--muted);">—</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill fill-green" id="kpi1-bar" style="width:0%"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI 2: % Accesos completos (Ret + Vtas + Inv) -->
-      <div class="kpi-card" style="--accent-color:#4f7fff">
-        <div class="kpi-label">% Accesos completos <span style="font-size:9px;color:var(--muted);">(Ret + Vtas + Inv)</span></div>
-        <div class="kpi-value" id="kpi2-value">—</div>
-        <div class="kpi-sub" id="kpi2-sub">Cargando…</div>
-        <div class="kpi-trend" id="kpi2-trend"></div>
-        <div style="margin-top:14px;">
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;">
-            <span style="color:var(--accent);">✓ Con acceso crítico</span>
-            <span id="kpi2-bar-lbl" style="color:var(--muted);">—</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill fill-blue" id="kpi2-bar" style="width:0%"></div>
-          </div>
-        </div>
-        <!-- Desglose por acceso -->
-        <div id="kpi2-breakdown" style="margin-top:12px;display:flex;flex-direction:column;gap:5px;"></div>
-      </div>
-
-      <!-- KPI 3: Días promedio de ciclo de recolección — hidden (sin datos aún) -->
-      <div class="kpi-card" style="--accent-color:#f97316;display:none;">
-        <div class="kpi-label">Días promedio ciclo recolección</div>
-        <div class="kpi-value" id="kpi3-value">—</div>
-        <div class="kpi-sub" id="kpi3-sub">Desde solicitud hasta acceso completo</div>
-        <div class="kpi-trend" id="kpi3-trend"></div>
-        <div id="kpi3-breakdown" style="margin-top:12px;display:flex;flex-direction:column;gap:5px;"></div>
-      </div>
-
-      <!-- Opinión de Cumplimiento -->
-      <div class="kpi-card" id="kpi-opi-card" style="--accent-color: #06b6d4">
-        <div class="kpi-label">Opinión de Cumplimiento</div>
-        <div class="kpi-value heat-green" id="kpi-opi-pct">—</div>
-        <div class="kpi-sub" id="kpi-opi-sub">Cargando…</div>
-        <div class="kpi-trend" id="kpi-opi-trend">Positivos / elegibles FIEL</div>
-        <div class="kpi-sub" id="kpi-opi-ventas" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">Cargando cruce con ventas…</div>
-      </div>
-
-    </div>
-
-    <!-- ── CARGA DOCUMENTAL POR RESPONSABLE ── -->
-    <div class="card" style="margin-bottom:24px;border-left:3px solid #06b6d4;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
-        <div class="card-title" style="margin:0;">📥 Carga documental por responsable</div>
-        <div style="font-size:11px;color:var(--muted);" id="crPeriodo">—</div>
-      </div>
-      <div style="font-size:11.5px;color:var(--muted);margin-bottom:14px;">Declaraciones cargadas y % por tipo de documento en el período activo. Click en un responsable para ver sus empresas una a una.</div>
-      <div id="crBoard" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;color:var(--muted);font-size:12.5px;">Se llena al cargar la sección de documentación (KPI 6)…</div>
-    </div>
-
-    <!-- Modal Carga por responsable -->
-    <div id="crModal" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:860px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);">
-          <div style="font-size:14px;font-weight:700;color:var(--text);" id="crModalTitle">Responsable</div>
-          <button onclick="document.getElementById('crModal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);line-height:1;padding:4px 8px;">×</button>
-        </div>
-        <div style="overflow-y:auto;padding:10px 16px 16px;" id="crModalBody"></div>
-      </div>
-    </div>
-
-    <!-- ── FILA 2: Histórico DeclaracionTipo — Ceros vs Con datos (hidden, sin datos aún) ── -->
-    <div class="card" style="margin-bottom:20px;display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
-        <div>
-          <div class="card-title">📈 Histórico — Tipo de Declaración <span class="badge" id="declTipoBadge">—</span></div>
-          <div style="font-size:11px;color:var(--muted);">Clientes con declaración en ceros vs con datos por período · Fuente: Clientes_por_periodo · DeclaracionTipo</div>
-        </div>
-      </div>
-      <div class="chart-container" style="height:220px;">
-        <canvas id="chartDeclTipo"></canvas>
-      </div>
-      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
-        <div class="legend-item"><div class="legend-dot" style="background:#4f7fff"></div><span style="font-size:11px;">Con datos</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div><span style="font-size:11px;">Ceros</span></div>
-      </div>
-    </div>
-
-    <!-- ── FILA 3: Declaraciones por Mes (ancho completo) ── -->
-    <div class="card" style="margin-bottom:20px;">
-      <div class="card-title">📊 Declaraciones por Mes <span class="badge" id="declBadgePeriodRangeKPI">—</span></div>
-      <div class="chart-container" style="height:300px;">
-        <canvas id="chartDeclKPI"></canvas>
-      </div>
-      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
-        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><span style="font-size:11px;">Declarado</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span style="font-size:11px;">En proceso</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><span style="font-size:11px;">Sin iniciar</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:#7c5cfc"></div><span style="font-size:11px;">Bloqueado</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:#4f7fff88"></div><span style="font-size:11px;">Sin Operación</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:#64748b"></div><span style="font-size:11px;">Deuda técnica</span></div>
-      </div>
-      <!-- Nota al pie -->
-      <div style="margin-top:16px;padding:12px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--muted);font-size:11px;color:var(--muted);line-height:1.7;">
-        <span style="font-weight:700;color:var(--text);">📌 Nota:</span>
-        Meses que se ven bajas en las declaraciones no son fallos en la declaración, son fallos en el registro al sistema, derivados de los cambios que han habido en el equipo de Amazon (Leonardo, Lina, ahora Eduardo) lo cual dificulta el handoff de los procesos. QA de papeles de trabajo nos da como resultado que <strong style="color:var(--text);">los procesos contables están hoy al día</strong>.
-        <br><br>
-        Se registrarán los clientes que presenten ventas y tengan deuda técnica y se procurará mantener el sistema registrado al 100% con las nuevas integraciones y procesos a futuro.
-      </div>
-    </div>
-
-    <!-- ── FILA 3b: Ventas Totales Portafolio ── -->
-    <div class="card" style="margin-bottom:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:0;">📊 Ventas Totales Portafolio <span class="badge">Todos los clientes · Últimos 12 meses</span></div>
-        <div style="text-align:right;">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;" id="overviewSalesPeriodLabel">Acumulado período</div>
-          <div style="font-size:20px;font-weight:700;color:var(--accent);" id="overviewSalesTotal">—</div>
-        </div>
-      </div>
-      <div class="chart-container" style="height:200px;"><canvas id="chartMonthlySales"></canvas></div>
-    </div>
-
-    <!-- ── HISTÓRICO TOP 5 CLIENTES 2026 ── -->
-    <div class="card" style="margin-bottom:20px;">
-      <div class="card-title" style="margin-bottom:2px;">📈 Histórico Top 5 clientes — ventas mensuales 2026</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" id="top5hist-note">Top 5 por ventas del período más reciente · Enero 2026 → período contable actual</div>
-      <div style="height:340px;position:relative;"><canvas id="chartTop5Hist"></canvas></div>
-    </div>
-
-    <!-- ── FILA 4: Top 10 con ventas + IOR/T1 ── -->
-    <div class="card" style="margin-bottom:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
-        <div>
-          <div class="card-title">🏆 KPI 4 — Top 10 clientes con ventas <span class="badge">Período más reciente</span></div>
-          <div style="font-size:11px;color:var(--muted);">Ordenado por ventas del período más reciente · 1a Imp. = Estado First Shipment · Fecha FS = Fecha First Shipment</div>
-        </div>
-        <div style="font-size:11px;color:var(--muted);" id="kpi4-period-note">Cargando…</div>
-      </div>
-      <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px;">
-          <thead>
-            <tr style="border-bottom:2px solid var(--border);background:var(--bg3);">
-              <th style="text-align:center;padding:8px;color:var(--muted);font-weight:600;">#</th>
-              <th style="text-align:left;padding:8px;color:var(--muted);font-weight:600;">Cliente</th>
-              <th style="text-align:right;padding:8px;color:var(--muted);font-weight:600;white-space:nowrap;">Ventas período</th>
-              <th style="text-align:right;padding:8px;color:var(--muted);font-weight:600;white-space:nowrap;">Período</th>
-              <th style="text-align:right;padding:8px;color:var(--muted);font-weight:600;white-space:nowrap;">MoM %</th>
-              <th style="text-align:center;padding:8px;color:var(--muted);font-weight:600;">Owner</th>
-              <th style="text-align:center;padding:8px;color:var(--muted);font-weight:600;">1a Imp.</th>
-              <th style="text-align:center;padding:8px;color:var(--muted);font-weight:600;">Fecha FS</th>
-            </tr>
-          </thead>
-          <tbody id="kpi4-body">
-            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">Cargando datos…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ── FILA 3: Clientes con caída >50% ── -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
-        <div>
-          <div class="card-title">📉 KPI 5 — Clientes con caída de ventas &gt;50% <span class="badge" id="kpi5-badge">—</span></div>
-          <div style="font-size:11px;color:var(--muted);">Comparativo mes anterior vs mes en curso · Solo clientes ya declarados (EstadoCliente = Declarado en Clientes_por_periodo) — los no registrados aún son ruido y se ocultan</div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <span class="filter-btn active" onclick="filterKPI5('all')" id="kpi5-filter-all">Todos</span>
-          <span class="filter-btn" onclick="filterKPI5('caida')" id="kpi5-filter-caida">Caída &gt;50%</span>
-          <span class="filter-btn" onclick="filterKPI5('cero')" id="kpi5-filter-cero">Dejaron de vender</span>
-          <span class="filter-btn" onclick="filterKPI5('subida')" id="kpi5-filter-subida">📈 Aumentaron ventas</span>
-        </div>
-      </div>
-      <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px;">
-          <thead>
-            <tr style="border-bottom:2px solid var(--border);background:var(--bg3);">
-              <th style="text-align:left;padding:8px;color:var(--muted);font-weight:600;">Cliente</th>
-              <th style="text-align:right;padding:8px;color:var(--muted);font-weight:600;white-space:nowrap;" id="kpi5-col-prev">Mes anterior</th>
-              <th style="text-align:right;padding:8px;color:var(--muted);font-weight:600;white-space:nowrap;" id="kpi5-col-curr">Mes actual</th>
-              <th style="text-align:right;padding:8px;color:var(--muted);font-weight:600;white-space:nowrap;">Δ MoM</th>
-              <th style="text-align:center;padding:8px;color:var(--muted);font-weight:600;">Owner</th>
-              <th style="text-align:center;padding:8px;color:var(--muted);font-weight:600;">Estado declaración</th>
-              <th style="text-align:center;padding:8px;color:var(--muted);font-weight:600;">Suspensión</th>
-              <th style="text-align:center;padding:8px;color:var(--muted);font-weight:600;">Notas</th>
-            </tr>
-          </thead>
-          <tbody id="kpi5-body">
-            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">Cargando datos…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ── FILA 4: Documentación Completa — hidden (sin datos aún) ── -->
-    <div class="card" style="margin-top:20px;display:none;" id="docCompleta-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
-        <div>
-          <div class="card-title">📋 KPI 6 — Documentación Completa <span class="badge" id="docCompleta-badge">—</span></div>
-          <div style="font-size:11px;color:var(--muted);">Universo: <b>DeclaracionTipo = Con datos</b> + <b>EstadoCliente = Declarado</b> en el período más reciente · Check de 5 fuentes de documentos</div>
-        </div>
-        <div style="font-size:11px;color:var(--muted);" id="docCompleta-period">—</div>
-      </div>
-      <!-- Summary bars -->
-      <div id="docCompleta-summary" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;"></div>
-      <!-- Completeness grid -->
-      <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:600px;" id="docCompleta-table">
-          <thead>
-            <tr style="border-bottom:2px solid var(--border);background:var(--bg3);">
-              <th style="text-align:left;padding:7px 8px;color:var(--muted);font-weight:600;">Cliente</th>
-              <th style="text-align:center;padding:7px 6px;color:var(--muted);font-weight:600;white-space:nowrap;">Declaración</th>
-              <th style="text-align:center;padding:7px 6px;color:var(--muted);font-weight:600;white-space:nowrap;">Inventario</th>
-              <th style="text-align:center;padding:7px 6px;color:var(--muted);font-weight:600;white-space:nowrap;">Rpt. Ventas</th>
-              <th style="text-align:center;padding:7px 6px;color:var(--muted);font-weight:600;white-space:nowrap;">Retenciones</th>
-              <th style="text-align:center;padding:7px 6px;color:var(--muted);font-weight:600;white-space:nowrap;">DIOT</th>
-              <th style="text-align:center;padding:7px 6px;color:var(--muted);font-weight:600;">Score</th>
-            </tr>
-          </thead>
-          <tbody id="docCompleta-body">
-            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Cargando…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- NEXT STEPS / ROADMAP EDITABLE (persistido en Sheet Roadmap_KPIs vía Tally Ops backend) -->
-    <div class="card" style="margin-bottom:20px;border-left:3px solid var(--accent);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
-        <div class="card-title" style="margin:0;">🗺️ Roadmap — Procesos por Definir</div>
-        <button onclick="rkAbrirModal()" style="background:var(--accent);color:#fff;border:none;border-radius:999px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;">＋ Crear</button>
-      </div>
-      <div id="rkBoard" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;color:var(--muted);font-size:13px;">Cargando roadmap…</div>
-    </div>
-
-    <style id="rkStyles">
-      .rk-card{position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;transition:border-color .15s;}
-      .rk-card:hover{border-color:var(--accent);}
-      .rk-acts{position:absolute;top:8px;right:8px;display:flex;gap:6px;opacity:0;transition:opacity .15s;}
-      .rk-card:hover .rk-acts{opacity:1;}
-      .rk-act{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:3px 7px;cursor:pointer;line-height:1;}
-      .rk-act:hover{border-color:var(--accent);}
-    </style>
-    <!-- Modal crear/editar ítem -->
-    <div id="rkModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;max-width:440px;width:100%;">
-        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;" id="rkModalTitle">＋ Nuevo ítem del roadmap</div>
-        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;">Ítem</label>
-        <textarea id="rkTexto" rows="3" placeholder="Describe el proceso o iniciativa…" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
-        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 6px;">Estado</label>
-        <select id="rkEstado" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:13px;">
-          <option>Next Steps</option><option>En proceso</option><option>Implementado</option>
-        </select>
-        <div style="display:flex;gap:10px;margin-top:18px;">
-          <button onclick="rkCrear()" id="rkCrearBtn" style="flex:1;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">✅ Crear</button>
-          <button onclick="document.getElementById('rkModal').style.display='none'" style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:999px;padding:10px;font-size:13px;cursor:pointer;">Cancelar</button>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /section-kpis -->
-
-  <!-- ============================================================ -->
-  <!-- TAB: JOURNEY TOP 10 -->
-  <!-- ============================================================ -->
-  <div class="section" id="section-journey">
-    <div class="section-header" style="margin-bottom:10px;">
-      <div>
-        <div class="section-title">🧭 Journey Top 10</div>
-      </div>
-      <div style="display:flex;gap:14px;font-size:11px;color:var(--muted);align-items:center;">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ef4444;"></span> Cuello de botella</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f59e0b;"></span> Procesando</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#22c55e;"></span> Activo</span>
-      </div>
-    </div>
-    <style>
-      .jt-slider{display:flex;align-items:stretch;gap:12px;}
-      .jt-arrow{flex:0 0 auto;align-self:center;width:46px;height:46px;border-radius:50%;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;user-select:none;}
-      .jt-arrow:hover{border-color:var(--accent);background:var(--accent);color:#fff;transform:scale(1.06);}
-      .jt-stage{flex:1;min-width:0;}
-      .jt-dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
-      .jt-dot{border:1px solid var(--border);background:var(--bg3);color:var(--muted);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s;}
-      .jt-dot:hover{border-color:var(--accent);color:var(--text);}
-      .jt-dot.on{background:var(--accent);border-color:var(--accent);color:#fff;}
-      .jt-counter{font-size:11px;color:var(--muted);text-align:center;margin-top:8px;}
-      .jt-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
-      .jt-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
-      .jt-rank{font-size:12px;font-weight:800;color:var(--muted);}
-      .jt-name{font-size:24px;font-weight:800;color:var(--text);}
-      .jt-meta{font-size:11px;color:var(--muted);margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap;}
-      .jt-ventas{font-weight:800;color:var(--green);}
-      .jt-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;}
-      .jt-tag{border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:700;cursor:pointer;border:1.5px dashed var(--border);background:transparent;color:var(--muted);transition:all .12s;user-select:none;}
-      .jt-tag:hover{transform:translateY(-1px);}
-      .jt-tag.rojo{border:1.5px solid #ef4444;background:rgba(239,68,68,.15);color:#ef4444;}
-      .jt-tag.amarillo{border:1.5px solid #f59e0b;background:rgba(245,158,11,.15);color:#f59e0b;}
-      .jt-tag.verde{border:1.5px solid #22c55e;background:rgba(34,197,94,.15);color:#22c55e;}
-      .jt-nota{width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 11px;font-size:16px;line-height:1.5;resize:vertical;min-height:52px;font-family:inherit;}
-      .jt-chart{position:relative;height:240px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px 6px;margin-bottom:12px;}
-      .jt-chart-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:11.5px;}
-      .jt-nota-row{display:flex;gap:8px;align-items:flex-start;}
-      .jt-save{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
-      .jt-save:disabled{opacity:.5;cursor:default;}
-      .jt-sync{font-size:10px;color:var(--muted);margin-top:5px;min-height:13px;}
-    </style>
-    <div id="jtGrid"><div style="color:var(--muted);font-size:13px;">Cargando Journey…</div></div>
-  </div><!-- /section-journey -->
-
 </div><!-- /main -->
 </div><!-- /app-layout -->
 
@@ -1483,9 +1139,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ── Declaraciones helpers ─────────────────────────────────────────────────────
-var clientOwnerMap    = {};       // { companyId: ownerName }
-var clientNameMap     = {};       // { companyId: clientName }
-var allClientsLoadIds = new Set(); // todos los Company_IDs de Clients_Load (para deuda técnica)
+var clientOwnerMap  = {};  // { companyId: ownerName }
 var declDataByOwner = {};  // { ownerName: { declarado, enProceso, sinIniciar, bloqueado } }
 var monthlyDeclData = null; // { labels[], declarado[], sinOp[], enProceso[], sinIniciar[], bloqueado[] }
 var anualesDataLoaded = false; // flag: true after loadAnualesData() populates the table
@@ -1498,7 +1152,7 @@ var elegiblesDecl    = 0;    // count of clients with FIEL active (excluding sus
 var clientOpiMap     = {};   // { companyId: 'Positivo'|'Negativo' } — latest non-empty OpiCumplimiento
 var clientOpiMapPK   = {};   // { companyId: 'YYYY-MM' } — period key of that value
 
-// Push live monthly data into all Declaraciones charts (overview + decl tab + KPI copy)
+// Push live monthly data into both Declaraciones charts (overview + decl tab)
 function updateDeclCharts() {
   if (!monthlyDeclData) return;
   var d = monthlyDeclData;
@@ -1510,19 +1164,14 @@ function updateDeclCharts() {
     ch.data.datasets[2].data = d.enProceso;
     ch.data.datasets[3].data = d.sinIniciar;
     ch.data.datasets[4].data = d.bloqueado;
-    if (ch.data.datasets[5]) ch.data.datasets[5].data = d.deudaTecnica || [];
     ch.update();
   };
   upd(charts.decl);
   upd(charts.meses);
-  upd(charts.declKPI);
-  // Also update badges
+  // Also update overview badge
   if (d.labels.length >= 2) {
-    var range = d.labels[0] + ' \u2013 ' + d.labels[d.labels.length - 1];
     var badge = document.querySelector('#section-overview .card-title .badge');
-    if (badge) badge.textContent = range;
-    var badgeKPI = document.getElementById('declBadgePeriodRangeKPI');
-    if (badgeKPI) badgeKPI.textContent = range;
+    if (badge) badge.textContent = d.labels[0] + ' \u2013 ' + d.labels[d.labels.length - 1];
   }
 }
 
@@ -1847,7 +1496,7 @@ async function loadAccesosData() {
   accesosRawData = rows
     .filter(function(r) {
       var id = r.c && r.c[0] && r.c[0].v !== null ? String(r.c[0].v) : '';
-      return id && id.startsWith('AZ');
+      return id && (id.startsWith('AZ') || id.startsWith('IN'));
     })
     .map(function(r) {
       var c = r.c || [];
@@ -1918,20 +1567,11 @@ function renderAccesosUI() {
   ];
   mods.forEach(function(m) { set(m.lbl, m.n + '/' + total); });
 
-  // Update donut charts (Overview + KPI copy)
+  // Update donut chart if initialized
   if (window.charts && window.charts.accesos) {
     window.charts.accesos.data.datasets[0].data = [completos.length, parciales.length, pendientes.length];
     window.charts.accesos.update();
   }
-  if (window.charts && window.charts.accesosKPI) {
-    window.charts.accesosKPI.data.datasets[0].data = [completos.length, parciales.length, pendientes.length];
-    window.charts.accesosKPI.update();
-  }
-  // Sync KPI copy labels
-  set('accesosDonutCenterKPI', pct + '%');
-  set('accesosCompleteLegendKPI', completos.length);
-  set('accesosParcialLegendKPI', parciales.length);
-  set('accesosPendienteLegendKPI', pendientes.length);
   // Render main risk-segmented accesos table
   renderAccesosTable();
   // Re-score critical actions — accesosRawData may change SC classification
@@ -2155,8 +1795,12 @@ async function refreshData() {
   if (lbl)  lbl.textContent = 'Actualizando…';
   try {
     await Promise.all([
-      loadTimelineData(), loadClientsLoad(), loadAccesosData(),
-      loadCorreosData(), loadBancosData(), loadWeeklyPlanData()
+      loadTimelineData(),
+      loadClientsLoad(),
+      loadAccesosData(),
+      loadCorreosData(),
+      loadBancosData(),
+      loadWeeklyPlanData()
     ]);
     await Promise.all([loadDeclaracionesData(), loadAnualesData(), loadOpiMap()]);
     await loadClientDB();
@@ -2166,8 +1810,10 @@ async function refreshData() {
       if (id === 'portfolio') renderPortfolioSection();
       if (id === 'pareto')    renderParetoSection();
     }
-  } catch(e) { console.warn('refreshData error:', e); }
-  if (lbl) lbl.textContent = 'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
+  } catch(e) {
+    console.warn('refreshData error:', e);
+  }
+  if (lbl)  lbl.textContent = 'Actualizado: ' + new Date().toLocaleString('es-MX', {timeZone:'America/Mexico_City'});
   if (btn) { btn.disabled = false; btn.textContent = '↻ Actualizar'; }
   renderCriticalActions();
 }
@@ -2177,12 +1823,6 @@ async function refreshData() {
 // ============================================================
 let timelineRawData = {};
 let monthlySalesData = {};
-var clientesRawRows  = [];   // raw rows from Clientes_por_periodo (shared: KPI6 + notes modal)
-var clientesRawCols  = [];   // col headers
-var clientPeriodsMap = {};   // {companyId: [{pk, periodoLabel, nota, estado}]} — for notes modal
-var automationsMap   = {};   // {companyId: {churn, churnRaw}} — from Automations table
-var kpi4Charts       = {};   // active Chart.js instances for KPI4 detail rows
-var kpi5Charts       = {};   // active Chart.js instances for KPI5 detail rows
 let equipoClientsData = {}; // {Arturo:0, Cristina:0, Lina:0, Edgar:0, 'Sin asignar':0}
 let overviewSalesChart = null;
 
@@ -2248,7 +1888,6 @@ async function loadTimelineData() {
   });
   // Render overview monthly sales chart if canvas is present
   if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
-  renderTop5Hist();
   // Update timeline selector in declaraciones tab
   const sel = document.getElementById('timelineClientSelect');
   if (sel) {
@@ -2320,7 +1959,6 @@ async function loadVentasMapIntoTimeline(gvizRows, parseCurrency, monthNames) {
 
   // 3) Render
   if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
-  renderTop5Hist(); // histórico Top 5 — también en la ruta fallback (Ventas_Map)
   const sel = document.getElementById('timelineClientSelect');
   if (sel) {
     const ids = Object.keys(timelineRawData).sort();
@@ -2394,20 +2032,19 @@ function showTab(id) {
   if (el) el.classList.add('active');
   if (id === 'overview') { initOverviewCharts(); }
   if (id === 'portfolio') {
-    if (!Object.keys(timelineRawData).length) loadTimelineData().then(renderPortfolioSection);
-    else renderPortfolioSection();
+    if (Object.keys(timelineRawData).length === 0) {
+      loadTimelineData().then(renderPortfolioSection);
+    } else { renderPortfolioSection(); }
   }
   if (id === 'pareto') {
-    if (!Object.keys(timelineRawData).length) loadTimelineData().then(renderParetoSection);
-    else renderParetoSection();
+    if (Object.keys(timelineRawData).length === 0) {
+      loadTimelineData().then(renderParetoSection);
+    } else { renderParetoSection(); }
   }
   if (id === 'clientes') {
     initClientesCharts();
-    if (!Object.keys(timelineRawData).length) loadTimelineData();
-    if (!Object.keys(CLIENT_DB).length) loadClientDB();
-  }
-  if (id === 'kpis') {
-    loadKPIsSection(false);
+    if (Object.keys(timelineRawData).length === 0) loadTimelineData();
+    if (Object.keys(CLIENT_DB).length === 0) loadClientDB();
   }
 }
 
@@ -2436,12 +2073,11 @@ function initOverviewCharts() {
     data: {
       labels: [],
       datasets: [
-        { label: 'Declarado',     data: [], backgroundColor: COLORS.green  + 'dd', borderRadius: 2 },
-        { label: 'Sin Operación', data: [], backgroundColor: COLORS.blue   + '77', borderRadius: 2 },
-        { label: 'En proceso',    data: [], backgroundColor: COLORS.yellow + 'dd', borderRadius: 2 },
-        { label: 'Sin iniciar',   data: [], backgroundColor: COLORS.red    + 'dd', borderRadius: 2 },
-        { label: 'Bloqueado',     data: [], backgroundColor: COLORS.purple + 'dd', borderRadius: 2 },
-        { label: 'Deuda técnica', data: [], backgroundColor: '#64748b55',          borderRadius: 2 }
+        { label: 'Declarado',    data: [], backgroundColor: COLORS.green  + 'dd', borderRadius: 2 },
+        { label: 'Sin Operación',data: [], backgroundColor: COLORS.blue   + '77', borderRadius: 2 },
+        { label: 'En proceso',   data: [], backgroundColor: COLORS.yellow + 'dd', borderRadius: 2 },
+        { label: 'Sin iniciar',  data: [], backgroundColor: COLORS.red    + 'dd', borderRadius: 2 },
+        { label: 'Bloqueado',    data: [], backgroundColor: COLORS.purple + 'dd', borderRadius: 2 }
       ]
     },
     options: {
@@ -2490,6 +2126,7 @@ function initOverviewCharts() {
 // ============================================================
 var weeklyPlanRawData = [];
 
+async function loadWeeklyPlanData() {
 async function loadWeeklyPlanData() {
   const data = await fetchSheet('WeeklyPlan');
   if (!data || !data.table) return;
@@ -2585,34 +2222,16 @@ async function loadClientsLoad() {
   const counts = { Arturo: 0, Cristina: 0, Lina: 0, Edgar: 0, 'Sin asignar': 0 };
   const rows = data.table?.rows || [];
   const uniqueIdSet = new Set(); // de-duplicate Company_IDs
-
-  // ── Detección dinámica de columna Cita FIEL (para deuda técnica) ──
-  let citaFielColIdx = -1;
-  (data.table.cols || []).forEach(function(col, i) {
-    const lbl = (col.label || '').trim().toLowerCase();
-    if (lbl === 'cita fiel' || lbl === 'citafiel') citaFielColIdx = i;
-  });
-
   clientOwnerMap = {}; // reset
-  clientNameMap  = {}; // reset
-  allClientsLoadIds = new Set(); // reset para este fetch
   rows.forEach(row => {
     const c = row.c || [];
     // Clients_Load columns: [0]Company_Id [1]RFC [2]ClientName [3]Owner
-    const companyId  = (c[0] && c[0].v) ? String(c[0].v).trim() : '';
-    const clientName = (c[2] && c[2].v) ? String(c[2].v).trim() : '';
-    const owner      = (c[3] && c[3].v) ? String(c[3].v).trim() : '';
+    const companyId = (c[0] && c[0].v) ? String(c[0].v).trim() : '';
+    const owner = (c[3] && c[3].v) ? String(c[3].v).trim() : '';
     if (!companyId) return;               // skip blank/formula rows with no ID
     if (uniqueIdSet.has(companyId)) return; // skip true duplicates
     uniqueIdSet.add(companyId);
-    // Deuda técnica: solo clientes con Cita FIEL = "Exitosa"
-    const citaFiel  = (citaFielColIdx >= 0 && c[citaFielColIdx] && c[citaFielColIdx].v)
-                        ? String(c[citaFielColIdx].v).trim() : '';
-    if (citaFiel === 'Exitosa') {
-      allClientsLoadIds.add(companyId); // universo elegible para deuda técnica
-    }
     clientOwnerMap[companyId] = owner;
-    clientNameMap[companyId]  = clientName;
     if (owner === 'Arturo') counts.Arturo++;
     else if (owner === 'Cristina') counts.Cristina++;
     else if (owner === 'Lina') counts.Lina++;
@@ -2633,13 +2252,6 @@ async function loadClientsLoad() {
   set('equipoCount_cristina', counts.Cristina);
   set('equipoCount_lina',     counts.Lina);
   set('equipoCount_edgar',    counts.Edgar);
-  // Card universo overview
-  set('kpi-ov-total',      totalClientes);
-  set('kpi-ov-arturo',     counts.Arturo);
-  set('kpi-ov-cristina',   counts.Cristina);
-  set('kpi-ov-lina',       counts.Lina);
-  set('kpi-ov-edgar',      counts.Edgar);
-  set('kpi-ov-sinasignar', counts['Sin asignar']);
   // Update table cells
   set('equipoTbl_arturo',   counts.Arturo);
   set('equipoTbl_cristina', counts.Cristina);
@@ -2674,29 +2286,6 @@ async function loadDeclaracionesData() {
   // Columns: [0]PeriodID [1]Company_id [7]EstadoCliente [13]MesPeriodo [14]AñoPeríodo
   // NOTE: OpiCumplimiento (col S) is NOT returned by the GViz proxy — loaded separately via loadOpiMap()
 
-  // ── Cache raw data for KPI6 (avoids re-fetch) ──
-  clientesRawRows = rows;
-  clientesRawCols = data.table.cols || [];
-
-  // Detect Notas_Declaracion column dynamically
-  // Normalization: lowercase, strip spaces/underscores, strip accents
-  const normColLabel = s => (s || '').toLowerCase()
-    .replace(/[\s_]/g,'')
-    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i')
-    .replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/ñ/g,'n');
-  let notasColIdx = -1;
-  clientesRawCols.forEach((col, i) => {
-    const lbl = normColLabel(col.label || '');
-    if (lbl === 'notasdeclaracion' || lbl === 'notasdeclaracion' ||
-        lbl === 'notas' || lbl === 'nota' || lbl === 'notesdeclaration' ||
-        lbl === 'notadeclaracion' || lbl === 'notasdecl') {
-      notasColIdx = i;
-    }
-  });
-  // Hardcoded fallback: Notas_Declaracion is historically at col 20 in this sheet
-  if (notasColIdx < 0 && clientesRawCols.length > 20) notasColIdx = 20;
-  console.log('[decl] notasColIdx =', notasColIdx, '| cols =', clientesRawCols.map(c => c.label));
-
   const mesToNum = { 'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
                      'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12 };
   const monthShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -2704,27 +2293,14 @@ async function loadDeclaracionesData() {
                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const OWNERS = ['Cristina', 'Lina', 'Edgar'];
 
-  // ── Dynamic column index detection (robust against sheet column reordering) ──
-  const colMapDecl = {};
-  clientesRawCols.forEach((col, i) => {
-    const lbl = (col.label || '').trim().toLowerCase()
-      .replace(/\s+/g,'').replace(/ñ/g,'n').replace(/[áàä]/g,'a').replace(/[éèë]/g,'e')
-      .replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/_/g,'');
-    colMapDecl[lbl] = i;
-  });
-  const iDCompany = colMapDecl['companyid'] ?? colMapDecl['company'] ?? 1;
-  const iDEstado  = colMapDecl['estadocliente'] ?? colMapDecl['estado'] ?? 7;
-  const iDMes     = colMapDecl['mesperiodo'] ?? colMapDecl['mes'] ?? 13;
-  const iDAnio    = colMapDecl['anoperiodo'] ?? colMapDecl['ano'] ?? 14;
-
   // ── 1. Build monthly aggregates (all periods) ──
   const monthlyAgg = {}; // { 'YYYY-MM': { declarado,enProceso,sinIniciar,bloqueado,sinOp,total } }
   rows.forEach(row => {
     const c = row.c || [];
-    const companyId = (c[iDCompany] && c[iDCompany].v) ? String(c[iDCompany].v).trim() : '';
-    const estado    = (c[iDEstado] && c[iDEstado].v) ? String(c[iDEstado].v).trim() : '';
-    const mes       = (c[iDMes] && c[iDMes].v) ? String(c[iDMes].v).trim() : '';
-    const anio      = (c[iDAnio] && c[iDAnio].v) ? String(c[iDAnio].v).trim() : '';
+    const companyId = (c[1] && c[1].v) ? String(c[1].v).trim() : '';
+    const estado    = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
+    const mes       = (c[13] && c[13].v) ? String(c[13].v).trim() : '';
+    const anio      = (c[14] && c[14].v) ? String(c[14].v).trim() : '';
     if (!mes || !anio || !companyId) return;
     const mesNum = mesToNum[mes]; if (!mesNum) return;
     const pk = anio + '-' + String(mesNum).padStart(2,'0');
@@ -2738,11 +2314,6 @@ async function loadDeclaracionesData() {
     // Build per-client period map (used by getClientDeclarations)
     if (!clientDeclMap[companyId]) clientDeclMap[companyId] = {};
     clientDeclMap[companyId][pk] = estado;
-    // Build per-client periods map (for notes modal)
-    const nota = (notasColIdx >= 0 && c[notasColIdx] && c[notasColIdx].v != null)
-      ? String(c[notasColIdx].v).trim() : '';
-    if (!clientPeriodsMap[companyId]) clientPeriodsMap[companyId] = [];
-    clientPeriodsMap[companyId].push({ pk, periodoLabel: mes + ' ' + anio, nota, estado });
   });
 
   const sortedKeys = Object.keys(monthlyAgg).sort();
@@ -2754,9 +2325,8 @@ async function loadDeclaracionesData() {
     declarado:  sortedKeys.map(k => monthlyAgg[k].declarado),
     sinOp:      sortedKeys.map(k => monthlyAgg[k].sinOp),
     enProceso:  sortedKeys.map(k => monthlyAgg[k].enProceso),
-    sinIniciar:   sortedKeys.map(k => monthlyAgg[k].sinIniciar),
-    bloqueado:    sortedKeys.map(k => monthlyAgg[k].bloqueado),
-    deudaTecnica: sortedKeys.map(k => Math.max(0, allClientsLoadIds.size - monthlyAgg[k].total))
+    sinIniciar: sortedKeys.map(k => monthlyAgg[k].sinIniciar),
+    bloqueado:  sortedKeys.map(k => monthlyAgg[k].bloqueado)
   };
   updateDeclCharts();
 
@@ -2895,10 +2465,10 @@ async function loadDeclaracionesData() {
   });
   rows.forEach(row => {
     const c = row.c || [];
-    const companyId = (c[iDCompany] && c[iDCompany].v) ? String(c[iDCompany].v).trim() : '';
-    const estado    = (c[iDEstado]  && c[iDEstado].v)  ? String(c[iDEstado].v).trim()  : '';
-    const mes       = (c[iDMes]     && c[iDMes].v)     ? String(c[iDMes].v).trim()     : '';
-    const anio      = (c[iDAnio]    && c[iDAnio].v)    ? String(c[iDAnio].v).trim()    : '';
+    const companyId = (c[1] && c[1].v) ? String(c[1].v).trim() : '';
+    const estado    = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
+    const mes       = (c[13] && c[13].v) ? String(c[13].v).trim() : '';
+    const anio      = (c[14] && c[14].v) ? String(c[14].v).trim() : '';
     if (!mes || !anio || !companyId) return;
     const mesNum = mesToNum[mes]; if (!mesNum) return;
     const pk = anio + '-' + String(mesNum).padStart(2,'0');
@@ -3025,29 +2595,6 @@ function renderOpiKPI() {
   if (sub) sub.textContent = positivos + ' positivos · ' + negativos + ' negativos · ' + vacios + ' sin dato de ' + total;
   var trend = document.getElementById('kpi-opi-trend');
   if (trend) trend.textContent = total > 0 ? 'Base elegible: ' + total + ' clientes' : 'Sin datos';
-
-  // ── Cruce: opinión de cumplimiento de clientes con Ventas Acumuladas ≥ $1 (Clients_Load) ──
-  var vTotal = 0, vPos = 0, vNeg = 0, vSin = 0;
-  Object.keys(CLIENT_DB).forEach(function(id) {
-    var cl = CLIENT_DB[id];
-    if (!cl || !(cl.ventasAcum >= 1)) return;
-    vTotal++;
-    var opi = clientOpiMap[id] || '';
-    if (opi === 'Positivo')      vPos++;
-    else if (opi === 'Negativo') vNeg++;
-    else                         vSin++;
-  });
-  var vEl = document.getElementById('kpi-opi-ventas');
-  if (vEl) {
-    if (vTotal > 0) {
-      var vPct = (vPos / vTotal * 100).toFixed(1);
-      var vColor = parseFloat(vPct) >= 80 ? 'var(--green)' : parseFloat(vPct) >= 50 ? 'var(--yellow)' : 'var(--red)';
-      vEl.innerHTML = '💰 Con ventas acumuladas ≥ $1: <b style="color:' + vColor + ';font-size:15px;">' + vPct + '%</b><br>'
-        + vPos + ' positivos · ' + vNeg + ' negativos · ' + vSin + ' sin dato de ' + vTotal + ' clientes';
-    } else {
-      vEl.textContent = '💰 Con ventas ≥ $1: sin datos (columna Ventas Acumuladas no disponible)';
-    }
-  }
 }
 
 // ============================================================
@@ -3264,15 +2811,10 @@ async function loadClientDB() {
   }
 
   // Build CLIENT_DB entries from Clients_Load
-  // Dynamic column index lookup (positions vary by sheet version)
+  // Dynamic column index lookup for Cita FIEL (position varies by sheet version)
   var citaFielColIdx = -1;
-  var payoneerColIdx = -1;
-  var ventasAcumColIdx = -1;
   (clData.table.cols || []).forEach(function(col, i) {
-    var lbl = (col.label || '').trim();
-    if (lbl === 'Cita FIEL') citaFielColIdx = i;
-    if (lbl === 'Payoneer' || lbl === 'payoneer' || lbl.toLowerCase() === 'payoneer') payoneerColIdx = i;
-    if (lbl === 'Ventas Acumuladas' || lbl.toLowerCase() === 'ventas acumuladas') ventasAcumColIdx = i;
+    if ((col.label || '').trim() === 'Cita FIEL') citaFielColIdx = i;
   });
 
   var newDB = {};
@@ -3313,15 +2855,7 @@ async function loadClientDB() {
       lastInvoice:     c[11] && c[11].v != null ? String(c[11].v).trim() : '',
       stripeEmail:     c[12] && c[12].v != null ? String(c[12].v).trim() : '',
       stripeContext:   c[13] && c[13].v != null ? String(c[13].v).trim() : '',
-      stripeTimestamp: c[14] && c[14].v != null ? String(c[14].v).trim() : '',
-      // Payoneer: value from Clients_Load.Payoneer column (detected dynamically)
-      payoneer:        payoneerColIdx >= 0 && c[payoneerColIdx] && c[payoneerColIdx].v != null ? String(c[payoneerColIdx].v).trim() : '',
-      // Ventas Acumuladas (Clients_Load) — para el cruce de Opinión de Cumplimiento
-      ventasAcum:      ventasAcumColIdx >= 0 && c[ventasAcumColIdx]
-                         ? (typeof c[ventasAcumColIdx].v === 'number'
-                             ? c[ventasAcumColIdx].v
-                             : parseFloat(String(c[ventasAcumColIdx].f || c[ventasAcumColIdx].v || '0').replace(/[$,\s]/g,'')) || 0)
-                         : 0
+      stripeTimestamp: c[14] && c[14].v != null ? String(c[14].v).trim() : ''
     };
   });
 
@@ -4411,6 +3945,8 @@ function initOverviewSalesChart() {
   buildTop10ClientsTable();
 }
 
+// ── Ventas tab: orchestrator ──────────────────────────────────────────────────
+function renderVentasSection() {
 // Parsear fechas de GViz (formato "Date(yyyy,m,d)" con mes 0-indexed) o strings MM/DD/YYYY
 function parseVLDate(s) {
   if (!s || typeof s !== 'string') return null;
@@ -4429,9 +3965,14 @@ function parseVLDate(s) {
 // ============================================================
 // PORTFOLIO ANALYTICS — NRR + Expansión + Pareto + Whale Curve
 // ============================================================
-const MES_LABELS_PF = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-// fmtMXN already defined above (in renderClientProfile helpers)
-const fmtK = v => { if (!v) return '$0'; if (v>=1000000) return '$'+(v/1000000).toFixed(1)+'M'; if (v>=1000) return '$'+Math.round(v/1000)+'k'; return fmtMXN(v); };
+const MES_LABELS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const fmtMXN = v => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(v||0);
+const fmtK   = v => {
+  if (!v) return '$0';
+  if (v >= 1000000) return '$' + (v/1000000).toFixed(1) + 'M';
+  if (v >= 1000)    return '$' + Math.round(v/1000) + 'k';
+  return fmtMXN(v);
+};
 
 function getPK(year, month) { return year + '-' + String(month).padStart(2,'0'); }
 
@@ -4439,7 +3980,9 @@ function buildClientSalesMap() {
   var map = {};
   Object.keys(timelineRawData).forEach(function(cid) {
     map[cid] = {};
-    timelineRawData[cid].forEach(function(e) { if (e.sales > 0) map[cid][e.periodKey] = e.sales; });
+    timelineRawData[cid].forEach(function(e) {
+      if (e.sales > 0) map[cid][e.periodKey] = e.sales;
+    });
   });
   return map;
 }
@@ -4450,174 +3993,371 @@ function avgOfPositive(arr) {
   return vals.reduce((a,b) => a+b, 0) / vals.length;
 }
 
+// ── Core metrics computation ──────────────────────────────────────────────────
 function computePortfolioMetrics() {
-  // Derive last-closed month from actual aggregate data — avoids using current
-  // month when no data has been loaded yet (e.g. today=Jun 22 but June not closed)
-  var lcKeys = Object.keys(monthlySalesData).sort();
-  var lcKey  = lcKeys.length ? lcKeys[lcKeys.length - 1] : null;
-  var yr, lc;
-  if (lcKey) {
-    yr = parseInt(lcKey.slice(0, 4), 10);
-    lc = parseInt(lcKey.slice(5, 7), 10);
-  } else {
-    var _now = new Date();
-    yr = _now.getFullYear();
-    lc = _now.getMonth(); // getMonth() is 0-based → gives previous month
-    if (lc < 1) { lc = 12; yr--; }
-  }
-  // Expose last-closed period label for the UI
-  window._portfolioLCLabel = MES_LABELS_PF[lc-1] + ' ' + yr;
-  var sm = buildClientSalesMap();
-  var res = [];
-  Object.keys(sm).forEach(function(cid) {
-    var s = sm[cid];
+  var now  = new Date();
+  var yr   = now.getFullYear();
+  var mo   = now.getMonth() + 1; // 1-12
+  // Before day 20: current month is incomplete → use previous month as "last closed"
+  var lastClosed = now.getDate() < 20 ? mo - 1 : mo;
+  if (lastClosed < 1) { lastClosed = 12; yr -= 1; }
+
+  var salesMap = buildClientSalesMap();
+  var results  = [];
+
+  Object.keys(salesMap).forEach(function(cid) {
+    var sm = salesMap[cid];
+
+    // Revenue 2026
     var rev2026 = 0;
-    Object.keys(s).forEach(function(pk){ if (pk.startsWith('2026')) rev2026 += (s[pk]||0); });
+    Object.keys(sm).forEach(function(pk) { if (pk.startsWith('2026')) rev2026 += (sm[pk]||0); });
     if (!rev2026) return;
-    var last3=[], py3=[], base3=[];
-    for (var i=0;i<3;i++) { var m=lc-i,y=yr; if(m<1){m+=12;y--;} last3.push(s[getPK(y,m)]||0); }
-    for (var i=0;i<3;i++) { var m=lc-i,y=yr-1; if(m<1){m+=12;y--;} py3.push(s[getPK(y,m)]||0); }
-    for (var i=1;i<=3;i++) { var m=lc-i,y=yr; if(m<1){m+=12;y--;} base3.push(s[getPK(y,m)]||0); }
-    var avgL3=avgOfPositive(last3), avgPY=avgOfPositive(py3), baseAvg=avgOfPositive(base3);
-    var nrr = avgPY>0 ? avgL3/avgPY*100 : null;
-    var lastSales = s[getPK(yr,lc)]||0;
-    var exp = baseAvg>0 ? lastSales/baseAvg*100 : null;
-    var ps  = exp!=null ? rev2026*(exp/100) : rev2026;
-    var q;
-    if (nrr!=null && exp!=null) {
-      if      (nrr>=100&&exp>=120) q='🚀 Estrella';
-      else if (nrr>=100&&exp>=80)  q='🏆 Héroe';
-      else if (nrr<80&&exp<80)     q='⚠️ En riesgo';
-      else if (exp<50)             q='😴 Dormido';
-      else                         q='📊 Estable';
-    } else if (exp!=null) {
-      // Expansion data available but no prior-year comparison (new/recent clients)
-      if      (exp>=120) q='🚀 Creciendo';
-      else if (exp>=80)  q='📊 Estable';
-      else if (exp<50)   q='😴 Contrayendo';
-      else               q='📊 Estable';
-    } else {
-      q='🆕 Sin datos';
+
+    // Last 3 closed months
+    var last3 = [];
+    for (var i = 0; i < 3; i++) {
+      var m = lastClosed - i, y = yr;
+      if (m < 1) { m += 12; y--; }
+      last3.push(sm[getPK(y,m)] || 0);
     }
-    var name=(CLIENT_DB[cid]&&CLIENT_DB[cid].name)?CLIENT_DB[cid].name:cid;
-    res.push({cid,name,rev2026,nrr,expansionRate:exp,priorityScore:ps,quadrant:q});
+    var avgLast3 = avgOfPositive(last3);
+
+    // Same 3 months one year prior
+    var prev3Y = [];
+    for (var i = 0; i < 3; i++) {
+      var m = lastClosed - i, y = yr - 1;
+      if (m < 1) { m += 12; y--; }
+      prev3Y.push(sm[getPK(y,m)] || 0);
+    }
+    var avgPrevYear = avgOfPositive(prev3Y);
+
+    var nrr = (avgPrevYear > 0) ? (avgLast3 / avgPrevYear * 100) : null;
+
+    // Expansion rate: last closed month vs avg of prior 3 months
+    var lastSales = sm[getPK(yr, lastClosed)] || 0;
+    var base3 = [];
+    for (var i = 1; i <= 3; i++) {
+      var m = lastClosed - i, y = yr;
+      if (m < 1) { m += 12; y--; }
+      base3.push(sm[getPK(y,m)] || 0);
+    }
+    var baseAvg = avgOfPositive(base3);
+    var expansionRate = (baseAvg > 0) ? (lastSales / baseAvg * 100) : null;
+
+    var priorityScore = (expansionRate != null) ? rev2026 * (expansionRate/100) : rev2026;
+
+    // Quadrant classification
+    var quadrant = '—';
+    if (nrr !== null && expansionRate !== null) {
+      if      (nrr >= 100 && expansionRate >= 120) quadrant = '🚀 Estrella';
+      else if (nrr >= 100 && expansionRate >= 80)  quadrant = '🏆 Héroe';
+      else if (nrr < 80   && expansionRate < 80)   quadrant = '⚠️ En riesgo';
+      else if (expansionRate < 50)                  quadrant = '😴 Dormido';
+      else                                          quadrant = '📊 Estable';
+    } else if (nrr === null) {
+      quadrant = '🆕 Sin historial';
+    }
+
+    var name = (CLIENT_DB[cid] && CLIENT_DB[cid].name) ? CLIENT_DB[cid].name : cid;
+    results.push({ cid, name, rev2026, nrr, expansionRate, priorityScore, quadrant });
   });
-  res.sort((a,b)=>b.priorityScore-a.priorityScore);
-  return res;
+
+  results.sort((a, b) => b.priorityScore - a.priorityScore);
+  return results;
 }
 
-function updatePortfolioKPIs(m) {
-  // Show last-closed period in the table badge
-  var lcBadge = document.getElementById('pf-lc-badge');
-  if (lcBadge && window._portfolioLCLabel) lcBadge.textContent = '· Ref: ' + window._portfolioLCLabel;
-  var withExp = m.filter(r=>r.expansionRate!=null).length;
-  var total=m.length, rev=m.reduce((s,r)=>s+r.rev2026,0);
-  var inExp=m.filter(r=>r.expansionRate!=null&&r.expansionRate>=100).length;
-  var nrrV=m.map(r=>r.nrr).filter(v=>v!=null);
-  var avgNRR=nrrV.length?(nrrV.reduce((a,b)=>a+b,0)/nrrV.length):null;
-  var set=(id,v)=>{var el=document.getElementById(id);if(el)el.textContent=v;};
-  set('pf-kpi-active',total); set('pf-kpi-active-sub',withExp+' con Tasa Expansión'); set('pf-kpi-active-trend','clientes con ventas en 2026');
-  set('pf-kpi-revenue',fmtK(rev)); set('pf-kpi-revenue-sub','Total acumulado 2026');
-  set('pf-kpi-expansion',inExp); set('pf-kpi-expansion-sub',total?(inExp/total*100).toFixed(0)+'% en expansión (≥100%)':'');
-  set('pf-kpi-nrr',avgNRR!=null?avgNRR.toFixed(1)+'%':'N/D');
-  set('pf-kpi-nrr-sub',nrrV.length ? nrrV.length+' clientes con datos 2025' : 'Sin historial anual aún');
-  set('pf-kpi-nrr-trend',avgNRR!=null?(avgNRR>=100?'▲ Portafolio en expansión':'▼ Portafolio en contracción'):'VentasList 2025 no disponible');
+// ── Portfolio KPI cards ───────────────────────────────────────────────────────
+function updatePortfolioKPIs(metrics) {
+  var total    = metrics.length;
+  var rev      = metrics.reduce((s,r) => s+r.rev2026, 0);
+  var inExp    = metrics.filter(r => r.nrr!=null && r.nrr>=100).length;
+  var nrrVals  = metrics.map(r=>r.nrr).filter(v=>v!=null);
+  var avgNRR   = nrrVals.length ? (nrrVals.reduce((a,b)=>a+b,0)/nrrVals.length) : null;
+
+  var set = (id,val) => { var el=document.getElementById(id); if(el) el.textContent=val; };
+  set('pf-kpi-active',       total);
+  set('pf-kpi-active-sub',   nrrVals.length + ' con historial NRR');
+  set('pf-kpi-active-trend', 'clientes con ventas en 2026');
+  set('pf-kpi-revenue',      fmtK(rev));
+  set('pf-kpi-revenue-sub',  'Total acumulado 2026');
+  set('pf-kpi-expansion',    inExp);
+  set('pf-kpi-expansion-sub', total ? (inExp/total*100).toFixed(0)+'% del portafolio' : '');
+  set('pf-kpi-expansion-trend', inExp + ' clientes con NRR ≥ 100%');
+  set('pf-kpi-nrr',          avgNRR!=null ? avgNRR.toFixed(1)+'%' : 'N/D');
+  set('pf-kpi-nrr-sub',      nrrVals.length + ' clientes con comparativo anual');
+  set('pf-kpi-nrr-trend',    avgNRR!=null ? (avgNRR>=100?'▲ Portafolio en expansión':'▼ Portafolio en contracción') : 'Sin datos anuales suficientes');
 }
 
-var _chartTop10=null;
+// ── Top 10 MoM 2026 multi-line chart ─────────────────────────────────────────
+var _chartTop10 = null;
+
 function buildTop10MoM2026(metrics) {
-  var sm=buildClientSalesMap();
-  var top10=metrics.slice().sort((a,b)=>b.rev2026-a.rev2026).slice(0,10);
-  var monthSet=new Set();
-  top10.forEach(function(r){Object.keys(sm[r.cid]||{}).forEach(function(pk){if(pk.startsWith('2026'))monthSet.add(pk);});});
-  var months=Array.from(monthSet).sort();
-  var labels=months.map(function(pk){return MES_LABELS_PF[parseInt(pk.split('-')[1],10)-1];});
-  var PAL=['#4f7fff','#22c55e','#f59e0b','#7c5cfc','#f97316','#06b6d4','#ec4899','#a3e635','#fb923c','#34d399'];
-  var datasets=top10.map(function(r,idx){
-    var d=months.map(function(pk){return (sm[r.cid]||{})[pk]||null;});
-    var lbl=r.name.length>22?r.name.slice(0,20)+'…':r.name;
-    return {label:lbl,data:d,borderColor:PAL[idx],backgroundColor:PAL[idx]+'22',tension:0.35,borderWidth:2,pointRadius:3,pointHoverRadius:5,spanGaps:false};
+  var salesMap = buildClientSalesMap();
+  // Top 10 by rev2026 (metrics already sorted by priorityScore — take top 10 by rev2026)
+  var by2026   = metrics.slice().sort((a,b) => b.rev2026 - a.rev2026).slice(0, 10);
+
+  var monthSet = new Set();
+  by2026.forEach(function(r) {
+    Object.keys(salesMap[r.cid]||{}).forEach(function(pk) {
+      if (pk.startsWith('2026')) monthSet.add(pk);
+    });
   });
-  var n=document.getElementById('top10-mom-note'); if(n) n.textContent=top10.length+' clientes · '+months.length+' meses 2026';
-  if(_chartTop10){_chartTop10.destroy();_chartTop10=null;}
-  var ctx=document.getElementById('chartTop10MoM')?.getContext('2d'); if(!ctx) return;
-  _chartTop10=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8,boxWidth:12}},tooltip:{callbacks:{label:function(c){return c.parsed.y!=null?c.dataset.label+': '+fmtK(c.parsed.y):null;}}}},scales:{x:{grid:{color:'#2a305022'}},y:{grid:{color:'#2a305033'},beginAtZero:true,ticks:{callback:function(v){return fmtK(v);}}}}}});
+  var months = Array.from(monthSet).sort();
+  var labels = months.map(function(pk) {
+    var m = parseInt(pk.split('-')[1],10)-1;
+    return MES_LABELS[m];
+  });
+
+  var PALETTE = ['#4f7fff','#22c55e','#f59e0b','#7c5cfc','#f97316','#06b6d4','#ec4899','#a3e635','#fb923c','#34d399'];
+  var datasets = by2026.map(function(r,idx) {
+    var sm   = salesMap[r.cid]||{};
+    var data = months.map(function(pk) { return sm[pk]||null; });
+    var lbl  = r.name.length>22 ? r.name.slice(0,20)+'…' : r.name;
+    return {
+      label: lbl, data,
+      borderColor: PALETTE[idx], backgroundColor: PALETTE[idx]+'22',
+      tension: 0.35, borderWidth: 2, pointRadius: 3, pointHoverRadius: 5,
+      spanGaps: false
+    };
+  });
+
+  var noteEl = document.getElementById('top10-mom-note');
+  if (noteEl) noteEl.textContent = by2026.length + ' clientes · ' + months.length + ' meses 2026';
+
+  if (_chartTop10) { _chartTop10.destroy(); _chartTop10=null; }
+  var ctx = document.getElementById('chartTop10MoM')?.getContext('2d');
+  if (!ctx) return;
+
+  _chartTop10 = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { position:'bottom', labels:{ font:{size:10}, padding:8, boxWidth:12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.parsed.y!=null ? ctx.dataset.label+': '+fmtK(ctx.parsed.y) : null
+          }
+        }
+      },
+      scales: {
+        x: { grid:{ color:'#2a305022' } },
+        y: {
+          grid:{ color:'#2a305033' }, beginAtZero:true,
+          ticks: { callback: v => fmtK(v) }
+        }
+      }
+    }
+  });
 }
 
-var _nrrRows=[];
-function buildNRRTable(metrics){_nrrRows=metrics;_renderNRRBody(metrics);}
-function filterNRRTable(){var q=(document.getElementById('nrrSearch')?.value||'').toLowerCase().trim();_renderNRRBody(q?_nrrRows.filter(r=>r.name.toLowerCase().includes(q)||r.cid.toLowerCase().includes(q)):_nrrRows);}
-function _renderNRRBody(rows){
-  var tbody=document.getElementById('nrrBody'); if(!tbody) return;
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Sin datos</td></tr>';return;}
-  tbody.innerHTML=rows.map(function(r,i){
-    var nc=r.nrr==null?'#8899aa':r.nrr>=100?'#22c55e':r.nrr>=80?'#f59e0b':'#ef4444';
-    var bg=r.nrr==null?'':r.nrr>=100?'rgba(34,197,94,0.04)':r.nrr<80?'rgba(239,68,68,0.04)':'';
-    return '<tr data-bg="'+bg+'" style="border-bottom:1px solid var(--border);background:'+bg+';" onmouseover="this.style.background=\'var(--hover)\'" onmouseout="this.style.background=this.dataset.bg">'+
+// ── NRR Table ─────────────────────────────────────────────────────────────────
+var _nrrRows = [];
+
+function buildNRRTable(metrics) {
+  _nrrRows = metrics;
+  _renderNRRBody(metrics);
+}
+
+function filterNRRTable() {
+  var q = (document.getElementById('nrrSearch')?.value||'').toLowerCase().trim();
+  _renderNRRBody(q ? _nrrRows.filter(r=>r.name.toLowerCase().includes(q)||r.cid.toLowerCase().includes(q)) : _nrrRows);
+}
+
+function _renderNRRBody(rows) {
+  var tbody = document.getElementById('nrrBody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);">Sin datos disponibles</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(function(r,i) {
+    var nrrStr = r.nrr!=null ? r.nrr.toFixed(1)+'%' : 'N/D';
+    var expStr = r.expansionRate!=null ? r.expansionRate.toFixed(1)+'%' : 'N/D';
+    var nrrCol = r.nrr==null ? '#8899aa' : r.nrr>=100 ? '#22c55e' : r.nrr>=80 ? '#f59e0b' : '#ef4444';
+    var rowBg  = r.nrr==null ? '' : r.nrr>=100 ? 'rgba(34,197,94,0.04)' : r.nrr<80 ? 'rgba(239,68,68,0.04)' : '';
+    return '<tr style="border-bottom:1px solid var(--border);background:'+rowBg+';" '+
+      'onmouseover="this.style.background=\'var(--hover)\'" onmouseout="this.style.background=\''+rowBg+'\'">' +
       '<td style="text-align:center;padding:8px;color:var(--muted);font-size:11px;">'+(i+1)+'</td>'+
-      '<td style="padding:8px;"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;" title="'+r.name+'">'+r.name+'</div><div style="font-size:10px;color:var(--muted);font-family:monospace;">'+r.cid+'</div></td>'+
+      '<td style="padding:8px;">'+
+        '<div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;" title="'+r.name+'">'+r.name+'</div>'+
+        '<div style="font-size:10px;color:var(--muted);font-family:monospace;">'+r.cid+'</div>'+
+      '</td>'+
       '<td style="padding:8px;text-align:right;font-weight:600;">'+fmtK(r.rev2026)+'</td>'+
-      '<td style="padding:8px;text-align:right;font-weight:700;color:'+nc+';">'+(r.nrr!=null?r.nrr.toFixed(1)+'%':'N/D')+'</td>'+
-      '<td style="padding:8px;text-align:right;">'+(r.expansionRate!=null?r.expansionRate.toFixed(1)+'%':'N/D')+'</td>'+
+      '<td style="padding:8px;text-align:right;font-weight:700;color:'+nrrCol+';">'+nrrStr+'</td>'+
+      '<td style="padding:8px;text-align:right;">'+expStr+'</td>'+
       '<td style="padding:8px;text-align:right;color:var(--muted);">'+fmtK(r.priorityScore)+'</td>'+
       '<td style="padding:8px;text-align:center;font-size:12px;">'+r.quadrant+'</td>'+
     '</tr>';
   }).join('');
 }
 
+// ── Render portfolio section ──────────────────────────────────────────────────
 function renderPortfolioSection() {
-  var _run=function(){var m=computePortfolioMetrics();updatePortfolioKPIs(m);buildTop10MoM2026(m);buildNRRTable(m);if(document.getElementById('chartMonthlySales'))initOverviewSalesChart();};
-  if(!Object.keys(timelineRawData).length) loadTimelineData().then(function(){if(!Object.keys(CLIENT_DB).length)loadClientDB().then(_run);else _run();});
-  else if(!Object.keys(CLIENT_DB).length) loadClientDB().then(_run);
-  else _run();
+  var _run = function() {
+    var metrics = computePortfolioMetrics();
+    updatePortfolioKPIs(metrics);
+    buildTop10MoM2026(metrics);
+    buildNRRTable(metrics);
+    if (document.getElementById('chartMonthlySales')) initOverviewSalesChart();
+  };
+  if (!Object.keys(timelineRawData).length) {
+    loadTimelineData().then(function() {
+      if (!Object.keys(CLIENT_DB).length) loadClientDB().then(_run); else _run();
+    });
+  } else if (!Object.keys(CLIENT_DB).length) {
+    loadClientDB().then(_run);
+  } else { _run(); }
 }
 
-var _chartWhaleCurve=null;
-function buildWhaleCurve(sorted){
-  var total=sorted.reduce((s,r)=>s+r.rev2026,0); if(!total) return;
-  var cum=0,pts=sorted.map(function(r,i){cum+=r.rev2026;return{x:+((i+1)/sorted.length*100).toFixed(2),y:+(cum/total*100).toFixed(2)};});
-  if(_chartWhaleCurve){_chartWhaleCurve.destroy();_chartWhaleCurve=null;}
-  var ctx=document.getElementById('chartWhaleCurve')?.getContext('2d'); if(!ctx) return;
-  _chartWhaleCurve=new Chart(ctx,{type:'line',data:{datasets:[{label:'% Revenue acumulado',data:pts,borderColor:'#7c5cfc',backgroundColor:'#7c5cfc1a',fill:true,tension:0.4,borderWidth:2,pointRadius:0,pointHoverRadius:4},{label:'Umbral 80%',data:[{x:0,y:80},{x:100,y:80}],borderColor:'#ef444488',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:10}},tooltip:{callbacks:{title:function(c){var x=c[0]?.parsed?.x;if(x==null)return'';var idx=Math.max(0,Math.min(Math.round(x/100*sorted.length)-1,sorted.length-1));return '#'+(idx+1)+' — '+sorted[idx].name;},label:function(c){if(c.datasetIndex!==0)return null;return '% clientes: '+c.parsed.x.toFixed(1)+'%  →  % revenue: '+c.parsed.y.toFixed(1)+'%';}}}},scales:{x:{type:'linear',min:0,max:100,title:{display:true,text:'% de clientes (de mayor a menor revenue)',font:{size:11}},grid:{color:'#2a305022'},ticks:{callback:function(v){return v+'%';}}},y:{min:0,max:100,title:{display:true,text:'% de revenue acumulado',font:{size:11}},grid:{color:'#2a305033'},ticks:{callback:function(v){return v+'%';}}}}}});
+// ── Whale Curve ───────────────────────────────────────────────────────────────
+var _chartWhaleCurve = null;
+
+function buildWhaleCurve(sorted) {
+  var total = sorted.reduce((s,r)=>s+r.rev2026, 0);
+  if (!total) return;
+
+  var cum = 0;
+  var points = sorted.map(function(r,i) {
+    cum += r.rev2026;
+    return { x: +((i+1)/sorted.length*100).toFixed(2), y: +(cum/total*100).toFixed(2) };
+  });
+
+  if (_chartWhaleCurve) { _chartWhaleCurve.destroy(); _chartWhaleCurve=null; }
+  var ctx = document.getElementById('chartWhaleCurve')?.getContext('2d');
+  if (!ctx) return;
+
+  _chartWhaleCurve = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: '% Revenue acumulado',
+          data: points,
+          borderColor: '#7c5cfc', backgroundColor: '#7c5cfc1a',
+          fill: true, tension: 0.4, borderWidth: 2,
+          pointRadius: 0, pointHoverRadius: 4
+        },
+        {
+          label: 'Umbral 80% revenue',
+          data: [{x:0,y:80},{x:100,y:80}],
+          borderColor: '#ef444488', borderDash:[5,4],
+          borderWidth: 1.5, pointRadius: 0, fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { position:'bottom', labels:{ font:{size:11}, padding:10 } },
+        tooltip: {
+          callbacks: {
+            title: function(ctx) {
+              var x = ctx[0]?.parsed?.x;
+              if (x==null) return '';
+              var idx = Math.round(x/100*sorted.length)-1;
+              idx = Math.max(0, Math.min(idx, sorted.length-1));
+              return '#'+(idx+1)+' — '+sorted[idx].name;
+            },
+            label: function(ctx) {
+              if (ctx.datasetIndex!==0) return null;
+              return '% clientes: '+ctx.parsed.x.toFixed(1)+'%  →  % revenue: '+ctx.parsed.y.toFixed(1)+'%';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type:'linear', min:0, max:100,
+          title:{ display:true, text:'% de clientes (de mayor a menor revenue)', font:{size:11} },
+          grid:{ color:'#2a305022' },
+          ticks:{ callback: v=>v+'%' }
+        },
+        y: {
+          min:0, max:100,
+          title:{ display:true, text:'% de revenue acumulado', font:{size:11} },
+          grid:{ color:'#2a305033' },
+          ticks:{ callback: v=>v+'%' }
+        }
+      }
+    }
+  });
 }
 
-function buildParetoTable(sorted){
-  var total=sorted.reduce((s,r)=>s+r.rev2026,0);
-  var tbody=document.getElementById('paretoBody'),badge=document.getElementById('pareto-table-badge');
-  if(!tbody)return; if(badge)badge.textContent=sorted.length+' clientes activos 2026';
-  var cum=0;
-  tbody.innerHTML=sorted.map(function(r,i){
-    cum+=r.rev2026;
-    var rp=(r.rev2026/total*100).toFixed(1)+'%',cp=cum/total*100,cps=cp.toFixed(1)+'%';
-    var bg=i<3?'rgba(124,92,252,0.06)':cp<=80?'rgba(34,197,94,0.03)':'';
-    var zona=cp<=80?'<span style="color:#22c55e;font-weight:700;">TOP 80%</span>':'<span style="color:var(--muted);">Resto</span>';
-    return '<tr data-bg="'+bg+'" style="border-bottom:1px solid var(--border);background:'+bg+';" onmouseover="this.style.background=\'var(--hover)\'" onmouseout="this.style.background=this.dataset.bg">'+
+// ── Pareto table ──────────────────────────────────────────────────────────────
+function buildParetoTable(sorted) {
+  var total  = sorted.reduce((s,r)=>s+r.rev2026, 0);
+  var tbody  = document.getElementById('paretoBody');
+  var badge  = document.getElementById('pareto-table-badge');
+  if (!tbody) return;
+  if (badge) badge.textContent = sorted.length + ' clientes activos 2026';
+  var cum = 0;
+  tbody.innerHTML = sorted.map(function(r,i) {
+    cum += r.rev2026;
+    var rowPct   = (r.rev2026/total*100).toFixed(1)+'%';
+    var cumPct   = (cum/total*100);
+    var cumPctStr = cumPct.toFixed(1)+'%';
+    var inTop80  = cumPct <= 80 || (cum-r.rev2026)/total*100 < 80;
+    var rowBg    = i<3 ? 'rgba(124,92,252,0.06)' : inTop80 ? 'rgba(34,197,94,0.03)' : '';
+    var zona     = cumPct<=80
+      ? '<span style="color:#22c55e;font-weight:700;">TOP 80%</span>'
+      : '<span style="color:var(--muted);">Resto</span>';
+    return '<tr style="border-bottom:1px solid var(--border);background:'+rowBg+';" '+
+      'onmouseover="this.style.background=\'var(--hover)\'" onmouseout="this.style.background=\''+rowBg+'\'">' +
       '<td style="text-align:center;padding:8px;color:var(--muted);font-size:11px;font-weight:'+(i<3?'700':'400')+';">'+(i+1)+'</td>'+
-      '<td style="padding:8px;"><div style="font-weight:'+(i<3?'700':'500')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;" title="'+r.name+'">'+r.name+'</div><div style="font-size:10px;color:var(--muted);font-family:monospace;">'+r.cid+'</div></td>'+
+      '<td style="padding:8px;">'+
+        '<div style="font-weight:'+(i<3?'700':'500')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;" title="'+r.name+'">'+r.name+'</div>'+
+        '<div style="font-size:10px;color:var(--muted);font-family:monospace;">'+r.cid+'</div>'+
+      '</td>'+
       '<td style="padding:8px;text-align:right;font-weight:'+(i<3?'700':'400')+';">'+fmtMXN(r.rev2026)+'</td>'+
-      '<td style="padding:8px;text-align:right;color:var(--muted);">'+rp+'</td>'+
-      '<td style="padding:8px;text-align:right;font-weight:600;color:'+(cp<=80?'#22c55e':'var(--muted)')+';">'+cps+'</td>'+
+      '<td style="padding:8px;text-align:right;color:var(--muted);">'+rowPct+'</td>'+
+      '<td style="padding:8px;text-align:right;font-weight:600;color:'+(cumPct<=80?'#22c55e':'var(--muted)')+';">'+cumPctStr+'</td>'+
       '<td style="padding:8px;text-align:center;">'+zona+'</td>'+
     '</tr>';
   }).join('');
 }
 
-function updateParetoKPIs(sorted){
-  var total=sorted.reduce((s,r)=>s+r.rev2026,0); if(!total)return;
-  var cum=0,n80=0;
-  for(var i=0;i<sorted.length;i++){cum+=sorted[i].rev2026;n80=i+1;if(cum/total>=0.80)break;}
-  var t10=sorted.slice(0,10).reduce((s,r)=>s+r.rev2026,0),t1=sorted[0]?.rev2026||0;
-  var set=(id,v)=>{var el=document.getElementById(id);if(el)el.textContent=v;};
-  set('pareto-kpi-n80',n80); set('pareto-kpi-n80-pct',(n80/sorted.length*100).toFixed(1)+'% del total de clientes'); set('pareto-kpi-n80-sub','concentran el 80% del revenue 2026');
-  set('pareto-kpi-top1',fmtK(t1)); set('pareto-kpi-top1-pct',(t1/total*100).toFixed(1)+'% del revenue total'); set('pareto-kpi-top1-name',sorted[0]?.name||'—');
-  set('pareto-kpi-top10',(t10/total*100).toFixed(1)+'%'); set('pareto-kpi-top10-sub',fmtK(t10)+' top 10 vs '+fmtK(total)+' total');
+// ── Pareto KPIs ───────────────────────────────────────────────────────────────
+function updateParetoKPIs(sorted) {
+  var total = sorted.reduce((s,r)=>s+r.rev2026,0);
+  if (!total) return;
+  var cum=0, n80=0;
+  for (var i=0;i<sorted.length;i++) {
+    cum += sorted[i].rev2026; n80=i+1;
+    if (cum/total >= 0.80) break;
+  }
+  var top10Rev = sorted.slice(0,10).reduce((s,r)=>s+r.rev2026,0);
+  var top1Rev  = sorted[0]?.rev2026||0;
+  var set = (id,v) => { var el=document.getElementById(id); if(el) el.textContent=v; };
+  set('pareto-kpi-n80',      n80);
+  set('pareto-kpi-n80-pct',  (n80/sorted.length*100).toFixed(1)+'% del total de clientes');
+  set('pareto-kpi-n80-sub',  'concentran el 80% del revenue 2026');
+  set('pareto-kpi-top1',     fmtK(top1Rev));
+  set('pareto-kpi-top1-pct', (top1Rev/total*100).toFixed(1)+'% del revenue total');
+  set('pareto-kpi-top1-name', sorted[0]?.name||'—');
+  set('pareto-kpi-top10',    (top10Rev/total*100).toFixed(1)+'%');
+  set('pareto-kpi-top10-sub', fmtK(top10Rev)+' top 10 vs '+fmtK(total)+' total');
 }
 
-function renderParetoSection(){
-  var _run=function(){var m=computePortfolioMetrics(),sorted=m.slice().sort((a,b)=>b.rev2026-a.rev2026);updateParetoKPIs(sorted);buildWhaleCurve(sorted);buildParetoTable(sorted);};
-  if(!Object.keys(timelineRawData).length) loadTimelineData().then(function(){if(!Object.keys(CLIENT_DB).length)loadClientDB().then(_run);else _run();});
-  else if(!Object.keys(CLIENT_DB).length) loadClientDB().then(_run);
-  else _run();
+// ── Render pareto section ─────────────────────────────────────────────────────
+function renderParetoSection() {
+  var _run = function() {
+    var metrics = computePortfolioMetrics();
+    var sorted  = metrics.slice().sort((a,b)=>b.rev2026-a.rev2026);
+    updateParetoKPIs(sorted);
+    buildWhaleCurve(sorted);
+    buildParetoTable(sorted);
+  };
+  if (!Object.keys(timelineRawData).length) {
+    loadTimelineData().then(function() {
+      if (!Object.keys(CLIENT_DB).length) loadClientDB().then(_run); else _run();
+    });
+  } else if (!Object.keys(CLIENT_DB).length) {
+    loadClientDB().then(_run);
+  } else { _run(); }
 }
 
 function initDeclCharts() {
@@ -4869,1885 +4609,6 @@ function filterCriticos(tag, btn) {
     }
   });
 }
-
-// ============================================================
-// KPIs CONTABILIDAD — chart helpers
-// ============================================================
-
-// Shared bar chart config factory (reuse for overview + KPI copies)
-function _declBarConfig() {
-  return {
-    type: 'bar',
-    data: {
-      labels: [],
-      datasets: [
-        { label: 'Declarado',    data: [], backgroundColor: COLORS.green  + 'dd', borderRadius: 2 },
-        { label: 'Sin Operación',data: [], backgroundColor: COLORS.blue   + '77', borderRadius: 2 },
-        { label: 'En proceso',   data: [], backgroundColor: COLORS.yellow + 'dd', borderRadius: 2 },
-        { label: 'Sin iniciar',  data: [], backgroundColor: COLORS.red    + 'dd', borderRadius: 2 },
-        { label: 'Bloqueado',      data: [], backgroundColor: COLORS.purple + 'dd', borderRadius: 2 },
-        { label: 'Deuda técnica',  data: [], backgroundColor: '#64748b55',          borderRadius: 2 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { font: { size: 11 }, padding: 10 }, position: 'bottom' },
-        tooltip: { mode: 'index', intersect: false }
-      },
-      scales: {
-        x: { stacked: true, grid: { color: '#2a305022' } },
-        y: { stacked: true, grid: { color: '#2a305033' }, beginAtZero: true }
-      }
-    }
-  };
-}
-
-// Initialize the KPI section chart copies and the DeclTipo line chart
-function initKPICharts() {
-  // ── Stacked bar copy (chartDeclKPI) ──
-  if (charts.declKPI) { charts.declKPI.destroy(); charts.declKPI = null; }
-  var ctx1 = document.getElementById('chartDeclKPI');
-  if (ctx1) {
-    charts.declKPI = new Chart(ctx1.getContext('2d'), _declBarConfig());
-    if (monthlyDeclData) updateDeclCharts();
-  }
-
-  // ── Accesos donut copy (chartAccesosKPI) ──
-  if (charts.accesosKPI) { charts.accesosKPI.destroy(); charts.accesosKPI = null; }
-  var ctx2 = document.getElementById('chartAccesosKPI');
-  if (ctx2) {
-    charts.accesosKPI = new Chart(ctx2.getContext('2d'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Completo', 'Parcial', 'Pendiente'],
-        datasets: [{ data: [0,0,1], backgroundColor: [COLORS.green, COLORS.yellow, COLORS.red], borderWidth: 0, hoverOffset: 6 }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
-    });
-    // Trigger sync if accesos data already loaded
-    if (accesosRawData && accesosRawData.length) loadAccesosData();
-  }
-
-  // ── DeclTipo line chart ──
-  if (charts.declTipo) { charts.declTipo.destroy(); charts.declTipo = null; }
-  var ctx3 = document.getElementById('chartDeclTipo');
-  if (ctx3) {
-    charts.declTipo = new Chart(ctx3.getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [
-          { label: 'Con datos', data: [], borderColor: '#4f7fff', backgroundColor: '#4f7fff22', fill: true, tension: 0.35, pointRadius: 3, pointHoverRadius: 5 },
-          { label: 'Ceros',     data: [], borderColor: '#f97316', backgroundColor: '#f9731622', fill: true, tension: 0.35, pointRadius: 3, pointHoverRadius: 5 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { font: { size: 11 }, padding: 10 }, position: 'bottom' },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        scales: {
-          x: { grid: { color: '#2a305022' } },
-          y: { grid: { color: '#2a305033' }, beginAtZero: true }
-        }
-      }
-    });
-    renderDeclTipoChart();
-  }
-}
-
-// Render historical Ceros vs Con datos from Clientes_por_periodo (already in clientesRawRows)
-function renderDeclTipoChart() {
-  if (!charts.declTipo) return;
-  if (!clientesRawRows || !clientesRawRows.length) return;
-
-  // Build column index map from clientesRawCols
-  var colMap = {};
-  clientesRawCols.forEach(function(col, i) {
-    var lbl = (col.label || '').trim().toLowerCase()
-      .replace(/\s+/g,'').replace(/ñ/g,'n').replace(/[áàä]/g,'a').replace(/[éèë]/g,'e')
-      .replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/_/g,'');
-    colMap[lbl] = i;
-  });
-  var iMes  = colMap['mesperiodo']      ?? 13;
-  var iAnio = colMap['anoperiodo']      ?? 14;
-  var iTipo = colMap['declaraciontipo'] ?? 4;
-
-  var mesToNum = { 'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
-                   'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12 };
-  var monthSh = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
-  var agg = {};
-  clientesRawRows.forEach(function(row) {
-    var c = row.c || [];
-    var mes  = (c[iMes]  && c[iMes].v  != null) ? String(c[iMes].v).trim()  : '';
-    var anio = (c[iAnio] && c[iAnio].v != null) ? String(c[iAnio].v).trim() : '';
-    var tipo = (c[iTipo] && c[iTipo].v != null) ? String(c[iTipo].v).trim() : '';
-    if (!mes || !anio) return;
-    var mn = mesToNum[mes];
-    if (!mn) return;
-    var pk = anio + '-' + String(mn).padStart(2,'0');
-    if (!agg[pk]) agg[pk] = { conDatos:0, ceros:0 };
-    if (tipo === 'Con datos') agg[pk].conDatos++;
-    else agg[pk].ceros++;
-  });
-
-  var sortedPKs = Object.keys(agg).sort();
-  var labels    = sortedPKs.map(function(pk) {
-    var parts = pk.split('-');
-    return monthSh[parseInt(parts[1], 10)] + ' ' + parts[0].slice(2);
-  });
-
-  charts.declTipo.data.labels = labels;
-  charts.declTipo.data.datasets[0].data = sortedPKs.map(function(pk) { return agg[pk].conDatos; });
-  charts.declTipo.data.datasets[1].data = sortedPKs.map(function(pk) { return agg[pk].ceros; });
-  charts.declTipo.update();
-
-  var badge = document.getElementById('declTipoBadge');
-  if (badge && labels.length >= 2) badge.textContent = labels[0] + ' – ' + labels[labels.length - 1];
-}
-
-// ============================================================
-// KPIs CONTABILIDAD
-// ============================================================
-
-var kpiSectionLoaded = false;
-var kpiDeclData      = [];   // rows from Clientes_por_periodo with Fecha_Declaracion
-var kpi5AllRows      = [];   // full list for KPI 5 filter
-
-async function loadKPIsSection(force) {
-  if (kpiSectionLoaded && !force) return;
-  kpiSectionLoaded = true;
-
-  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  const setH = (id, v) => { const e = document.getElementById(id); if (e) e.innerHTML = v; };
-  const pct  = (n, d)  => d > 0 ? (n / d * 100).toFixed(1) : '0.0';
-
-  // Initialize KPI chart copies (DeclBar + Accesos donut + DeclTipo line)
-  try { initKPICharts(); } catch(e) { console.error('[initKPICharts]', e); }
-
-  // Each step wrapped in try-catch so one failure never blocks subsequent KPIs
-  try { renderKPI2(); } catch(e) { console.error('[KPI2]', e); }
-
-  // ── KPIs 4 & 5 — necesitan timelineRawData ──────────────────────────
-  if (!Object.keys(timelineRawData).length) {
-    try { await loadTimelineData(); } catch(e) { console.error('[timeline]', e); }
-  }
-  try { renderKPI4(); } catch(e) { console.error('[KPI4]', e); }
-  try { renderKPI5(); } catch(e) { console.error('[KPI5]', e); }
-
-  // ── KPI 1 — usa clientDeclMap ya cargado, sin fetch extra ────────────
-  try { renderKPI1(); } catch(e) { console.error('[KPI1]', e); }
-
-  // ── KPI 3 — ciclo de recolección ────────────────────────────────────
-  try { renderKPI3(); } catch(e) { console.error('[KPI3]', e); }
-
-  // ── Automations — carga para columna Suspensión en KPI5 ─────────────
-  if (!Object.keys(automationsMap).length) {
-    try { await loadAutomationsData(); } catch(e) { console.error('[automations]', e); }
-  }
-  // Re-render KPI5 now that automations data is available
-  try { renderKPI5(); } catch(e) { console.error('[KPI5-re]', e); }
-
-  // ── KPI 6 — Documentación Completa ──────────────────────────────────
-  try { await loadDocumentacionCompleta(force); } catch(e) { console.error('[KPI6]', e); }
-}
-
-// ─── KPI 1: % Declaraciones presentadas antes del día 17 ─────────────────────
-// Uses clientDeclMap (already populated by loadDeclaracionesData at page load)
-// — no extra fetch, renders instantly.
-function renderKPI1() {
-  const set    = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  const setCls = (id, c) => { const e = document.getElementById(id); if (e) e.className = c; };
-
-  const mapKeys = Object.keys(clientDeclMap || {});
-  if (!mapKeys.length) {
-    set('kpi1-value', 'Sin datos');
-    set('kpi1-sub', 'Clientes_por_periodo aún no cargado — recarga la sección');
-    return;
-  }
-
-  // Reference period: use activeDeclPK (set by loadDeclaracionesData) or compute M-1
-  let refPK = (typeof activeDeclPK !== 'undefined' && activeDeclPK) ? activeDeclPK : null;
-  if (!refPK) {
-    const now = new Date();
-    const refMon  = now.getMonth() === 0 ? 12 : now.getMonth();
-    const refYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-    refPK = refYear + '-' + String(refMon).padStart(2,'0');
-  }
-
-  // Count declared vs total in reference period from clientDeclMap
-  let declarados = 0, total = 0, enProceso = 0, sinIniciar = 0, bloqueado = 0;
-  mapKeys.forEach(id => {
-    const estado = (clientDeclMap[id] || {})[refPK];
-    if (estado === undefined) return;  // client not in this period
-    total++;
-    if      (estado === 'Declarado')   declarados++;
-    else if (estado === 'En proceso')  enProceso++;
-    else if (estado === 'Sin iniciar') sinIniciar++;
-    else if (estado === 'Bloqueado')   bloqueado++;
-  });
-
-  if (!total) {
-    // Try latest period in the map
-    const allPKs = new Set();
-    mapKeys.forEach(id => Object.keys(clientDeclMap[id] || {}).forEach(pk => allPKs.add(pk)));
-    const latestPK = [...allPKs].sort().pop();
-    if (latestPK && latestPK !== refPK) {
-      refPK = latestPK;
-      mapKeys.forEach(id => {
-        const estado = (clientDeclMap[id] || {})[refPK];
-        if (estado === undefined) return;
-        total++;
-        if (estado === 'Declarado') declarados++;
-      });
-    }
-    if (!total) {
-      set('kpi1-value', 'Sin datos');
-      set('kpi1-sub', 'Sin registros en el período ' + refPK);
-      return;
-    }
-  }
-
-  const kpi1Pct = parseFloat((declarados / total * 100).toFixed(1));
-  const heatCls = v => v >= 90 ? 'kpi-value heat-green' : v >= 70 ? 'kpi-value heat-yellow' : 'kpi-value heat-red';
-  const trendCls = v => v >= 90 ? 'kpi-trend trend-up' : v >= 70 ? 'kpi-trend trend-warn' : 'kpi-trend trend-down';
-
-  const refLabel = (typeof activeDeclPeriod !== 'undefined' && activeDeclPeriod) ? activeDeclPeriod : refPK;
-
-  const el1 = document.getElementById('kpi1-value');
-  if (el1) el1.className = heatCls(kpi1Pct);
-  set('kpi1-value', kpi1Pct.toFixed(1) + '%');
-  set('kpi1-sub', declarados + '/' + total + ' declarados en ' + refLabel +
-    (enProceso  ? ' · ' + enProceso  + ' en proceso'  : '') +
-    (sinIniciar ? ' · ' + sinIniciar + ' sin iniciar' : '') +
-    (bloqueado  ? ' · ' + bloqueado  + ' bloqueados'  : ''));
-  setCls('kpi1-trend', trendCls(kpi1Pct));
-  set('kpi1-trend',
-    kpi1Pct >= 90 ? '✓ Cumplimiento óptimo' :
-    kpi1Pct >= 70 ? '⚠ Por mejorar' :
-    '✗ Requiere atención — ' + (total - declarados) + ' pendientes');
-
-  set('kpi1-bar-lbl', kpi1Pct.toFixed(1) + '%');
-  const bar = document.getElementById('kpi1-bar');
-  if (bar) bar.style.width = Math.min(kpi1Pct, 100) + '%';
-
-  // Deadline alert (days 1–17 of current month)
-  const today = new Date();
-  if (today.getDate() <= 17) {
-    const deadline = new Date(today.getFullYear(), today.getMonth(), 17);
-    const daysLeft = Math.ceil((deadline - today) / 86400000);
-    const alertEl = document.getElementById('kpi-deadline-alert');
-    if (alertEl) {
-      alertEl.style.display = 'flex';
-      const msgEl = document.getElementById('kpi-deadline-msg');
-      if (msgEl) msgEl.innerHTML = '<b>' + daysLeft + ' días para el deadline del día 17</b> — ' +
-        (total - declarados) + ' clientes pendientes de declarar en ' + refLabel + '.';
-    }
-  }
-
-}
-
-
-// ─── KPI 2: % Accesos completos (Ret + Vtas + Inv) ───────────────────────────
-function renderKPI2() {
-  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  const allAZ = accesosRawData || [];
-  if (!allAZ.length) {
-    set('kpi2-value', 'Sin datos');
-    set('kpi2-sub', 'Accesos_SellerCentral no cargado');
-    return;
-  }
-
-  // Universo: solo AZ con First Shipment = Finalizado (operativamente activos en Amazon)
-  const d = allAZ.filter(r => {
-    const cl = (typeof CLIENT_DB !== 'undefined' && CLIENT_DB[r.id]) ? CLIENT_DB[r.id] : null;
-    return cl && cl.firstShipment === 'Finalizado';
-  });
-  // Si CLIENT_DB aún no cargó, usar todos los AZ como fallback
-  const useAll = d.length === 0 && allAZ.length > 0;
-  const universe = useAll ? allAZ : d;
-  const universeLabel = useAll ? 'AZ (all — cargando FS…)' : 'AZ · FS Finalizado';
-
-  // Payoneer es relevante solo para clientes cuyo estado en Clients_Load.Payoneer
-  // sea uno de estos valores. Para los demás, no se exige ni se cuenta.
-  const PAYONEER_RELEVANT_STATES = new Set([
-    'Account Linked to Amazon',
-    'Waiting Client Amount',
-    'Receiving Amazon Payments',
-    'TEF number shared'
-  ]);
-  const payoneerRelevant = r => {
-    const cl = (typeof CLIENT_DB !== 'undefined' && CLIENT_DB[r.id]) ? CLIENT_DB[r.id] : null;
-    return cl && PAYONEER_RELEVANT_STATES.has(cl.payoneer);
-  };
-
-  const pctOf = (n, tot) => tot > 0 ? (n / tot * 100).toFixed(1) : '0.0';
-  const total     = universe.length;
-  // KPI 2 critical = Retenciones + Ventas + Inventario (los 3 necesarios para declarar)
-  const completos = universe.filter(c => c.ret && c.vtas && c.inv).length;
-  const retN      = universe.filter(c => c.ret).length;
-  const vtasN     = universe.filter(c => c.vtas).length;
-  const invN      = universe.filter(c => c.inv).length;
-  // Payoneer: universe restringido a clientes con estado Payoneer relevante
-  const payUniverse = universe.filter(payoneerRelevant);
-  const payN        = payUniverse.filter(c => c.pay).length;
-  const payTotal    = payUniverse.length;
-  const kpi2Pct   = parseFloat(pctOf(completos, total));
-
-  const heatCls = v => v >= 80 ? 'kpi-value heat-green' : v >= 55 ? 'kpi-value heat-yellow' : 'kpi-value heat-red';
-  document.getElementById('kpi2-value').className = heatCls(kpi2Pct);
-  set('kpi2-value', kpi2Pct.toFixed(1) + '%');
-  set('kpi2-sub', completos + '/' + total + ' (' + universeLabel + ') con Ret+Vtas+Inv · ' + (total - completos) + ' pendientes');
-  const trend = document.getElementById('kpi2-trend');
-  if (trend) {
-    trend.className = kpi2Pct >= 80 ? 'kpi-trend trend-up' : kpi2Pct >= 55 ? 'kpi-trend trend-warn' : 'kpi-trend trend-down';
-    trend.textContent = kpi2Pct >= 80 ? '✓ Cobertura óptima' : '⚠ Revisar pendientes';
-  }
-  set('kpi2-bar-lbl', kpi2Pct.toFixed(1) + '%');
-  document.getElementById('kpi2-bar').style.width = Math.min(kpi2Pct, 100) + '%';
-
-  // Desglose por tipo de acceso
-  const breakdownEl = document.getElementById('kpi2-breakdown');
-  if (breakdownEl) {
-    const fmtRow = (label, n, tot) => {
-      const p = parseFloat(pctOf(n, tot));
-      const barClr = p >= 80 ? '#22c55e' : p >= 55 ? '#f59e0b' : '#ef4444';
-      return `<div style="font-size:11px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-          <span style="color:var(--muted);">${label}</span>
-          <span style="font-weight:600;">${n}/${tot} · ${p.toFixed(0)}%</span>
-        </div>
-        <div class="progress-bar" style="height:5px;">
-          <div style="height:100%;border-radius:4px;background:${barClr};width:${Math.min(p,100)}%;transition:width 1s ease;"></div>
-        </div>
-      </div>`;
-    };
-    const payRowHtml = payTotal > 0
-      ? fmtRow(`Payoneer <span style="font-size:9px;color:var(--muted);font-weight:400;">(${payTotal} con cuenta)</span>`, payN, payTotal)
-      : `<div style="font-size:11px;color:var(--muted);padding:4px 0;">Payoneer — sin clientes con cuenta Payoneer activa en este universo</div>`;
-    breakdownEl.innerHTML =
-      `<div style="font-size:10px;color:var(--muted);margin-bottom:6px;">Universo: ${universeLabel} (${total} clientes)</div>` +
-      fmtRow('Retenciones', retN, total) +
-      fmtRow('Ventas', vtasN, total) +
-      fmtRow('Inventario', invN, total) +
-      payRowHtml;
-  }
-}
-
-// ─── KPI 3: Días ciclo de recolección ────────────────────────────────────────
-// Cycle = days from First Shipment date (Folder_Clientes.fechaFS) to
-//         acceso date (Accesos_SellerCentral col 10 = fecha when access was confirmed)
-// Universe: AZ clients with firstShipment = Finalizado that already have full access
-function renderKPI3() {
-  const set  = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  const d = accesosRawData || [];
-  if (!d.length) {
-    set('kpi3-value', '—');
-    set('kpi3-sub', 'Sin datos de Accesos_SellerCentral');
-    return;
-  }
-
-  const parseDate = raw => {
-    if (!raw || raw === '' || raw === '—') return null;
-    if (raw instanceof Date) return isNaN(raw) ? null : raw;
-    if (typeof raw === 'string') {
-      // GViz "Date(yyyy,m,d)" — m is 0-indexed
-      if (raw.startsWith('Date(')) {
-        const parts = raw.replace('Date(','').replace(')','').split(',').map(Number);
-        if (parts.length >= 3) return new Date(parts[0], parts[1], parts[2]);
-        return null;
-      }
-      // ISO string: "2025-06-12T06:00:00.000Z" or "2025-06-12"
-      const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (iso) return new Date(parseInt(iso[1]), parseInt(iso[2])-1, parseInt(iso[3]));
-      // dd/mm/yyyy or d/m/yyyy
-      const dmy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      if (dmy) return new Date(parseInt(dmy[3]), parseInt(dmy[2])-1, parseInt(dmy[1]));
-    }
-    // Numeric (Excel serial)
-    if (typeof raw === 'number') {
-      const excelEpoch = new Date(1899,11,30);
-      return new Date(excelEpoch.getTime() + raw * 86400000);
-    }
-    const d = new Date(raw);
-    return isNaN(d) ? null : d;
-  };
-
-  const daysBetween = (a, b) => {
-    if (!a || !b) return null;
-    return Math.round((b - a) / 86400000);
-  };
-
-  // Universe: AZ + FirstShipment = Finalizado + acceso completo (cycle completed)
-  const universe = d.filter(r => {
-    const cl = (typeof CLIENT_DB !== 'undefined' && CLIENT_DB[r.id]) ? CLIENT_DB[r.id] : null;
-    return cl && cl.firstShipment === 'Finalizado' && r.ret && r.vtas && r.inv;
-  });
-
-  const conAcceso = universe.length;
-  const sinAcceso = d.filter(r => {
-    const cl = (typeof CLIENT_DB !== 'undefined' && CLIENT_DB[r.id]) ? CLIENT_DB[r.id] : null;
-    return cl && cl.firstShipment === 'Finalizado' && !(r.ret && r.vtas && r.inv);
-  }).length;
-
-  // Compute cycle days for completed clients
-  const cycleDays = [];
-  universe.forEach(r => {
-    const cl = (typeof CLIENT_DB !== 'undefined') ? CLIENT_DB[r.id] : null;
-    if (!cl) return;
-    const fsDate     = parseDate(cl.fechaFS);
-    const accesoDate = parseDate(r.fecha);  // r.fecha = FechaSubidaAccesos (col 10 de Accesos_SellerCentral)
-    if (!fsDate || !accesoDate) return;
-    const days = daysBetween(fsDate, accesoDate);
-    if (days !== null && days >= 0 && days < 730) cycleDays.push(days); // sanity: <2 years
-  });
-
-  const hasCycleData = cycleDays.length > 0;
-  const avgDays = hasCycleData
-    ? (cycleDays.reduce((s, v) => s + v, 0) / cycleDays.length).toFixed(1)
-    : null;
-
-  const trend = document.getElementById('kpi3-trend');
-  const breakdownEl = document.getElementById('kpi3-breakdown');
-
-  if (hasCycleData) {
-    const heatCls = v => v <= 30 ? 'kpi-value heat-green' : v <= 60 ? 'kpi-value heat-yellow' : 'kpi-value heat-red';
-    document.getElementById('kpi3-value').className = heatCls(parseFloat(avgDays));
-    set('kpi3-value', avgDays + ' d');
-    set('kpi3-sub', 'Promedio FS → acceso completo · ' + cycleDays.length + ' clientes con ciclo medido');
-    if (trend) {
-      const v = parseFloat(avgDays);
-      trend.className = v <= 30 ? 'kpi-trend trend-up' : v <= 60 ? 'kpi-trend trend-warn' : 'kpi-trend trend-down';
-      trend.textContent = v <= 30 ? '✓ Ciclo ágil' : v <= 60 ? '⚠ Ciclo en rango' : '✗ Ciclo lento — revisar';
-    }
-    const minD = Math.min(...cycleDays);
-    const maxD = Math.max(...cycleDays);
-    const p50  = cycleDays.slice().sort((a,b)=>a-b)[Math.floor(cycleDays.length/2)];
-    if (breakdownEl) {
-      breakdownEl.innerHTML = `
-        <div style="font-size:11px;color:var(--muted);line-height:1.8;">
-          <div style="display:flex;justify-content:space-between;"><span>Con acceso completo (FS)</span><b style="color:var(--green);">${conAcceso}</b></div>
-          <div style="display:flex;justify-content:space-between;"><span>Sin acceso completo (FS)</span><b style="color:var(--red);">${sinAcceso}</b></div>
-          <div style="display:flex;justify-content:space-between;"><span>Con ciclo medido</span><b>${cycleDays.length}</b></div>
-          <div style="display:flex;justify-content:space-between;"><span>Mín / Mediana / Máx</span><b>${minD} d / ${p50} d / ${maxD} d</b></div>
-        </div>`;
-    }
-  } else {
-    set('kpi3-value', 'Sin datos');
-    set('kpi3-sub', 'Completa la columna FechaSubidaAccesos en Accesos_SellerCentral para ver el promedio de días');
-    if (trend) {
-      trend.className = 'kpi-trend trend-warn';
-      trend.textContent = '⚠ FechaSubidaAccesos vacía — se necesita para calcular el ciclo';
-    }
-    if (breakdownEl) {
-      breakdownEl.innerHTML = `
-        <div style="font-size:11px;color:var(--muted);line-height:1.7;">
-          <div>• Con acceso completo (AZ+FS): <b style="color:var(--green);">${conAcceso}</b></div>
-          <div>• Sin acceso completo (AZ+FS): <b style="color:var(--red);">${sinAcceso}</b></div>
-          <div style="margin-top:6px;padding:8px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--yellow);">
-            Columna requerida: <b>FechaSubidaAccesos</b> en <b>Accesos_SellerCentral</b>.<br>
-            Registra la fecha en que se confirmó la subida de accesos completa.
-          </div>
-        </div>`;
-    }
-  }
-}
-
-// ─── Shared: Accounting calendar period pair ──────────────────────────────────
-// Declaraciones tienen plazo hasta el día 17 del mes siguiente.
-// Si aún no llegamos al 17: M-1 puede estar incompleto → usar M-2 vs M-3.
-// Si ya pasó el 17: M-1 está cerrado → usar M-1 vs M-2.
-function accountingPeriodPair() {
-  const now  = new Date();
-  const rOff = now.getDate() >= 17 ? 1 : 2;   // offset del período más reciente completo
-  const mkPK = off => {
-    const d = new Date(now.getFullYear(), now.getMonth() - off, 1);
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-  };
-  const fmtMon = pk => {
-    if (!pk) return '—';
-    const [y, m] = pk.split('-');
-    const mn = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    return mn[parseInt(m, 10) - 1] + ' ' + y;
-  };
-  return { lastPK: mkPK(rOff), prevPK: mkPK(rOff + 1), rOff, fmtMon };
-}
-
-// ─── KPI 4: Top 10 clientes con ventas (período más reciente) ─────────────────
-function renderKPI4() {
-  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  const tbody = document.getElementById('kpi4-body');
-  if (!tbody) return;
-
-  const td = timelineRawData || {};
-  if (!Object.keys(td).length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">Sin datos de ventas</td></tr>';
-    return;
-  }
-
-  // Calendario contable: si hoy >= día 17 usar M-1 vs M-2; si < 17 usar M-2 vs M-3
-  const { lastPK, prevPK, rOff, fmtMon } = accountingPeriodPair();
-
-  const dayNote = 'Día ' + new Date().getDate() + ' → ' + (rOff === 1 ? 'M-1 vs M-2' : 'M-2 vs M-3');
-  set('kpi4-period-note', fmtMon(lastPK) + ' vs ' + fmtMon(prevPK) + ' · ' + dayNote);
-
-  // Build top 10 by last period sales
-  const clientSales = Object.entries(td).map(([id, entries]) => {
-    const last = entries.find(e => e.periodKey === lastPK);
-    const prev = entries.find(e => e.periodKey === prevPK);
-    return { id, name: id, salesLast: last ? last.sales : 0, salesPrev: prev ? prev.sales : 0 };
-  }).filter(c => c.salesLast > 0);
-
-  clientSales.sort((a, b) => b.salesLast - a.salesLast);
-  const top10 = clientSales.slice(0, 10);
-
-  const fmtMXN = n => n > 0 ? '$' + n.toLocaleString('es-MX', {maximumFractionDigits: 0}) : '—';
-  const momPct = (curr, prev) => {
-    if (!prev) return null;
-    return ((curr - prev) / prev * 100).toFixed(1);
-  };
-
-  // Destroy any existing detail charts before re-rendering
-  Object.keys(kpi4Charts).forEach(id => { try { kpi4Charts[id].destroy(); } catch(e){} });
-  kpi4Charts = {};
-
-  const html = top10.map((c, i) => {
-    const mom = momPct(c.salesLast, c.salesPrev);
-    const momHtml = mom !== null
-      ? `<span style="color:${parseFloat(mom) >= 0 ? 'var(--green)' : 'var(--red)'};">${parseFloat(mom) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(mom)).toFixed(1)}%</span>`
-      : '<span style="color:var(--muted);">—</span>';
-    const owner    = clientOwnerMap[c.id] || '—';
-    const name     = clientNameMap[c.id]  || '';
-    const nameHtml = name ? `<div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:1px;">${name}</div>` : '';
-    const cl       = (typeof CLIENT_DB !== 'undefined') ? (CLIENT_DB[c.id] || null) : null;
-    const fs       = cl ? (cl.firstShipment || '—') : '—';
-    const fechaFS  = cl ? (cl.fechaFS || '—') : '—';
-    const fsColor  = fs === 'Finalizado' ? 'var(--green)' : fs === '—' ? 'var(--muted)' : 'var(--yellow)';
-    const fsHtml   = `<span style="font-size:10px;color:${fsColor};font-weight:600;">${fs}</span>`;
-    const fechaHtml= fechaFS !== '—'
-      ? `<span style="font-size:10px;color:var(--text);white-space:nowrap;">${fechaFS}</span>`
-      : `<span style="font-size:10px;color:var(--muted);">—</span>`;
-    const safeId   = c.id.replace(/[^a-zA-Z0-9]/g, '_');
-    const mainRow  = `<tr style="cursor:pointer;" onclick="toggleKPI4Detail('${safeId}')"
-        onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
-      <td style="text-align:center;padding:8px;color:var(--muted);font-weight:700;">
-        <span id="kpi4-arrow-${safeId}" style="font-size:9px;margin-right:2px;">▶</span>${i + 1}
-      </td>
-      <td style="padding:8px;font-weight:600;">${c.id}${nameHtml}</td>
-      <td style="text-align:right;padding:8px;font-weight:700;">${fmtMXN(c.salesLast)}</td>
-      <td style="text-align:right;padding:8px;color:var(--muted);font-size:11px;">${fmtMon(lastPK)}</td>
-      <td style="text-align:right;padding:8px;">${momHtml}</td>
-      <td style="text-align:center;padding:8px;font-size:11px;color:var(--muted);">${owner}</td>
-      <td style="text-align:center;padding:8px;">${fsHtml}</td>
-      <td style="text-align:center;padding:8px;">${fechaHtml}</td>
-    </tr>`;
-    const detailRow = `<tr id="kpi4-detail-${safeId}" style="display:none;">
-      <td colspan="8" style="padding:0;">
-        <div style="background:var(--bg3);border-top:1px solid var(--border);border-bottom:2px solid var(--border);padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <!-- Chart -->
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;">📈 Ventas · IVA · ISR por período</div>
-            <div style="position:relative;height:180px;">
-              <canvas id="kpi4-canvas-${safeId}"></canvas>
-            </div>
-          </div>
-          <!-- Notes -->
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;">🗒️ Notas de declaración por período</div>
-            <div id="kpi4-notes-${safeId}" style="max-height:180px;overflow-y:auto;font-size:11px;">
-              <span style="color:var(--muted);">Cargando…</span>
-            </div>
-          </div>
-        </div>
-      </td>
-    </tr>`;
-    return mainRow + detailRow;
-  }).join('');
-
-  tbody.innerHTML = html || '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">Sin clientes con ventas en el período</td></tr>';
-
-  // Note if CLIENT_DB not yet loaded
-  if (top10.length && (!Object.keys(CLIENT_DB || {}).length)) {
-    const noteRow = `<tr><td colspan="8" style="padding:8px 8px 2px;font-size:10px;color:var(--muted);border-top:1px solid var(--border);">
-      ⏳ Datos de importación cargando desde Folder_Clientes…
-    </td></tr>`;
-    tbody.innerHTML += noteRow;
-  }
-}
-
-// ─── KPI 5: Clientes con caída de ventas >50% ────────────────────────────────
-function renderKPI5() {
-  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  const tbody = document.getElementById('kpi5-body');
-  if (!tbody) return;
-
-  const td = timelineRawData || {};
-  if (!Object.keys(td).length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">Sin datos de ventas</td></tr>';
-    return;
-  }
-
-  // Calendario contable: si hoy >= día 17 usar M-1 vs M-2; si < 17 usar M-2 vs M-3
-  const { lastPK, prevPK, rOff, fmtMon } = accountingPeriodPair();
-
-  const dayNote = 'Día ' + new Date().getDate() + (rOff === 1 ? ' ≥17 → M-1 vs M-2' : ' <17 → M-2 vs M-3');
-  set('kpi5-col-prev', fmtMon(prevPK));
-  set('kpi5-col-curr', fmtMon(lastPK));
-
-  const fmtMXN = n => n > 0 ? '$' + n.toLocaleString('es-MX', {maximumFractionDigits: 0}) : '$0';
-
-  // Build rows: clients with ventas in prev period, compare to last
-  kpi5AllRows = Object.entries(td).map(([id, entries]) => {
-    const last = entries.find(e => e.periodKey === lastPK);
-    const prev = entries.find(e => e.periodKey === prevPK);
-    const salesLast = last ? last.sales : 0;
-    const salesPrev = prev ? prev.sales : 0;
-    if (salesPrev <= 0 && salesLast <= 0) return null;  // skip ghosts
-    const deltaPct = salesPrev > 0 ? ((salesLast - salesPrev) / salesPrev * 100) : null;
-    const owner = clientOwnerMap[id] || '—';
-    const estado = (clientDeclMap[id] && clientDeclMap[id][lastPK]) || '—';
-    // Regla (Juan 21-jul-2026): si el cliente NO está registrado en Clientes_por_periodo con
-    // EstadoCliente=Declarado en el período actual, su $0 es ruido (aún no se declara) → fuera.
-    if (String(estado).trim().toLowerCase() !== 'declarado') return null;
-    return { id, salesLast, salesPrev, deltaPct, owner, estado };
-  }).filter(Boolean);
-
-  // Sort: biggest drops first
-  kpi5AllRows.sort((a, b) => {
-    const da = a.deltaPct !== null ? a.deltaPct : 0;
-    const db = b.deltaPct !== null ? b.deltaPct : 0;
-    return da - db;
-  });
-
-  // Default view: caída >50%
-  const caida = kpi5AllRows.filter(r => r.deltaPct !== null && r.deltaPct <= -50);
-  set('kpi5-badge', caida.length + ' clientes · ' + dayNote);
-
-  renderKPI5Rows(caida);
-  // Activate default filter btn
-  document.querySelectorAll('[id^="kpi5-filter-"]').forEach(b => b.classList.remove('active'));
-  const fb = document.getElementById('kpi5-filter-caida');
-  if (fb) fb.classList.add('active');
-}
-
-function filterKPI5(type) {
-  document.querySelectorAll('[id^="kpi5-filter-"]').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('kpi5-filter-' + type);
-  if (btn) btn.classList.add('active');
-
-  let rows;
-  if (type === 'all')   rows = kpi5AllRows;
-  else if (type === 'caida') rows = kpi5AllRows.filter(r => r.deltaPct !== null && r.deltaPct <= -50);
-  else if (type === 'cero')  rows = kpi5AllRows.filter(r => r.salesLast === 0 && r.salesPrev > 0);
-  else if (type === 'subida') {
-    // Crecimiento positivo: MoM > 0, incluyendo quienes arrancaron de $0 (nuevos vendedores)
-    rows = kpi5AllRows
-      .filter(r => (r.deltaPct !== null && r.deltaPct > 0) || (r.salesPrev === 0 && r.salesLast > 0))
-      .slice()
-      .sort((a, b) => {
-        const da = a.deltaPct !== null ? a.deltaPct : Infinity; // de $0 a ventas = crecimiento máximo
-        const db = b.deltaPct !== null ? b.deltaPct : Infinity;
-        return db - da;
-      });
-  }
-  else rows = kpi5AllRows;
-
-  renderKPI5Rows(rows);
-}
-
-function renderKPI5Rows(rows) {
-  const tbody = document.getElementById('kpi5-body');
-  if (!tbody) return;
-  // Destroy existing detail charts before re-render
-  Object.keys(kpi5Charts).forEach(k => { try { kpi5Charts[k].destroy(); } catch(e){} });
-  kpi5Charts = {};
-  const fmtMXN = n => n > 0 ? '$' + n.toLocaleString('es-MX', {maximumFractionDigits: 0}) : '$0';
-
-  const estadoHtml = e => {
-    if (!e || e === '—') return '<span style="color:var(--muted);font-size:10px;">—</span>';
-    const map = { 'Declarado':'status-green','En proceso':'status-yellow','Sin iniciar':'status-red','Bloqueado':'status-red' };
-    return `<span class="status ${map[e] || 'status-gray'}" style="font-size:10px;">${e}</span>`;
-  };
-
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);">Sin clientes con esta condición en los períodos analizados.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = rows.map(r => {
-    const isZero   = r.salesLast === 0 && r.salesPrev > 0;
-    const deltaTxt = r.deltaPct !== null
-      ? (parseFloat(r.deltaPct) <= -50 ? `<span style="color:var(--red);font-weight:700;">▼ ${Math.abs(parseFloat(r.deltaPct)).toFixed(1)}%</span>` : `<span style="color:${parseFloat(r.deltaPct) >= 0 ? 'var(--green)' : 'var(--yellow)'};">${parseFloat(r.deltaPct) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(r.deltaPct)).toFixed(1)}%</span>`)
-      : '<span style="color:var(--muted);">—</span>';
-    const rowBg  = isZero ? 'background:rgba(239,68,68,0.04);' : (r.deltaPct !== null && r.deltaPct <= -50 ? 'background:rgba(239,68,68,0.03);' : '');
-    const name   = clientNameMap[r.id] || '';
-    const nameHtml = name ? `<div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:1px;">${name}</div>` : '';
-    const sinVentasTag = isZero ? ' <span style="font-size:9px;background:rgba(239,68,68,0.15);color:#ef4444;padding:1px 6px;border-radius:8px;">SIN VENTAS</span>' : '';
-
-    // ── Suspensión: from Automations table (Churn = Sí) ──
-    const autoRec = (typeof automationsMap !== 'undefined') ? automationsMap[r.id] : null;
-    let suspHtml;
-    if (!autoRec) {
-      suspHtml = '<span style="font-size:10px;color:var(--muted);">—</span>';
-    } else if (autoRec.churn) {
-      suspHtml = `<span class="status status-red" style="font-size:10px;" title="Churn = Sí en Automations">Churn</span>`;
-    } else {
-      suspHtml = `<span style="font-size:10px;color:var(--green);">Activo</span>`;
-    }
-
-    // ── Notes button ──
-    const hasNotes = (typeof clientPeriodsMap !== 'undefined') &&
-      (clientPeriodsMap[r.id] || []).some(p => p.nota);
-    const notesBtnColor = hasNotes ? 'var(--text)' : 'var(--muted)';
-    const notesBtnTitle = hasNotes ? 'Ver notas de períodos' : 'Sin notas registradas';
-    const notesBtn = `<button onclick="openNotesModal('${r.id}')" title="${notesBtnTitle}"
-      style="background:none;border:none;cursor:pointer;font-size:16px;color:${notesBtnColor};padding:2px 4px;border-radius:4px;line-height:1;"
-      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='none'">🗒️</button>`;
-
-    const safeId = r.id.replace(/[^a-zA-Z0-9]/g, '_');
-    const mainRow = `<tr style="${rowBg}cursor:pointer;" onclick="toggleKPI5Detail('${r.id}')"
-        onmouseover="this.style.background='rgba(99,102,241,0.04)'" onmouseout="this.style.background='${rowBg.replace('background:', '').replace(';','').trim()||''}'">
-      <td style="padding:8px;font-weight:600;">
-        <span id="kpi5-arrow-${safeId}" style="font-size:9px;margin-right:4px;color:var(--muted);">▶</span>${r.id}${sinVentasTag}${nameHtml}
-      </td>
-      <td style="text-align:right;padding:8px;">${fmtMXN(r.salesPrev)}</td>
-      <td style="text-align:right;padding:8px;">${fmtMXN(r.salesLast)}</td>
-      <td style="text-align:right;padding:8px;">${deltaTxt}</td>
-      <td style="text-align:center;padding:8px;font-size:11px;color:var(--muted);">${r.owner}</td>
-      <td style="text-align:center;padding:8px;">${estadoHtml(r.estado)}</td>
-      <td style="text-align:center;padding:8px;">${suspHtml}</td>
-      <td style="text-align:center;padding:8px;" onclick="event.stopPropagation()">${notesBtn}</td>
-    </tr>
-    <tr id="kpi5-detail-${safeId}" style="display:none;">
-      <td colspan="8" style="padding:0;">
-        <div style="background:var(--bg3);border-top:1px solid var(--border);border-bottom:2px solid var(--border);padding:14px 20px;">
-          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;">
-            📉 Histórico de ventas · IVA · ISR — ${escH(r.id)} ${name ? '(' + escH(name) + ')' : ''}
-          </div>
-          <div style="position:relative;height:180px;">
-            <canvas id="kpi5-canvas-${safeId}"></canvas>
-          </div>
-        </div>
-      </td>
-    </tr>`;
-    return mainRow;
-  }).join('');
-}
-
-// ─── Automations loader ───────────────────────────────────────────────────────
-// Tabla Automations de AppSheet.
-// Match por columna: CompanyID
-// Suspensión: columna Churn = "Sí"
-async function loadAutomationsData() {
-  const data = await fetchSheet('Automations').catch(() => null);
-  if (!data || !data.table) return;
-  const cols = data.table.cols || [];
-  let cMap = {};
-  cols.forEach((col, i) => {
-    // Normalize: strip spaces, underscores, lowercase
-    const lbl = (col.label || '').trim().toLowerCase().replace(/[\s_]/g,'');
-    cMap[lbl] = i;
-    // Also store original label (case-sensitive) for exact matches
-    cMap['__orig__' + col.label.trim()] = i;
-  });
-  // CompanyID column (exact label used in AppSheet)
-  const iComp  = cMap['__orig__CompanyID'] ?? cMap['companyid'] ?? cMap['company'] ?? 0;
-  // Churn column: "Sí" means suspended/churned
-  const iChurn = cMap['__orig__Churn'] ?? cMap['churn'] ?? -1;
-
-  automationsMap = {};
-  (data.table.rows || []).forEach(row => {
-    const c = row.c || [];
-    const g = i => (i >= 0 && c[i] && c[i].v != null) ? String(c[i].v).trim() : '';
-    const companyId = g(iComp);
-    if (!companyId) return;
-    const churnVal = iChurn >= 0 ? g(iChurn) : '';
-    const churn    = churnVal === 'Sí' || churnVal === 'Si' || churnVal === 'YES' || churnVal === 'true' || churnVal === 'TRUE';
-    if (!automationsMap[companyId]) automationsMap[companyId] = { churn: false, churnRaw: '' };
-    // If ANY row for this company has Churn=Sí, mark the company as churned
-    if (churn) {
-      automationsMap[companyId].churn    = true;
-      automationsMap[companyId].churnRaw = churnVal;
-    }
-  });
-}
-
-// ─── Note interpreter (based on SOP auditor patterns) ─────────────────────────
-function interpretarNota(rawNota, estado) {
-  if (!rawNota || !rawNota.trim()) return null;
-  const n  = rawNota.trim();
-  const nl = n.toLowerCase();
-
-  // QA code translation table (from Auditor SOP — lenguaje para DMs)
-  const QA_CODES = {
-    'c1': 'Sin declaración cargada',
-    'c2': 'DIOT faltante',
-    'c3': 'Diferencia entre retenciones registradas y certificado SAT',
-    'c4': 'Conciliación bancaria sin cuadre',
-    'c5': 'Sin soporte de ventas adjunto',
-    'c7': 'Declaración presentada fuera de plazo SAT (día 17)',
-    'c8': 'Documentación de entrada incompleta',
-    'c9': 'Período marcado "Finalizado" con hallazgos abiertos'
-  };
-
-  // Format money string from regex capture group
-  const fmtMoney = str => '$' + parseFloat((str || '0').replace(/,/g, '')).toLocaleString('es-MX', { maximumFractionDigits: 0 });
-
-  // ── 1. Ambiguous marker (system-tagged) ───────────────────────────────────
-  if (/⚠️\s*NOTA\s*AMBIGUA|NOTA\s*AMBIGUA/i.test(n)) {
-    return { icon: '⚠️', label: 'Revisión manual requerida', color: 'var(--yellow)',
-      summary: 'El sistema marcó esta nota como ambigua. Requiere captura manual de IVA_pagar / ISR_pagar en Clientes_por_periodo.' };
-  }
-
-  // ── 2. QA agent findings [QA] or C1–C9 codes ─────────────────────────────
-  if (/\[qa\]/i.test(n) || /\bC[1-9]\b/.test(n)) {
-    const translated = n
-      .replace(/\[QA\]\s*/i, '')
-      .replace(/\bC([1-9])\b/g, (_, code) => QA_CODES['c' + code] || ('C' + code));
-    return { icon: '🔍', label: 'Hallazgo de auditoría QA', color: 'var(--red)',
-      summary: translated };
-  }
-
-  // ── 3. Zero / no activity ─────────────────────────────────────────────────
-  if (/sin\s+ingreso|no\s+hubo\s+venta|sin\s+venta|declaraci.n\s+(en\s+)?cero|en\s+cero|periodo\s+cero|\bceros\b/i.test(nl)) {
-    return { icon: '🔵', label: 'Sin actividad', color: 'var(--muted)',
-      summary: 'Período declarado en ceros — cliente sin ingresos ni impuestos a pagar este mes.' };
-  }
-
-  // ── 4. IVA / ISR amounts detected ─────────────────────────────────────────
-  const ivaFavor  = n.match(/IVA\s+a\s+favor\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  const ivaPagar  = n.match(/IVA\s+a\s+pagar\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  const isrFavor  = n.match(/ISR\s+a\s+favor\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  const isrPagar  = n.match(/ISR\s+a\s+pagar\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  const saldoFav  = n.match(/saldo\s+a\s+favor\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  const remanente = n.match(/remanente\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
-
-  if (ivaFavor || ivaPagar || isrFavor || isrPagar || saldoFav || remanente) {
-    const parts = [];
-    if (ivaFavor)  parts.push('IVA a favor: ' + fmtMoney(ivaFavor[1]));
-    if (ivaPagar)  parts.push('IVA a pagar: ' + fmtMoney(ivaPagar[1]));
-    if (isrFavor)  parts.push('ISR a favor: ' + fmtMoney(isrFavor[1]));
-    if (isrPagar)  parts.push('ISR a pagar: ' + fmtMoney(isrPagar[1]));
-    if (saldoFav && !ivaFavor && !ivaPagar) parts.push('Saldo a favor: ' + fmtMoney(saldoFav[1]));
-    if (remanente) parts.push('Remanente: ' + fmtMoney(remanente[1]));
-    return { icon: '✅', label: 'Declaración con resultado fiscal', color: 'var(--green)',
-      summary: 'Declaración completada. ' + parts.join(' · ') + '.' };
-  }
-
-  // ── 5. Waiting / blocked by client ────────────────────────────────────────
-  if (/cliente\s+no\s+ha\s+contestado|sin\s+respuesta|no\s+responde|esperando\s+(al\s+)?cliente|cliente\s+no\s+respond/i.test(nl)) {
-    return { icon: '⏳', label: 'Esperando cliente', color: 'var(--yellow)',
-      summary: 'En espera de respuesta o documentación del cliente para poder procesar el período.' };
-  }
-
-  // ── 6. Unusable material ──────────────────────────────────────────────────
-  if (/\berrado\b|\bilegible\b|material\s+incompleto|incompleto.*material/i.test(nl)) {
-    return { icon: '🚫', label: 'Material no utilizable', color: 'var(--red)',
-      summary: 'El material del cliente no puede procesarse: está errado, ilegible o incompleto.' };
-  }
-
-  // ── 7. Open dispute ───────────────────────────────────────────────────────
-  if (/en\s+disputa|disputa\s+abierta|en\s+litigio/i.test(nl)) {
-    return { icon: '⚖️', label: 'Disputa activa', color: 'var(--red)',
-      summary: 'El período tiene una disputa o litigio activo. No se procesa hasta su resolución.' };
-  }
-
-  // ── 8. Declared without documentation / alternate source ──────────────────
-  if (/sin\s+documentaci[oó]n|sin\s+docs/i.test(nl)) {
-    const fuente = /en\s+base\s+al\s+SAT/i.test(n) ? ' usando datos directos del SAT'
-                 : /Contalink/i.test(n) ? ' usando datos de Contalink' : '';
-    return { icon: '⚠️', label: 'Declarada sin documentación', color: 'var(--yellow)',
-      summary: 'La declaración fue procesada' + fuente + ' sin documentación original del cliente.' };
-  }
-  if (/en\s+base\s+al\s+SAT/i.test(n)) {
-    return { icon: '✅', label: 'Procesado — fuente SAT', color: 'var(--green)',
-      summary: 'Información procesada en base a datos obtenidos directamente del SAT.' };
-  }
-  if (/en\s+base\s+a\s+Contalink/i.test(n)) {
-    return { icon: '✅', label: 'Procesado — fuente Contalink', color: 'var(--green)',
-      summary: 'Información procesada en base a datos de Contalink.' };
-  }
-
-  // ── 9. Client delivered material ──────────────────────────────────────────
-  if (/cliente\s+envi[oó]|cliente\s+confirm[oó]|client[ae]\s+compart[ií]/i.test(nl)) {
-    return { icon: '📥', label: 'Material recibido del cliente', color: 'var(--green)',
-      summary: 'El cliente entregó el material necesario para procesar el período.' };
-  }
-
-  // ── 10. Work completed (active/passive past or present tense) ─────────────
-  const doneActive  = /\b(sub[ií]|carg[ué]|valid[ao]|complet[ao]|present[ée]|declar[ée]|apliqu[ée]|registr[ée])\b/i;
-  const donePast    = /\bse\s+(aplic[oó]|declar[oó]|present[oó]|subi[oó]|carg[oó]|valid[oó]|complet[oó]|registr[oó]|sube|carga)\b/i;
-  const donePresent = /\bse\s+(aplica|declara|sube|carga|valida|completa|registra|presenta)\b/i;
-
-  if (doneActive.test(n) || donePast.test(n) || donePresent.test(n)) {
-    return { icon: '✅', label: 'Trabajo completado', color: 'var(--green)',
-      summary: 'El período fue procesado y la documentación correspondiente fue completada.' };
-  }
-
-  // ── 11. In-progress / pending ─────────────────────────────────────────────
-  if (/pendiente|en\s+proceso|en\s+revisi[oó]n|revisando|\bfalta\b/i.test(nl)) {
-    return { icon: '🔄', label: 'En proceso', color: 'var(--yellow)',
-      summary: 'El período está en proceso o tiene elementos pendientes de resolución.' };
-  }
-
-  // ── 12. Default: informational note ──────────────────────────────────────
-  return { icon: 'ℹ️', label: 'Nota del auditor', color: 'var(--muted)',
-    summary: n.length > 200 ? n.slice(0, 197) + '…' : n };
-}
-
-// Render an interpreted note with expandable raw-note toggle
-function renderNota(rawNota, estado) {
-  if (!rawNota || !rawNota.trim()) {
-    return '<span style="color:var(--muted);font-style:italic;">Sin notas</span>';
-  }
-  const interp = interpretarNota(rawNota, estado);
-  const uid = 'rn-' + Math.random().toString(36).slice(2, 9);
-  return `<div>
-    <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
-      <span style="font-size:13px;line-height:1;">${interp.icon}</span>
-      <span style="font-size:10px;font-weight:700;color:${interp.color};text-transform:uppercase;letter-spacing:.4px;">${interp.label}</span>
-    </div>
-    <div style="color:var(--text);font-size:12px;line-height:1.5;">${escH(interp.summary)}</div>
-    <button onclick="(function(btn){var d=document.getElementById('${uid}');d.style.display=d.style.display==='none'?'block':'none';btn.textContent=d.style.display==='none'?'Ver nota original':'Ocultar nota';})(this)"
-      style="background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;padding:2px 0;text-decoration:underline;display:block;margin-top:3px;">Ver nota original</button>
-    <div id="${uid}" style="display:none;margin-top:4px;font-size:11px;color:var(--muted);font-style:italic;border-left:2px solid var(--border);padding-left:6px;">${escH(rawNota)}</div>
-  </div>`;
-}
-
-// ─── Notes modal helpers ──────────────────────────────────────────────────────
-function openNotesModal(companyId) {
-  const periods = (clientPeriodsMap[companyId] || [])
-    .slice().sort((a, b) => b.pk.localeCompare(a.pk)); // newest first
-  const name    = clientNameMap[companyId] || '';
-  const statColor = {
-    'Declarado': 'var(--green)', 'En proceso': 'var(--yellow)',
-    'Sin iniciar': 'var(--red)', 'Bloqueado': 'var(--red)'
-  };
-  const rows = periods.map(p => {
-    const sc = statColor[p.estado] || 'var(--muted)';
-    return `<tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:6px 10px;white-space:nowrap;font-weight:600;vertical-align:top;">${p.periodoLabel}</td>
-      <td style="padding:6px 10px;vertical-align:top;"><span style="color:${sc};font-size:11px;font-weight:600;">${p.estado || '—'}</span></td>
-      <td style="padding:6px 10px;">${renderNota(p.nota, p.estado)}</td>
-    </tr>`;
-  }).join('');
-  const modal = document.getElementById('notesModal');
-  if (!modal) return;
-  document.getElementById('notesModalTitle').textContent =
-    companyId + (name ? ' — ' + name : '') + ' · Historial de notas';
-  document.getElementById('notesModalBody').innerHTML = rows ||
-    '<tr><td colspan="3" style="padding:24px;text-align:center;color:var(--muted);">Sin notas registradas en ningún período</td></tr>';
-  modal.style.display = 'flex';
-}
-function closeNotesModal() {
-  const modal = document.getElementById('notesModal');
-  if (modal) modal.style.display = 'none';
-}
-
-// ─── KPI4 row expand ─────────────────────────────────────────────────────────
-function toggleKPI4Detail(id) {
-  const detailRow = document.getElementById('kpi4-detail-' + id);
-  const arrow = document.getElementById('kpi4-arrow-' + id);
-  if (!detailRow) return;
-  const isOpen = detailRow.style.display !== 'none';
-  if (isOpen) {
-    detailRow.style.display = 'none';
-    if (arrow) arrow.textContent = '▶';
-    // Destroy chart to free memory
-    if (kpi4Charts[id]) { kpi4Charts[id].destroy(); delete kpi4Charts[id]; }
-  } else {
-    detailRow.style.display = '';
-    if (arrow) arrow.textContent = '▼';
-    // Build chart
-    const canvas = document.getElementById('kpi4-canvas-' + id);
-    if (canvas && !kpi4Charts[id]) {
-      const entries = (timelineRawData[id] || []).slice(-18); // last 18 months max
-      const labels  = entries.map(e => e.period);
-      const sales   = entries.map(e => e.sales   || 0);
-      const iva     = entries.map(e => e.iva     || 0);
-      const isr     = entries.map(e => e.isr     || 0);
-      const fmtK = v => v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'K' : v.toFixed(0);
-      kpi4Charts[id] = new Chart(canvas, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Ventas',  data: sales, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: true },
-            { label: 'IVA',     data: iva,   borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 2, tension: 0.3, borderDash: [4,3] },
-            { label: 'ISR',     data: isr,   borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 2, tension: 0.3, borderDash: [2,3] },
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: {
-            callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('es-MX', {maximumFractionDigits:0}) }
-          }},
-          scales: {
-            x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(128,128,128,0.1)' } },
-            y: { ticks: { font: { size: 10 }, callback: v => '$' + fmtK(v) }, grid: { color: 'rgba(128,128,128,0.1)' } }
-          }
-        }
-      });
-    }
-    // Render notes
-    const notesDiv = document.getElementById('kpi4-notes-' + id);
-    if (notesDiv) {
-      const periods = (clientPeriodsMap[id] || []).slice().sort((a, b) => b.pk.localeCompare(a.pk)).slice(0, 12);
-      const sc = { 'Declarado': 'var(--green)', 'En proceso': 'var(--yellow)', 'Sin iniciar': 'var(--red)', 'Bloqueado': 'var(--red)' };
-      notesDiv.innerHTML = periods.length
-        ? '<table style="width:100%;font-size:11px;border-collapse:collapse;">' +
-          periods.map(p => `<tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:4px 8px;white-space:nowrap;font-weight:600;color:var(--muted);">${p.periodoLabel}</td>
-            <td style="padding:4px 8px;"><span style="color:${sc[p.estado]||'var(--muted)'};font-weight:600;">${p.estado||'—'}</span></td>
-            <td style="padding:4px 8px;">${renderNota(p.nota, p.estado)}</td>
-          </tr>`).join('') + '</table>'
-        : '<span style="color:var(--muted);font-size:11px;">Sin historial de períodos</span>';
-    }
-  }
-}
-
-// ─── KPI 5: Toggle detail row (historical chart) ────────────────────────────
-function toggleKPI5Detail(id) {
-  const safeId    = id.replace(/[^a-zA-Z0-9]/g, '_');
-  const detailRow = document.getElementById('kpi5-detail-' + safeId);
-  const arrow     = document.getElementById('kpi5-arrow-' + safeId);
-  if (!detailRow) return;
-  const isOpen = detailRow.style.display !== 'none';
-  if (isOpen) {
-    detailRow.style.display = 'none';
-    if (arrow) arrow.textContent = '▶';
-    if (kpi5Charts[safeId]) { kpi5Charts[safeId].destroy(); delete kpi5Charts[safeId]; }
-  } else {
-    detailRow.style.display = '';
-    if (arrow) arrow.textContent = '▼';
-    const canvas = document.getElementById('kpi5-canvas-' + safeId);
-    if (canvas && !kpi5Charts[safeId]) {
-      const entries = (timelineRawData[id] || []).slice(-18);
-      const labels  = entries.map(e => e.period);
-      const sales   = entries.map(e => e.sales   || 0);
-      const iva     = entries.map(e => e.iva     || 0);
-      const isr     = entries.map(e => e.isr     || 0);
-      const fmtK = v => v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : v >= 1000 ? (v/1000).toFixed(0) + 'K' : v.toFixed(0);
-      kpi5Charts[safeId] = new Chart(canvas, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Ventas', data: sales, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.07)', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: true },
-            { label: 'IVA',    data: iva,   borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 2, tension: 0.3, borderDash: [4,3] },
-            { label: 'ISR',    data: isr,   borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 2, tension: 0.3, borderDash: [2,3] },
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: {
-            callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('es-MX', {maximumFractionDigits:0}) }
-          }},
-          scales: {
-            x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(128,128,128,0.1)' } },
-            y: { ticks: { font: { size: 10 }, callback: v => '$' + fmtK(v) }, grid: { color: 'rgba(128,128,128,0.1)' } }
-          }
-        }
-      });
-    }
-  }
-}
-
-// ─── KPI 6: Documentación Completa ───────────────────────────────────────────
-// Uses cached clientesRawRows (populated by loadDeclaracionesData at startup).
-var docCompletaLoaded = false;
-async function loadDocumentacionCompleta(force) {
-  if (docCompletaLoaded && !force) return;
-  docCompletaLoaded = true;
-
-  const tbody   = document.getElementById('docCompleta-body');
-  const summary = document.getElementById('docCompleta-summary');
-  const badge   = document.getElementById('docCompleta-badge');
-  const perLabel= document.getElementById('docCompleta-period');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Cargando 5 tablas de documentación…</td></tr>';
-
-  // ── 1. Use cached Clientes_por_periodo data (loaded at startup by loadDeclaracionesData) ──
-  if (!clientesRawRows.length) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Datos aún no cargados — espera a que la página termine de cargar y reintenta</td></tr>';
-    return;
-  }
-
-  const mesToNum = { 'Enero':1,'Febrero':2,'Marzo':3,'Abril':4,'Mayo':5,'Junio':6,
-                     'Julio':7,'Agosto':8,'Septiembre':9,'Octubre':10,'Noviembre':11,'Diciembre':12 };
-
-  // Detect columns dynamically from cached headers
-  const bCols = clientesRawCols;
-  let bMap = {};
-  bCols.forEach((col, i) => {
-    // Normalización robusta: minúsculas, sin espacios/guiones bajos, sin acentos, ñ→n
-    const lbl = (col.label || '').trim().toLowerCase().replace(/[\s_]+/g,'')
-      .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i')
-      .replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/ñ/g,'n');
-    bMap[lbl] = i;
-  });
-  const biComp  = bMap['companyid']       ?? 1;
-  const biEst   = bMap['estadocliente']   ?? 7;
-  const biTipo  = bMap['declaraciontipo'] ?? 4;
-  const biMes   = bMap['mesperiodo']      ?? 13;
-  const biAnio  = bMap['anoperiodo']      ?? 14;
-  console.log('[kpi6] índices — comp:', biComp, 'estado:', biEst, 'tipo:', biTipo, 'mes:', biMes, 'año:', biAnio);
-
-  // Build: universe of companyIds per period where tipo=Con datos + estado=Declarado
-  const periodUniverse = {}; // pk → Set of companyIds
-  clientesRawRows.forEach(row => {
-    const c = row.c || [];
-    const g = i => (c[i] && c[i].v != null) ? c[i].v : null;
-    const companyId = String(g(biComp) || '').trim();
-    const estado    = String(g(biEst) || '').trim();
-    const tipo      = String(g(biTipo) || '').trim();
-    const mes       = String(g(biMes) || '').trim();
-    const anio      = String(g(biAnio) || '').trim();
-    if (!companyId || !mes || !anio) return;
-    const mesNum = mesToNum[mes]; if (!mesNum) return;
-    const pk = anio + '-' + String(mesNum).padStart(2,'0');
-    // KPI6 universe: AZ clients only (Amazon), Con datos + Declarado
-    if (tipo === 'Con datos' && estado === 'Declarado' && companyId.startsWith('AZ')) {
-      if (!periodUniverse[pk]) periodUniverse[pk] = new Set();
-      periodUniverse[pk].add(companyId);
-    }
-  });
-
-  // Pick most recent period with data
-  const sortedPKs = Object.keys(periodUniverse).sort();
-  if (!sortedPKs.length) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Sin clientes con DeclaracionTipo=Con datos + EstadoCliente=Declarado</td></tr>';
-    return;
-  }
-  const activePK = sortedPKs[sortedPKs.length - 1];
-  const universe = periodUniverse[activePK]; // Set of companyIds
-  const [actY, actM] = activePK.split('-');
-  const monthFull = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  if (perLabel) perLabel.textContent = monthFull[parseInt(actM,10)] + ' ' + actY + ' · ' + universe.size + ' clientes';
-
-  // ── 2. Fetch 5 document tables in parallel ──────────────────────────────────
-  const TABLES = [
-    { key: 'decl',  sheet: 'declaracion_periodo',    label: 'Declaración' },
-    { key: 'inv',   sheet: 'inventario_por_periodo', label: 'Inventario' },
-    { key: 'vtas',  sheet: 'Reportes_de_venta',      label: 'Rpt. Ventas' },
-    { key: 'ret',   sheet: 'Retenciones_por_periodo',label: 'Retenciones' },
-    { key: 'diot',  sheet: 'diot_periodo',           label: 'DIOT' },
-  ];
-  // Carga por responsable incluye además Estados de cuenta (SOP p3/p7)
-  const CR_TABLES = TABLES.concat([{ key: 'edo', sheet: 'Estados_cuenta', label: 'Edo. Cuenta' }]);
-
-  // ── Fuente primaria: backend Tally Ops (acción docs_presencia — regla SOP: fila con
-  //    mismo PeriodID en la tabla destino = documento cargado). El proxy del dashboard
-  //    no sirve estas 5-6 tablas, por eso antes todo marcaba 0%.
-  let viaBackend = false;
-  const presenceSetsB = {}, presenceAllB = {};
-  CR_TABLES.forEach(t => { presenceSetsB[t.key] = new Set(); presenceAllB[t.key] = new Set(); });
-  try {
-    if (typeof rkApi === 'function') {
-      const rp = await rkApi('docs_presencia', { periodo: activePK });
-      if (rp && rp.ok && rp.presencia) {
-        viaBackend = true;
-        console.log('[docs] presencia vía backend:', rp.detalle);
-        CR_TABLES.forEach(t => {
-          const arr = rp.presencia[t.key] || [];
-          presenceAllB[t.key] = new Set(arr);
-          presenceSetsB[t.key] = new Set(arr.filter(id => universe.has(id)));
-        });
-      }
-    }
-  } catch (e) { console.warn('[docs] backend falló, uso proxy:', e); }
-
-  const tableResults = viaBackend ? TABLES.map(() => null) : await Promise.all(
-    TABLES.map(t => fetchSheet(t.sheet).catch(() => null))
-  );
-
-  // For each table: build Set of companyIds present in activePK
-  // Strategy: look for Company_id + PeriodID or Mes+Año columns dynamically
-  const presenceSets = presenceSetsB; // key → Set<companyId>  (universo KPI6: AZ Con datos+Declarado)
-  const presenceAll  = presenceAllB;  // key → Set<companyId>  (TODAS las empresas — Carga por responsable)
-  if (!viaBackend) TABLES.forEach((t, idx) => {
-    const data = tableResults[idx];
-    if (!data || !data.table) return;
-
-    const tCols = data.table.cols || [];
-    let tcMap = {};
-    tCols.forEach((col, i) => {
-      const lbl = (col.label || '').trim().toLowerCase().replace(/[\s_]/g,'');
-      tcMap[lbl] = i;
-    });
-    const tcComp = tcMap['companyid'] ?? tcMap['company'] ?? 0;
-    const tcPid  = tcMap['periodid'] ?? tcMap['period'] ?? -1;
-    const tcMes  = tcMap['mesperiodo'] ?? tcMap['mes'] ?? -1;
-    const tcAnio = tcMap['añoperiodo'] ?? tcMap['anoperiodo'] ?? tcMap['ano'] ?? -1;
-
-    (data.table.rows || []).forEach(row => {
-      const c = row.c || [];
-      const g = i => (i >= 0 && c[i] && c[i].v != null) ? c[i].v : null;
-      const companyId = String(g(tcComp) || '').trim();
-      if (!companyId) return;
-
-      // Match to activePK
-      let matched = false;
-      if (tcPid >= 0 && g(tcPid)) {
-        const pid = String(g(tcPid));
-        const m = pid.match(/^(\d{4})-(\d{1,2})/);
-        if (m) {
-          const pk = m[1] + '-' + m[2].padStart(2,'0');
-          if (pk === activePK) matched = true;
-        }
-      }
-      if (!matched && tcMes >= 0 && tcAnio >= 0 && g(tcMes) && g(tcAnio)) {
-        const mesNorm = String(g(tcMes)).trim();
-        const mesNum  = mesToNum[mesNorm];
-        if (mesNum) {
-          const pk = String(g(tcAnio)).trim() + '-' + String(mesNum).padStart(2,'0');
-          if (pk === activePK) matched = true;
-        }
-      }
-      // Fallback: no period info → just track presence (all records for this company)
-      const sinPeriodo = (tcPid < 0 && tcMes < 0);
-      if (matched || sinPeriodo) presenceAll[t.key].add(companyId);
-      if ((matched || sinPeriodo) && universe.has(companyId)) presenceSets[t.key].add(companyId);
-    });
-  });
-
-  // ── 3. Render summary bars ─────────────────────────────────────────────────
-  if (summary) {
-    summary.innerHTML = TABLES.map((t, idx) => {
-      const count = presenceSets[t.key].size;
-      const total = universe.size;
-      const pct   = total > 0 ? Math.round(count / total * 100) : 0;
-      const color = pct >= 90 ? 'var(--green)' : pct >= 60 ? 'var(--yellow)' : 'var(--red)';
-      return `<div style="flex:1;min-width:100px;background:var(--bg3);border-radius:8px;padding:10px 12px;">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">${t.label}</div>
-        <div style="font-size:18px;font-weight:700;color:${color};">${pct}%</div>
-        <div style="font-size:10px;color:var(--muted);">${count}/${total}</div>
-      </div>`;
-    }).join('');
-  }
-
-  // Overall completeness
-  const fullCount = [...universe].filter(id =>
-    TABLES.every(t => presenceSets[t.key].has(id))
-  ).length;
-  if (badge) badge.textContent = fullCount + '/' + universe.size + ' completos (' + Math.round(fullCount / (universe.size || 1) * 100) + '%)';
-
-  // ── 4. Render grid ─────────────────────────────────────────────────────────
-  const check = has => has
-    ? '<span style="color:var(--green);font-size:14px;">✓</span>'
-    : '<span style="color:var(--red);font-size:14px;">✗</span>';
-
-  const sortedIds = [...universe].sort();
-  const score = id => TABLES.filter(t => presenceSets[t.key].has(id)).length;
-
-  const rows = sortedIds.map(id => {
-    const s = score(id);
-    const scoreColor = s === 5 ? 'var(--green)' : s >= 3 ? 'var(--yellow)' : 'var(--red)';
-    const name = clientNameMap[id] || '';
-    const nameHtml = name ? `<span style="font-size:10px;color:var(--muted);margin-left:4px;">${name}</span>` : '';
-    return `<tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:6px 8px;font-weight:600;">${id}${nameHtml}</td>
-      ${TABLES.map(t => `<td style="text-align:center;padding:6px;">${check(presenceSets[t.key].has(id))}</td>`).join('')}
-      <td style="text-align:center;padding:6px;font-weight:700;color:${scoreColor};">${s}/5</td>
-    </tr>`;
-  }).join('');
-
-  if (tbody) {
-    tbody.innerHTML = rows || '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Sin clientes en el universo</td></tr>';
-  }
-
-  // ── 5. Carga documental por responsable (sección propia) ──
-  // Denominador = TODAS las empresas asignadas al responsable en AppSheet (Clients_Load,
-  // no suspendidas), tengan o no fila en el período activo. Las que no tienen fila
-  // aparecen como "Sin registro" — eso también es deuda visible.
-  const crEstados = new Map(); // companyId → estado en el período activo
-  clientesRawRows.forEach(row => {
-    const c = row.c || [];
-    const g = i => (c[i] && c[i].v != null) ? c[i].v : null;
-    const companyId = String(g(biComp) || '').trim();
-    const mes  = String(g(biMes) || '').trim();
-    const anio = String(g(biAnio) || '').trim();
-    if (!companyId || !mes || !anio) return;
-    const mesNum = mesToNum[mes]; if (!mesNum) return;
-    if (anio + '-' + String(mesNum).padStart(2,'0') !== activePK) return;
-    crEstados.set(companyId, String(g(biEst) || '').trim() || 'Sin estado');
-  });
-  if (typeof CLIENT_DB !== 'undefined') {
-    Object.keys(CLIENT_DB).forEach(id => {
-      if (CLIENT_DB[id].suspended) return;               // suspendidos fuera del denominador
-      if (!crEstados.has(id)) crEstados.set(id, 'Sin registro');
-    });
-  }
-  CR_DATA = { activePK, tables: CR_TABLES.map(t => ({ key: t.key, label: t.label })), presenceAll, estados: crEstados };
-  try { crRender(); } catch (e) { console.warn('[carga-resp]', e); }
-}
 </script>
-
-<!-- ── Notes Modal ─────────────────────────────────────────────────────────── -->
-<div id="notesModal" onclick="if(event.target===this)closeNotesModal()"
-  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--bg2);border-radius:16px;width:100%;max-width:780px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.4);border:1px solid var(--border);">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);">
-      <div style="font-size:14px;font-weight:700;color:var(--text);" id="notesModalTitle">Notas del cliente</div>
-      <button onclick="closeNotesModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);line-height:1;padding:4px 8px;border-radius:6px;"
-        onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='none'">×</button>
-    </div>
-    <!-- Body -->
-    <div style="overflow-y:auto;padding:12px 4px;">
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead>
-          <tr style="background:var(--bg3);">
-            <th style="padding:8px 12px;text-align:left;font-weight:600;color:var(--muted);width:110px;">Período</th>
-            <th style="padding:8px 12px;text-align:left;font-weight:600;color:var(--muted);width:120px;">Estado</th>
-            <th style="padding:8px 12px;text-align:left;font-weight:600;color:var(--muted);">Notas de declaración</th>
-          </tr>
-        </thead>
-        <tbody id="notesModalBody"></tbody>
-      </table>
-    </div>
-    <!-- Footer -->
-    <div style="padding:12px 20px;border-top:1px solid var(--border);text-align:right;">
-      <button onclick="closeNotesModal()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:600;">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<script>
-
-// ══ Histórico Top 5 clientes (ventas mensuales 2026) — se alimenta de timelineRawData ══
-let top5HistChart=null;
-function renderTop5Hist(){
-  const cv=document.getElementById('chartTop5Hist');
-  if(!cv||typeof Chart==='undefined'||!Object.keys(timelineRawData).length) return;
-  let lastKey='';
-  Object.values(timelineRawData).forEach(arr=>arr.forEach(e=>{ if(e.sales>0&&e.periodKey>lastKey&&e.periodKey.indexOf('2026-')===0) lastKey=e.periodKey; }));
-  if(!lastKey){ // ventas aún no llegan (Ventas_Map async) → reintenta hasta 5 veces
-    if((renderTop5Hist._try||0)<5){ renderTop5Hist._try=(renderTop5Hist._try||0)+1; setTimeout(renderTop5Hist,5000); }
-    return;
-  }
-  const lastMon=parseInt(lastKey.split('-')[1],10);
-  const MN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const keys=[],labels=[];
-  for(let m=1;m<=lastMon;m++){ keys.push('2026-'+String(m).padStart(2,'0')); labels.push(MN[m-1].slice(0,3)+' 2026'); }
-  const rank=Object.keys(timelineRawData).map(cid=>{
-    const e=timelineRawData[cid].find(x=>x.periodKey===lastKey);
-    return {cid:cid,v:e?e.sales:0};
-  }).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
-  const colors=['#7c4dff','#22c55e','#f59e0b','#38bdf8','#ef4444'];
-  const datasets=rank.map((r,i)=>({
-    label:((typeof clientNameMap!=='undefined'&&clientNameMap[r.cid])?clientNameMap[r.cid]:r.cid),
-    data:keys.map(k=>{ const e=timelineRawData[r.cid].find(x=>x.periodKey===k); return e&&e.sales>0?e.sales:null; }),
-    borderColor:colors[i],backgroundColor:colors[i]+'33',tension:.3,spanGaps:true,pointRadius:3,borderWidth:2
-  }));
-  if(top5HistChart) top5HistChart.destroy();
-  top5HistChart=new Chart(cv.getContext('2d'),{type:'line',data:{labels:labels,datasets:datasets},options:{
-    responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-    plugins:{legend:{labels:{color:'#e2e8f0',boxWidth:12,font:{size:11}}},
-      tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+(ctx.parsed.y==null?'—':'$'+ctx.parsed.y.toLocaleString('en-US',{maximumFractionDigits:0}));}}}},
-    scales:{x:{ticks:{color:'#9089aa'},grid:{color:'#2d254588'}},
-            y:{ticks:{color:'#9089aa',callback:function(v){return '$'+(v>=1e6?(v/1e6).toFixed(1)+'M':(v/1e3).toFixed(0)+'K');}},grid:{color:'#2d254588'}}}
-  }});
-  const note=document.getElementById('top5hist-note');
-  if(note) note.textContent='Top 5 por ventas de '+MN[lastMon-1]+' 2026 · Enero 2026 → '+MN[lastMon-1]+' 2026';
-  if(!renderTop5Hist._named){ renderTop5Hist._named=1; setTimeout(renderTop5Hist,4000); }
-}
-// Vigilante: reintenta dibujar el histórico hasta que exista, sin depender de la ruta de carga
-var top5HistWatch=setInterval(function(){
-  if(top5HistChart){ clearInterval(top5HistWatch); return; }
-  try{ renderTop5Hist(); }catch(e){ console.warn('[top5hist]', e); }
-},4000);
-setTimeout(function(){ clearInterval(top5HistWatch); },180000);
-
-// ══ Roadmap editable — persistido en la pestaña Roadmap_KPIs del Sheet de Tally Ops ══
-const RK_OPS_URL='https://script.google.com/macros/s/AKfycbylh4xs3Ch09rUd05CnfxOE-wgERMCZIW38V-lGIU13DLIaojdynfZlQm8xqV_KLoRY/exec';
-const RK_TOKEN='tly-ops-2026-Jm9xQ4vKp7Rd3TzN8wHs';
-const RK_SHEET='1A5TSql1ksUHQ8DBYwfTDrj_V3J1HGAs8cgCF9mijmnQ';
-const RK_ESTADOS=[['Next Steps','var(--accent)'],['En proceso','var(--yellow)'],['Implementado','var(--green)']];
-let RK_ITEMS=[];
-function rkApi(action,payload){
-  return new Promise(function(resolve){
-    var cb='__rk'+Date.now()+Math.floor(Math.random()*999);
-    var t=setTimeout(function(){ delete window[cb]; s.remove(); resolve({ok:false,error:'timeout'}); },30000);
-    window[cb]=function(d){ clearTimeout(t); delete window[cb]; s.remove(); resolve(d); };
-    var s=document.createElement('script');
-    s.src=RK_OPS_URL+'?action='+encodeURIComponent(action)+'&token='+encodeURIComponent(RK_TOKEN)+'&payload='+encodeURIComponent(JSON.stringify(payload||{}))+'&callback='+cb;
-    s.onerror=function(){ clearTimeout(t); delete window[cb]; s.remove(); resolve({ok:false,error:'red'}); };
-    document.body.appendChild(s);
-  });
-}
-function rkLoad(){
-  return new Promise(function(resolve){
-    var cb='__rkg'+Date.now();
-    var t=setTimeout(function(){ delete window[cb]; s.remove(); resolve(); },20000);
-    window[cb]=function(json){
-      clearTimeout(t); delete window[cb]; s.remove();
-      try{
-        var cols=json.table.cols.map(function(c){return c.label||c.id;});
-        RK_ITEMS=json.table.rows.map(function(row){ var o={}; row.c.forEach(function(cell,i){ o[cols[i]]=cell?(cell.f!=null?cell.f:(cell.v!=null?cell.v:'')):''; }); return o; }).filter(function(x){return x.item_id;});
-      }catch(e){}
-      resolve();
-    };
-    var s=document.createElement('script');
-    s.src='https://docs.google.com/spreadsheets/d/'+RK_SHEET+'/gviz/tq?tqx=out:json;responseHandler:'+cb+'&headers=1&sheet=Roadmap_KPIs';
-    s.onerror=function(){ clearTimeout(t); delete window[cb]; s.remove(); resolve(); };
-    document.body.appendChild(s);
-  });
-}
-function rkRender(){
-  var el=document.getElementById('rkBoard'); if(!el) return;
-  el.innerHTML=RK_ESTADOS.map(function(est){
-    var nombre=est[0], color=est[1];
-    var items=RK_ITEMS.filter(function(x){return x.estado===nombre;});
-    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;border-top:3px solid '+color+';">'
-      +'<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">'+nombre+' <span style="color:var(--muted);font-weight:400;">('+items.length+')</span></div>'
-      +(items.length?items.map(function(x,i){
-        return '<div class="rk-card">'
-          +'<div style="min-width:22px;height:22px;border-radius:50%;background:'+color+';color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;">'+(i+1)+'</div>'
-          +'<div style="flex:1;padding-right:56px;"><div style="font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;">'+String(x.texto).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</div>'
-          +'<select onchange="rkMover(\''+x.item_id+'\',this.value)" style="margin-top:6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:10.5px;padding:2px 6px;">'
-          +RK_ESTADOS.map(function(e2){return '<option '+(e2[0]===nombre?'selected':'')+'>'+e2[0]+'</option>';}).join('')
-          +'</select></div>'
-          +'<div class="rk-acts">'
-          +'<button class="rk-act" title="Editar" onclick="rkEditar(\''+x.item_id+'\')">✏️</button>'
-          +'<button class="rk-act" title="Eliminar" onclick="rkEliminar(\''+x.item_id+'\')">🗑</button>'
-          +'</div></div>';
-      }).join(''):'<div style="color:var(--muted);font-size:12px;padding:8px 0;">— vacío —</div>')
-      +'</div>';
-  }).join('');
-}
-var RK_EDIT=null; // item_id en edición (null = creando)
-function rkAbrirModal(){
-  RK_EDIT=null;
-  document.getElementById('rkModalTitle').textContent='＋ Nuevo ítem del roadmap';
-  document.getElementById('rkCrearBtn').textContent='✅ Crear';
-  document.getElementById('rkModal').style.display='flex';
-  document.getElementById('rkTexto').value='';
-  document.getElementById('rkEstado').value='Next Steps';
-  document.getElementById('rkTexto').focus();
-}
-function rkEditar(id){
-  var x=RK_ITEMS.find(function(y){return y.item_id===id;}); if(!x) return;
-  RK_EDIT=id;
-  document.getElementById('rkModalTitle').textContent='✏️ Editar ítem';
-  document.getElementById('rkCrearBtn').textContent='💾 Guardar cambios';
-  document.getElementById('rkModal').style.display='flex';
-  document.getElementById('rkTexto').value=x.texto||'';
-  document.getElementById('rkEstado').value=x.estado||'Next Steps';
-  document.getElementById('rkTexto').focus();
-}
-async function rkEliminar(id){
-  var x=RK_ITEMS.find(function(y){return y.item_id===id;}); if(!x) return;
-  if(!confirm('¿Eliminar este ítem del roadmap?\n\n"'+x.texto+'"')) return;
-  var r=await rkApi('kpi_item_del',{item_id:id});
-  if(r.ok){ RK_ITEMS=RK_ITEMS.filter(function(y){return y.item_id!==id;}); rkRender(); }
-  else alert('Error al eliminar: '+(r.error||''));
-}
-async function rkCrear(){
-  var texto=document.getElementById('rkTexto').value.trim();
-  var estado=document.getElementById('rkEstado').value;
-  if(!texto){ alert('Escribe el ítem'); return; }
-  var btn=document.getElementById('rkCrearBtn'); btn.disabled=true; btn.textContent='Guardando…';
-  var r;
-  if(RK_EDIT){
-    r=await rkApi('kpi_item_edit',{item_id:RK_EDIT,texto:texto,estado:estado});
-    if(r.ok){ var x=RK_ITEMS.find(function(y){return y.item_id===RK_EDIT;}); if(x){ x.texto=texto; x.estado=estado; } }
-  } else {
-    r=await rkApi('kpi_item_add',{texto:texto,estado:estado});
-    if(r.ok) RK_ITEMS.push({item_id:r.item_id,texto:texto,estado:r.estado});
-  }
-  btn.disabled=false; btn.textContent=RK_EDIT?'💾 Guardar cambios':'✅ Crear';
-  if(r.ok){ document.getElementById('rkModal').style.display='none'; RK_EDIT=null; rkRender(); }
-  else alert('Error al guardar: '+(r.error||''));
-}
-async function rkMover(id,estado){
-  var r=await rkApi('kpi_item_estado',{item_id:id,estado:estado});
-  if(r.ok){ var x=RK_ITEMS.find(function(y){return y.item_id===id;}); if(x) x.estado=estado; }
-  rkRender();
-}
-rkLoad().then(rkRender);
-
-// ══ Journey Top 10 — tags de journey por cliente, persistido en pestaña Journey_Top10 (Ops DB) ══
-const JT_TAGS=['Banco','First Shipment','T1C','IOR','Seller Central','Edo. Cuenta','Reporte','Growth'];
-const JT_CYCLE=['off','rojo','amarillo','verde'];
-// Top 10 por Ventas Acumuladas (Clients_Load · corte 28-jul-2026). seeds = estado inicial sugerido desde AppSheet; editable y persistente.
-const JT_CLIENTES=[
- {id:'IN003008', nombre:'Speediance México', ventas:75865463, owner:'Edgar', tipo:'Legacy',
-  seed:{'Banco':'amarillo','Edo. Cuenta':'amarillo','Reporte':'verde'},
-  seedNota:'Expediente 2026 al día (revisión semanal con Luis). RFC "NO MATCH" en Clients_Load — corregir para cruces Syntage/SAT WS.'},
- {id:'AZ007386', nombre:'Insightconnect', ventas:21279696, owner:'Eduardo', tipo:'Amazon',
-  seed:{'Banco':'rojo','First Shipment':'verde','Seller Central':'amarillo','Reporte':'verde'},
-  seedNota:'FS 12-jun-26. SC pendiente y sin banco registrado. RFC en base = NO MATCH; el real es INS250310R2A (sheet abril). Ventas abril $3.18M.'},
- {id:'IN002551', nombre:'Krowdy México', ventas:13148159, owner:'Edgar', tipo:'Legacy',
-  seed:{'Edo. Cuenta':'amarillo','Reporte':'verde'},
-  seedNota:'Períodos 2026 completos (ene–jun). RFC NO MATCH en Clients_Load.'},
- {id:'AZ006416', nombre:'Growve Inc.', ventas:12976651, owner:'Cristina', tipo:'Amazon',
-  seed:{'Banco':'amarillo','First Shipment':'verde','Seller Central':'rojo','Reporte':'verde'},
-  seedNota:'BBVA Spark "Sin iniciar" y acceso SC pendiente pese a ser #4 en ventas. Reasignar seguimiento con la salida de Cris (3-ago).'},
- {id:'AZ006901', nombre:'Loudcup MX', ventas:5177417, owner:'Eduardo', tipo:'Amazon',
-  seed:{'Banco':'verde','First Shipment':'verde','Seller Central':'verde','Edo. Cuenta':'verde','Reporte':'verde'},
-  seedNota:'Journey completo: Payoneer finalizado, SC acceso total, períodos 2026 al día. Candidato a playbook de Growth.'},
- {id:'IN004245', nombre:'Patagonia CNC Machines', ventas:3884614, owner:'Arturo', tipo:'Legacy',
-  seed:{'Reporte':'amarillo'},
-  seedNota:'Stripe past_due (cobranza abierta). Portafolio Arturo → aplicar protocolo de handover (contexto + auditoría + kickoff) antes de absorber.'},
- {id:'IN004033', nombre:'THING02 Consulting', ventas:3791531, owner:'Arturo', tipo:'Legacy',
-  seed:{'Reporte':'amarillo'},
-  seedNota:'Solo períodos abr–jun 2026 en sistema. Sin subscription en Stripe. Handover Arturo pendiente.'},
- {id:'AZ007022', nombre:'GHU Electronics LLC', ventas:2792421, owner:'Cristina', tipo:'Amazon',
-  seed:{'Banco':'amarillo','First Shipment':'verde','Seller Central':'amarillo','Reporte':'rojo'},
-  seedNota:'Hueco de períodos mar–may 2026 (salta de feb a jun). Acceso SC parcial. Prioridad de regularización.'},
- {id:'AZ006552', nombre:'Meister', ventas:2338564, owner:'Cristina', tipo:'Amazon',
-  seed:{'Banco':'verde','First Shipment':'verde','Seller Central':'verde','Edo. Cuenta':'verde','Reporte':'verde'},
-  seedNota:'Todo en verde: FIEL exitosa, SC completo, períodos al día. Top seller AZ — mantener y explorar upgrade de plan.'},
- {id:'IN005064', nombre:'11S Tecnología MX', ventas:2093793, owner:'Arturo', tipo:'Legacy',
-  seed:{'Reporte':'amarillo'},
-  seedNota:'Solo abr–jun 2026 registrados. Cliente Legacy de Arturo con Stripe activo — validar historial pre-abril.'}
-];
-let JT_STATE={}; // company_id -> {tags:{}, nota:''}
-function jtEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
-function jtFmt(n){return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0});}
-function jtLoad(){
-  return new Promise(function(resolve){
-    var cb='__jtg'+Date.now();
-    var t=setTimeout(function(){ delete window[cb]; s.remove(); resolve(); },20000);
-    window[cb]=function(json){
-      clearTimeout(t); delete window[cb]; s.remove();
-      try{
-        var cols=json.table.cols.map(function(c){return c.label||c.id;});
-        json.table.rows.forEach(function(row){
-          var o={}; row.c.forEach(function(cell,i){ o[cols[i]]=cell?(cell.f!=null?cell.f:(cell.v!=null?cell.v:'')):''; });
-          if(!o.company_id) return;
-          var tags={}; try{ tags=JSON.parse(o.tags||'{}'); }catch(e){}
-          JT_STATE[o.company_id]={tags:tags, nota:String(o.nota||'')};
-        });
-      }catch(e){}
-      resolve();
-    };
-    var s=document.createElement('script');
-    s.src='https://docs.google.com/spreadsheets/d/'+RK_SHEET+'/gviz/tq?tqx=out:json;responseHandler:'+cb+'&headers=1&sheet=Journey_Top10';
-    s.onerror=function(){ clearTimeout(t); delete window[cb]; s.remove(); resolve(); };
-    document.body.appendChild(s);
-  });
-}
-function jtGet(c){
-  if(!JT_STATE[c.id]) JT_STATE[c.id]={tags:Object.assign({},c.seed||{}), nota:c.seedNota||'', _seed:true};
-  return JT_STATE[c.id];
-}
-var JT_IDX=0;
-function jtRender(){
-  var el=document.getElementById('jtGrid'); if(!el) return;
-  if(JT_IDX<0) JT_IDX=JT_CLIENTES.length-1;
-  if(JT_IDX>=JT_CLIENTES.length) JT_IDX=0;
-  var c=JT_CLIENTES[JT_IDX], idx=JT_IDX;
-  var st=jtGet(c);
-  var card='<div class="jt-card" id="jt-'+c.id+'">'
-    +'<div class="jt-head"><span class="jt-rank">#'+(idx+1)+'</span><span class="jt-name">'+jtEsc(c.nombre)+'</span><span class="jt-ventas">'+jtFmt(c.ventas)+'</span></div>'
-    +'<div class="jt-meta"><span>'+c.id+'</span><span>Owner: '+jtEsc(c.owner)+'</span><span>'+jtEsc(c.tipo)+'</span></div>'
-    +'<div class="jt-chart" id="jtChartBox-'+c.id+'"><canvas id="jtChart-'+c.id+'"></canvas></div>'
-    +'<div class="jt-tags">'+JT_TAGS.map(function(tg){
-      var est=st.tags[tg]||'off';
-      return '<span class="jt-tag '+(est==='off'?'':est)+'" onclick="jtCycle(\''+c.id+'\',\''+tg.replace(/'/g,"\\'")+'\')">'+jtEsc(tg)+'</span>';
-    }).join('')+'</div>'
-    +'<div class="jt-nota-row">'
-    +'<textarea class="jt-nota" id="jtNota-'+c.id+'" placeholder="Contexto de valor sobre el proceso/cliente…">'+jtEsc(st.nota)+'</textarea>'
-    +'<button class="jt-save" onclick="jtSaveNota(\''+c.id+'\')">💾</button>'
-    +'</div><div class="jt-sync" id="jtSync-'+c.id+'">'+(st._seed?'Sugerido desde AppSheet — edita y se guarda para todos':'')+'</div>'
-    +'</div>';
-  el.innerHTML='<div class="jt-slider">'
-    +'<div class="jt-arrow" onclick="jtNav(-1)" title="Anterior (←)">‹</div>'
-    +'<div class="jt-stage">'+card+'</div>'
-    +'<div class="jt-arrow" onclick="jtNav(1)" title="Siguiente (→)">›</div>'
-    +'</div>'
-    +'<div class="jt-dots">'+JT_CLIENTES.map(function(x,i){
-      return '<span class="jt-dot'+(i===idx?' on':'')+'" onclick="jtGo('+i+')" title="'+jtEsc(x.nombre)+'">#'+(i+1)+' '+jtEsc(x.nombre.length>16?x.nombre.slice(0,15)+'…':x.nombre)+'</span>';
-    }).join('')+'</div>'
-    +'<div class="jt-counter">'+(idx+1)+' de '+JT_CLIENTES.length+' · usa ← → del teclado</div>';
-  jtRenderCharts();
-}
-function jtNav(d){ JT_IDX+=d; jtRender(); }
-function jtGo(i){ JT_IDX=i; jtRender(); }
-document.addEventListener('keydown',function(ev){
-  var sec=document.getElementById('section-journey');
-  if(!sec||!sec.classList.contains('active')) return;
-  if(ev.target&&(ev.target.tagName==='TEXTAREA'||ev.target.tagName==='INPUT'||ev.target.tagName==='SELECT')) return;
-  if(ev.key==='ArrowLeft') jtNav(-1);
-  else if(ev.key==='ArrowRight') jtNav(1);
-});
-// ── Gráfica ventas/impuestos mes a mes por cliente (reusa timelineRawData de Clientes_por_periodo) ──
-var JT_CHARTS={};
-function jtRenderCharts(){
-  if(typeof Chart==='undefined') return;
-  JT_CLIENTES.forEach(function(c){
-    var box=document.getElementById('jtChartBox-'+c.id); if(!box) return;
-    if(JT_CHARTS[c.id]){ try{JT_CHARTS[c.id].destroy();}catch(e){} delete JT_CHARTS[c.id]; }
-    var serie=(typeof timelineRawData!=='undefined' && timelineRawData[c.id])?timelineRawData[c.id]:null;
-    if(!serie||!serie.length){
-      box.innerHTML='<div class="jt-chart-empty">Sin períodos en Clientes_por_periodo'+(typeof timelineRawData!=='undefined'&&Object.keys(timelineRawData).length?'':' — cargando…')+'</div>';
-      return;
-    }
-    var ult=serie.slice(-12); // últimos 12 meses
-    box.innerHTML='<canvas id="jtChart-'+c.id+'"></canvas>';
-    var css=getComputedStyle(document.documentElement);
-    var mut=(css.getPropertyValue('--muted')||'#888').trim();
-    var brd=(css.getPropertyValue('--border')||'#333').trim();
-    JT_CHARTS[c.id]=new Chart(document.getElementById('jtChart-'+c.id).getContext('2d'),{
-      type:'line',
-      data:{
-        labels:ult.map(function(e){return e.period;}),
-        datasets:[
-          {label:'Ventas',data:ult.map(function(e){return e.sales;}),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.12)',borderWidth:2,pointRadius:2.5,tension:.3,fill:true,yAxisID:'y'},
-          {label:'IVA',data:ult.map(function(e){return e.iva;}),borderColor:'#4f7fff',backgroundColor:'rgba(79,127,255,.25)',borderWidth:2,pointRadius:2.5,tension:.3,yAxisID:'y2'},
-          {label:'ISR',data:ult.map(function(e){return e.isr;}),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.25)',borderWidth:2,pointRadius:2.5,tension:.3,yAxisID:'y2'}
-        ]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,animation:false,
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{labels:{color:mut,boxWidth:10,font:{size:10}}},
-          tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': $'+Number(ctx.parsed.y||0).toLocaleString('en-US',{maximumFractionDigits:0});}}}
-        },
-        scales:{
-          x:{ticks:{color:mut,font:{size:9.5}},grid:{display:false}},
-          y:{position:'left',ticks:{color:'#22c55e',font:{size:9},callback:function(v){return '$'+(Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'k':v);}},grid:{color:brd}},
-          y2:{position:'right',ticks:{color:mut,font:{size:9},callback:function(v){return '$'+(Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'k':v);}},grid:{display:false}}
-        }
-      }
-    });
-  });
-}
-// ══ Pulso Semanal editable — persistido en pestaña Pulso_Semanal (Ops DB) ══
-const PW_COLS=[['movio','✅ Qué se movió esta semana','#22c55e'],['atorado','🔴 Qué está atorado y por qué','#ef4444'],['foco','🎯 Foco próxima semana','#4f7fff']];
-const PW_SEED=[
- {columna:'movio',chip:'Cerrado',chip_tipo:'done',titulo:'Deuda de declaraciones abril 2026 registrada',texto:'33 empresas cargadas a Clientes_por_periodo (venían del hallazgo de 31 discrepancias en la LineUp del 22-jul). Insight Connect y Pharmaris mapeadas por RFC.'},
- {columna:'movio',chip:'Cerrado',chip_tipo:'done',titulo:'Tally Ops: deploy descongelado + Respuesta OS',texto:'Pipeline clasp congelado del 23–28 jul, reactivado. Bandeja ahora detecta respuestas enviadas fuera de la interfaz (todas las cuentas) y Tareas tiene CRUD completo.'},
- {columna:'movio',chip:'Cerrado',chip_tipo:'done',titulo:'Pricing por tiers listo para vender upgrades',texto:'Cotizador bottom-up (USD), matriz de 5 planes y PDF de cotización. Conecta con la comisión comercial por cambio de plan acordada con Pablo (20-jul).'},
- {columna:'movio',chip:'Cerrado',chip_tipo:'done',titulo:'Gobierno de agentes',texto:'Auditoría de los 15 agents, CX apagado (único que emailaba clientes), SOP humano en Notion y nuevo agente de registro de períodos sin aprobaciones manuales.'},
- {columna:'movio',chip:'En rampa',chip_tipo:'done',titulo:'CRM contable adoptado por el equipo',texto:'Estados proceso/bloqueado, migración WhatsApp a correo y Kanban de accesos SC acordados en el Reporte de Clientes. Retro Escala y Purga ejecutada con compromisos 1-1-1.'},
- {columna:'atorado',chip:'Bloqueado',chip_tipo:'block',titulo:'78 clientes con acceso SC y ventas en $0',texto:'Ya importaron (FS finalizado) y no venden. Causa raíz: hueco de datos entre First Shipment e IOR — los shipments no se cargan al 360 y no hay alerta de restock ni de misconfiguración de listings MX.'},
- {columna:'atorado',chip:'Bloqueado',chip_tipo:'block',titulo:'Sales reports incompletos (may–jul)',texto:'Caso Red Medical: meses sin reporte pese a servicio de freelance pagado. La descarga es manual cuenta por cuenta; la API de Amazon SP tarda 3–4 meses en autorizarse.'},
- {columna:'atorado',chip:'Workaround',chip_tipo:'warn',titulo:'API de AppSheet rota para registrar períodos',texto:'Columna requerida no editable bloquea los adds vía API y descarta filas en silencio. Resuelto por el backend de Apps Script (canal de control) — no depender de la API para esta tabla.'},
- {columna:'atorado',chip:'Riesgo',chip_tipo:'warn',titulo:'Higiene de datos: RFC NO MATCH en clientes top',texto:'Speediance, Krowdy, Insight y Growve sin RFC en Clients_Load — bloquea cruces automáticos (Syntage / SAT WS) justo en las cuentas que concentran el revenue.'},
- {columna:'atorado',chip:'Capacidad',chip_tipo:'warn',titulo:'Doble salida el 3-ago + QA silencioso',texto:'Cris inicia licencia y Juan sale de vacaciones el mismo día; el equipo reporta saturación (retro). El Auditor QA corre pero no publica en Slack desde el 22-jul.'},
- {columna:'foco',chip:'Lun–Mar',chip_tipo:'next',titulo:'Integrar accounting data model al 360',texto:'Sesión con Alan y Dilson. Mata el silo de datos que causa la mitad de los bloqueos (shipments, ventas, journey por vertical).'},
- {columna:'foco',chip:'Task force',chip_tipo:'next',titulo:'Los 78 en cero + carga de shipments',texto:'Es NRR directo: clientes que ya pagaron importación y no facturan son churn latente. Investigar listings MX y activar recordatorio de restock.'},
- {columna:'foco',chip:'Deuda',chip_tipo:'next',titulo:'Completar sales reports may–jul del top 31',texto:'Abril ya quedó registrado; cerrar los meses restantes antes del corte del día 17 y del arranque de SAT WS (125 RFCs).'},
- {columna:'foco',chip:'Antes 3-ago',chip_tipo:'next',titulo:'Handover Cris a Cristian + trámite API Amazon',texto:'Dejar la operación corriendo sola antes de la doble salida; el trámite de la API es largo — cada semana sin iniciarlo son reportes manuales de más.'},
- {columna:'foco',chip:'Criterio',chip_tipo:'next',titulo:'¿Por qué esto y no otra cosa?',texto:'El top 10 concentra el revenue y sus bloqueos son de datos, no de contabilidad. Última semana con Juan y Cris activos: prioridad a lo que deja sistemas corriendo solos (360 + task force), no a tareas delegables en agosto.'}
-];
-let PW_ITEMS=[]; var PW_EDIT=null;
-function pwLoad(){
-  return new Promise(function(resolve){
-    var cb='__pwg'+Date.now();
-    var t=setTimeout(function(){ delete window[cb]; s.remove(); resolve(); },20000);
-    window[cb]=function(json){
-      clearTimeout(t); delete window[cb]; s.remove();
-      try{
-        var cols=json.table.cols.map(function(c){return c.label||c.id;});
-        PW_ITEMS=json.table.rows.map(function(row){ var o={}; row.c.forEach(function(cell,i){ o[cols[i]]=cell?(cell.f!=null?cell.f:(cell.v!=null?cell.v:'')):''; }); return o; }).filter(function(x){return x.item_id;});
-      }catch(e){}
-      resolve();
-    };
-    var s=document.createElement('script');
-    s.src='https://docs.google.com/spreadsheets/d/'+RK_SHEET+'/gviz/tq?tqx=out:json;responseHandler:'+cb+'&headers=1&sheet=Pulso_Semanal';
-    s.onerror=function(){ clearTimeout(t); delete window[cb]; s.remove(); resolve(); };
-    document.body.appendChild(s);
-  });
-}
-async function pwSeed(){
-  var el=document.getElementById('pwBoard');
-  if(el) el.innerHTML='Sembrando pulso inicial…';
-  for(var i=0;i<PW_SEED.length;i++){
-    var sd=PW_SEED[i];
-    var r=await rkApi('pulso_set',sd);
-    if(r.ok) PW_ITEMS.push(Object.assign({item_id:r.item_id},sd));
-  }
-}
-function pwEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
-function pwRender(){
-  var el=document.getElementById('pwBoard'); if(!el) return;
-  el.innerHTML=PW_COLS.map(function(col){
-    var key=col[0], titulo=col[1], color=col[2];
-    var items=PW_ITEMS.filter(function(x){return x.columna===key;});
-    return '<div class="wk-col" style="border-top:3px solid '+color+';">'
-      +'<div class="wk-col-title">'+titulo+' <span style="color:var(--muted);font-weight:400;">('+items.length+')</span></div>'
-      +(items.length?items.map(function(x){
-        return '<div class="wk-card">'
-          +(x.chip?'<span class="wk-chip wk-'+pwEsc(x.chip_tipo||'done')+'">'+pwEsc(x.chip)+'</span>':'')
-          +'<b>'+pwEsc(x.titulo)+'</b><p>'+pwEsc(x.texto)+'</p>'
-          +'<div class="wk-acts">'
-          +'<button class="wk-act" title="Editar" onclick="pwEditar(\''+x.item_id+'\')">✏️</button>'
-          +'<button class="wk-act" title="Eliminar" onclick="pwEliminar(\''+x.item_id+'\')">🗑</button>'
-          +'</div></div>';
-      }).join(''):'<div style="color:var(--muted);font-size:12px;padding:8px 0;">— vacío —</div>')
-      +'</div>';
-  }).join('');
-}
-function pwAbrir(){
-  PW_EDIT=null;
-  document.getElementById('pwModalTitle').textContent='＋ Nuevo ítem del pulso';
-  document.getElementById('pwGuardarBtn').textContent='✅ Crear';
-  document.getElementById('pwColumna').value='movio';
-  document.getElementById('pwChip').value='';
-  document.getElementById('pwTipo').value='done';
-  document.getElementById('pwTitulo').value='';
-  document.getElementById('pwTexto').value='';
-  document.getElementById('pwModal').style.display='flex';
-  document.getElementById('pwTitulo').focus();
-}
-function pwEditar(id){
-  var x=PW_ITEMS.find(function(y){return y.item_id===id;}); if(!x) return;
-  PW_EDIT=id;
-  document.getElementById('pwModalTitle').textContent='✏️ Editar ítem';
-  document.getElementById('pwGuardarBtn').textContent='💾 Guardar cambios';
-  document.getElementById('pwColumna').value=x.columna||'movio';
-  document.getElementById('pwChip').value=x.chip||'';
-  document.getElementById('pwTipo').value=x.chip_tipo||'done';
-  document.getElementById('pwTitulo').value=x.titulo||'';
-  document.getElementById('pwTexto').value=x.texto||'';
-  document.getElementById('pwModal').style.display='flex';
-  document.getElementById('pwTitulo').focus();
-}
-async function pwEliminar(id){
-  var x=PW_ITEMS.find(function(y){return y.item_id===id;}); if(!x) return;
-  if(!confirm('¿Eliminar este ítem del pulso?\n\n"'+x.titulo+'"')) return;
-  var r=await rkApi('pulso_del',{item_id:id});
-  if(r.ok){ PW_ITEMS=PW_ITEMS.filter(function(y){return y.item_id!==id;}); pwRender(); }
-  else alert('Error al eliminar: '+(r.error||''));
-}
-async function pwGuardar(){
-  var payload={
-    columna:document.getElementById('pwColumna').value,
-    chip:document.getElementById('pwChip').value.trim(),
-    chip_tipo:document.getElementById('pwTipo').value,
-    titulo:document.getElementById('pwTitulo').value.trim(),
-    texto:document.getElementById('pwTexto').value.trim()
-  };
-  if(!payload.titulo){ alert('Escribe el título'); return; }
-  var btn=document.getElementById('pwGuardarBtn'); btn.disabled=true; btn.textContent='Guardando…';
-  if(PW_EDIT) payload.item_id=PW_EDIT;
-  var r=await rkApi('pulso_set',payload);
-  btn.disabled=false; btn.textContent=PW_EDIT?'💾 Guardar cambios':'✅ Crear';
-  if(r.ok){
-    if(PW_EDIT){ var x=PW_ITEMS.find(function(y){return y.item_id===PW_EDIT;}); if(x) Object.assign(x,payload); }
-    else PW_ITEMS.push(Object.assign({item_id:r.item_id},payload));
-    document.getElementById('pwModal').style.display='none'; PW_EDIT=null; pwRender();
-  } else alert('Error al guardar: '+(r.error||''));
-}
-pwLoad().then(function(){
-  if(PW_ITEMS.length){ pwRender(); }
-  else { pwSeed().then(pwRender); }
-});
-
-// ══ Carga documental por responsable — datos de loadDocumentacionCompleta (KPI 6) ══
-var CR_DATA=null;
-function crMesLabel(pk){ var M=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']; var p=String(pk||'').split('-'); return (M[parseInt(p[1],10)]||'')+' '+(p[0]||''); }
-function crOwnerDe(id){ var cb=(typeof CLIENT_DB!=='undefined')?CLIENT_DB[id]:null; return (cb&&cb.owner)?cb.owner:'Arturo / sin asignar'; }
-function crNombre(id){ var cb=(typeof CLIENT_DB!=='undefined')?CLIENT_DB[id]:null; if(cb&&cb.name) return cb.name; if(typeof clientNameMap!=='undefined'&&clientNameMap[id]) return clientNameMap[id]; return ''; }
-function crEsc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
-function crGrupos(){
-  var G={};
-  CR_DATA.estados.forEach(function(estado,id){ var o=crOwnerDe(id); (G[o]=G[o]||[]).push(id); });
-  return G;
-}
-function crRender(){
-  var el=document.getElementById('crBoard'); if(!el||!CR_DATA) return;
-  var per=document.getElementById('crPeriodo'); if(per) per.textContent='Período activo: '+crMesLabel(CR_DATA.activePK)+' · '+CR_DATA.estados.size+' empresas';
-  var G=crGrupos();
-  var owners=Object.keys(G).sort(function(a,b){ return G[b].length-G[a].length; });
-  el.innerHTML=owners.map(function(o){
-    var ids=G[o];
-    var dec=ids.filter(function(id){ return CR_DATA.estados.get(id)==='Declarado'; }).length;
-    var pctDec=ids.length?Math.round(dec/ids.length*100):0;
-    var colDec=pctDec>=90?'var(--green)':pctDec>=60?'var(--yellow)':'var(--red)';
-    var docs=CR_DATA.tables.map(function(t){
-      var n=ids.filter(function(id){ return CR_DATA.presenceAll[t.key].has(id); }).length;
-      var p=ids.length?Math.round(n/ids.length*100):0;
-      var c=p>=90?'var(--green)':p>=60?'var(--yellow)':'var(--red)';
-      return '<div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-top:5px;">'
-        +'<span style="width:82px;color:var(--muted);">'+crEsc(t.label)+'</span>'
-        +'<div style="flex:1;height:6px;background:var(--bg3);border-radius:999px;overflow:hidden;"><div style="width:'+p+'%;height:100%;background:'+c+';border-radius:999px;"></div></div>'
-        +'<span style="width:70px;text-align:right;font-weight:700;color:'+c+';">'+n+'/'+ids.length+' · '+p+'%</span></div>';
-    }).join('');
-    return '<div onclick="crOpen(\''+crEsc(o).replace(/'/g,"\\'")+'\')" style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
-      +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'
-      +'<div style="font-size:14px;font-weight:800;color:var(--text);">👤 '+crEsc(o)+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);">'+ids.length+' empresas · click para detalle</div></div>'
-      +'<div style="display:flex;align-items:baseline;gap:8px;margin:8px 0 4px;">'
-      +'<span style="font-size:26px;font-weight:800;color:'+colDec+';">'+dec+'/'+ids.length+'</span>'
-      +'<span style="font-size:11.5px;color:var(--muted);">declaradas ('+pctDec+'%)</span></div>'
-      +'<div style="height:7px;background:var(--bg3);border-radius:999px;overflow:hidden;margin-bottom:8px;"><div style="width:'+pctDec+'%;height:100%;background:'+colDec+';border-radius:999px;"></div></div>'
-      +docs+'</div>';
-  }).join('')||'<div style="color:var(--muted);">Sin empresas en el período activo.</div>';
-}
-function crOpen(owner){
-  if(!CR_DATA) return;
-  var G=crGrupos(); var ids=(G[owner]||[]).slice();
-  var ORDEN={'Sin registro':0,'Sin iniciar':1,'Bloqueado':2,'En proceso':3,'Declarado':4};
-  ids.sort(function(a,b){
-    var d=(ORDEN[CR_DATA.estados.get(a)]??9)-(ORDEN[CR_DATA.estados.get(b)]??9);
-    return d!==0?d:String(crNombre(a)||a).localeCompare(String(crNombre(b)||b));
-  });
-  var dec=ids.filter(function(id){ return CR_DATA.estados.get(id)==='Declarado'; }).length;
-  document.getElementById('crModalTitle').textContent='👤 '+owner+' — '+crMesLabel(CR_DATA.activePK)+' · '+dec+'/'+ids.length+' declaradas';
-  var chip=function(e){
-    var m={'Declarado':['var(--green)','rgba(34,197,94,.15)'],'En proceso':['var(--yellow)','rgba(245,158,11,.15)'],'Bloqueado':['var(--red)','rgba(239,68,68,.15)'],'Sin iniciar':['var(--muted)','var(--bg3)'],'Sin registro':['var(--red)','rgba(239,68,68,.10)']};
-    var c=m[e]||['var(--muted)','var(--bg3)'];
-    return '<span style="display:inline-block;border-radius:999px;padding:2px 10px;font-size:10.5px;font-weight:700;color:'+c[0]+';background:'+c[1]+';white-space:nowrap;">'+crEsc(e)+'</span>';
-  };
-  var dot=function(ok,label){
-    return '<td title="'+crEsc(label)+': '+(ok?'cargado':'falta')+'" style="text-align:center;padding:6px 4px;"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+(ok?'var(--green)':'var(--red)')+';"></span></td>';
-  };
-  var body='<table style="width:100%;border-collapse:collapse;font-size:12px;">'
-    +'<thead><tr style="background:var(--bg3);"><th style="text-align:left;padding:8px 10px;color:var(--muted);">Empresa</th><th style="text-align:left;padding:8px 6px;color:var(--muted);">Estado</th>'
-    +CR_DATA.tables.map(function(t){ return '<th style="padding:8px 4px;color:var(--muted);font-size:10px;">'+crEsc(t.label)+'</th>'; }).join('')
-    +'</tr></thead><tbody>'
-    +ids.map(function(id){
-      var nom=crNombre(id);
-      return '<tr style="border-bottom:1px solid var(--border);">'
-        +'<td style="padding:7px 10px;"><b style="color:var(--text);">'+crEsc(nom||id)+'</b>'+(nom?' <span style="font-size:10px;color:var(--muted);">'+id+'</span>':'')+'</td>'
-        +'<td style="padding:7px 6px;">'+chip(CR_DATA.estados.get(id))+'</td>'
-        +CR_DATA.tables.map(function(t){ return dot(CR_DATA.presenceAll[t.key].has(id), t.label); }).join('')
-        +'</tr>';
-    }).join('')
-    +'</tbody></table>';
-  document.getElementById('crModalBody').innerHTML=body;
-  document.getElementById('crModal').style.display='flex';
-}
-
-// Reintentar cuando timelineRawData termine de cargar (llega async por el proxy)
-var jtChartWatch=setInterval(function(){
-  if(typeof timelineRawData!=='undefined' && Object.keys(timelineRawData).length){
-    clearInterval(jtChartWatch);
-    try{ jtRenderCharts(); }catch(e){ console.warn('[journey charts]',e); }
-  }
-},2500);
-setTimeout(function(){ clearInterval(jtChartWatch); },180000);
-async function jtPersist(id){
-  var c=JT_CLIENTES.find(function(x){return x.id===id;}); if(!c) return;
-  var st=jtGet(c); delete st._seed;
-  var sy=document.getElementById('jtSync-'+id); if(sy) sy.textContent='Guardando…';
-  var r=await rkApi('journey_set',{company_id:id, cliente:c.nombre, tags:JSON.stringify(st.tags), nota:st.nota});
-  if(sy) sy.textContent=r.ok?('Guardado '+new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})):('⚠️ Error: '+(r.error||'red'));
-}
-function jtCycle(id,tag){
-  var c=JT_CLIENTES.find(function(x){return x.id===id;}); if(!c) return;
-  var st=jtGet(c);
-  var cur=st.tags[tag]||'off';
-  var nxt=JT_CYCLE[(JT_CYCLE.indexOf(cur)+1)%JT_CYCLE.length];
-  if(nxt==='off') delete st.tags[tag]; else st.tags[tag]=nxt;
-  var nota=document.getElementById('jtNota-'+id); if(nota) st.nota=nota.value;
-  jtRender();
-  jtPersist(id);
-}
-function jtSaveNota(id){
-  var c=JT_CLIENTES.find(function(x){return x.id===id;}); if(!c) return;
-  var st=jtGet(c);
-  var nota=document.getElementById('jtNota-'+id); if(nota) st.nota=nota.value;
-  jtPersist(id);
-}
-jtLoad().then(jtRender);
 </script>
 </body>
