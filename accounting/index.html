@@ -1424,7 +1424,7 @@ function gateSubmit() {
 // Proxy de Apps Script — JSONP mode: el <script> tag envía cookies de Google del usuario
 // → funciona para el equipo interno que ya está logueado en su cuenta Google
 const PROXY_URL = 'https://script.google.com/macros/s/AKfycby6Ng1huZmswttAsDIUYic6OYdFZsY9PllT8tWTR5F8RG8DTXtIyu6eb4azTRUhkIUr/exec';
-function fetchSheet(sheetName) {
+function fetchSheet(sheetName, timeoutMs) {
   return new Promise(function(resolve) {
     var cbName = '_tallyCb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     var script = document.createElement('script');
@@ -1433,7 +1433,7 @@ function fetchSheet(sheetName) {
       if (script.parentNode) script.parentNode.removeChild(script);
       console.warn('fetchSheet timeout:', sheetName);
       resolve(null);
-    }, 25000);
+    }, timeoutMs || 25000);
     window[cbName] = function(data) {
       clearTimeout(timer);
       delete window[cbName];
@@ -1450,6 +1450,15 @@ function fetchSheet(sheetName) {
     };
     document.head.appendChild(script);
   });
+}
+// Tablas pesadas (Clientes_por_periodo ~2,200 filas): timeout amplio + 2 reintentos.
+async function fetchSheetBig(sheetName) {
+  for (var intento = 1; intento <= 3; intento++) {
+    var d = await fetchSheet(sheetName, 50000);
+    if (d && d.table) return d;
+    console.warn('[fetchSheetBig] intento ' + intento + ' falló para ' + sheetName + (intento < 3 ? ' — reintentando…' : ''));
+  }
+  return null;
 }
 
 // ============================================================
@@ -2187,7 +2196,7 @@ let equipoClientsData = {}; // {Arturo:0, Cristina:0, Lina:0, Edgar:0, 'Sin asig
 let overviewSalesChart = null;
 
 async function loadTimelineData() {
-  const data = await fetchSheet('Clientes_por_periodo');
+  const data = await fetchSheetBig('Clientes_por_periodo');
   if (!data) return;
   timelineRawData = {};
   monthlySalesData = {};
@@ -2668,8 +2677,11 @@ async function loadClientsLoad() {
 // ── Declaraciones por Responsable (conectado a Clientes_por_periodo) ──────────
 // ── Declaraciones Data — fuente única para KPIs, charts y tablas ────────────
 async function loadDeclaracionesData() {
-  const data = await fetchSheet('Clientes_por_periodo');
-  if (!data || !data.table) return;
+  const data = await fetchSheetBig('Clientes_por_periodo');
+  if (!data || !data.table) {
+    console.error('[decl] Clientes_por_periodo no cargó tras 3 intentos — KPIs quedarán en Sin datos');
+    return;
+  }
   const rows = data.table.rows || [];
   // Columns: [0]PeriodID [1]Company_id [7]EstadoCliente [13]MesPeriodo [14]AñoPeríodo
   // NOTE: OpiCumplimiento (col S) is NOT returned by the GViz proxy — loaded separately via loadOpiMap()
