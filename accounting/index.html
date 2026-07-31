@@ -6655,10 +6655,18 @@ pwLoad().then(function(){
 });
 
 // ══ Carga documental por responsable — datos de loadDocumentacionCompleta (KPI 6) ══
-var CR_DATA=null;
+var CR_DATA=null, CR_UNIVERSO=null, CR_EXCLUIDOS=0, CR_OWNER_BK={}, CR_NOMBRE_BK={};
 function crMesLabel(pk){ var M=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']; var p=String(pk||'').split('-'); return (M[parseInt(p[1],10)]||'')+' '+(p[0]||''); }
-function crOwnerDe(id){ var cb=(typeof CLIENT_DB!=='undefined')?CLIENT_DB[id]:null; return (cb&&cb.owner)?cb.owner:'Arturo / sin asignar'; }
-function crNombre(id){ var cb=(typeof CLIENT_DB!=='undefined')?CLIENT_DB[id]:null; if(cb&&cb.name) return cb.name; if(typeof clientNameMap!=='undefined'&&clientNameMap[id]) return clientNameMap[id]; return ''; }
+function crOwnerDe(id){
+  if(CR_OWNER_BK[id]) return CR_OWNER_BK[id];          // owner real de Clients_Load (vía backend)
+  var cb=(typeof CLIENT_DB!=='undefined')?CLIENT_DB[id]:null;
+  return (cb&&cb.owner)?cb.owner:'Arturo / sin asignar';
+}
+function crNombre(id){
+  if(CR_NOMBRE_BK[id]) return CR_NOMBRE_BK[id];
+  var cb=(typeof CLIENT_DB!=='undefined')?CLIENT_DB[id]:null; if(cb&&cb.name) return cb.name;
+  if(typeof clientNameMap!=='undefined'&&clientNameMap[id]) return clientNameMap[id]; return '';
+}
 function crEsc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 function crGrupos(){
   var G={};
